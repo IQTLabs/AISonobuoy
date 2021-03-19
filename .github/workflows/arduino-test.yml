@@ -1,0 +1,35 @@
+name: arduino-test
+on: [push, pull_request]
+jobs:
+  test-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arduino-platform: ["arduino:avr"]
+        include:
+          - arduino-platform: "arduino:avr"
+            fqbn: "arduino:avr:uno"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Install platform
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+          curl -fsSL https://downloads.arduino.cc/arduino-1.8.13-linux64.tar.xz | tar Jxf -
+          mkdir ~/bin
+          ln -s ~/arduino*/arduino ~/bin/arduino
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/bin sh
+          mkdir -p ~/.arduino15/packages
+          PATH=~/bin:$PATH arduino-cli config init
+          PATH=~/bin:$PATH arduino-cli core update-index
+          PATH=~/bin:$PATH arduino-cli core install ${{ matrix.arduino-platform }}
+          PATH=~/bin:$PATH arduino-cli lib update-index
+          PATH=~/bin:$PATH arduino-cli lib install "Sleepy Pi 2"
+          PATH=~/bin:$PATH arduino-cli lib install PCF8523
+          PATH=~/bin:$PATH arduino-cli lib install Time
+          PATH=~/bin:$PATH arduino-cli lib install LowPower_LowPowerLab
+      - name: Compile Sketch
+        run: PATH=~/bin:$PATH arduino-cli compile --fqbn ${{ matrix.fqbn }} bbsleepypi/bbsleepypi.ino
+      - name: cppcheck
+        run: cppcheck --enable=style,performance,information,portability,warning --language=c++ --error-exitcode=1 --xml --inline-suppr bbsleepypi/*.ino
