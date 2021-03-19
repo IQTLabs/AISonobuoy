@@ -29,6 +29,7 @@ jobs:
           PATH=~/bin:$PATH arduino-cli lib install PCF8523
           PATH=~/bin:$PATH arduino-cli lib install Time
           PATH=~/bin:$PATH arduino-cli lib install LowPower_LowPowerLab
+          PATH=~/bin:$PATH arduino-cli lib install ArduinoJson
       - name: Compile Sketch
         run: PATH=~/bin:$PATH arduino-cli compile --fqbn ${{ matrix.fqbn }} bbsleepypi/bbsleepypi.ino
       - name: cppcheck
