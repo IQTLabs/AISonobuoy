@@ -31,6 +31,6 @@ jobs:
           PATH=~/bin:$PATH arduino-cli lib install LowPower_LowPowerLab
           PATH=~/bin:$PATH arduino-cli lib install ArduinoJson
       - name: Compile Sketch
-        run: PATH=~/bin:$PATH arduino-cli compile --fqbn ${{ matrix.fqbn }} bbsleepypi/bbsleepypi.ino
+        run: PATH=~/bin:$PATH arduino-cli compile --fqbn ${{ matrix.fqbn }} rpi/sleepypi/sleepypi.ino
       - name: cppcheck
-        run: cppcheck --enable=style,performance,information,portability,warning --language=c++ --error-exitcode=1 --xml --inline-suppr bbsleepypi/*.ino
+        run: cppcheck --enable=style,performance,information,portability,warning --language=c++ --error-exitcode=1 --xml --inline-suppr rpi/sleepypi/*.ino
