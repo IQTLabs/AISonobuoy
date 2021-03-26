@@ -22,7 +22,8 @@ void setup() {
   memset(cmdBuffer, 0, sizeof(cmdBuffer));
   SleepyPi.enablePiPower(true);
   SleepyPi.rtcInit(false);
-  Serial.begin(115200);
+  Serial.begin(9600);
+  Serial.println("Hello");
 }
 
 void loop() {
