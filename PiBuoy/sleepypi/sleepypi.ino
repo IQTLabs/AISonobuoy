@@ -142,11 +142,23 @@ void handleSensors() {
   outDoc["powerStateOverride"] = powerStateOverride;
 }
 
+void handleGetTime() {
+  DateTime nowTime = SleepyPi.readTime();
+  outDoc["unixtime"] = nowTime.unixtime();
+  outDoc["rtcBatteryLow"] = SleepyPi.rtcBatteryLow();
+  outDoc["rtcRunning"] = SleepyPi.isrunning();
+}
+
+const cmdHandler getTimeCmd = {
+  "gettime", &handleGetTime,
+};
+
 const cmdHandler sensorsCmd = {
   "sensors", &handleSensors,
 };
 
 const cmdHandler cmdHandlers[] = {
+  getTimeCmd,
   sensorsCmd,
   endOfHandlers,
 };
