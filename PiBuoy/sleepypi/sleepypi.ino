@@ -435,16 +435,17 @@ void loop() {
   powerStateOverride = lastButtonCheck && !timedOut(powerOverrideTime, nowTime, overrideInterval);
 
   if (!powerStateOverride && sampleStats.meanValid) {
-    bool shutdownVoltage = sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage;
-    bool startupVoltage = sampleStats.mean1mSupplyVoltage >= eepromConfig.config.startupVoltage;
-    bool shutdownRpiCurrent = sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent;
-
     if (powerState) {
+      bool shutdownVoltage = sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage
+      bool shutdownRpiCurrent = sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent;
+
       if (shutdownVoltage || (!requestedPowerState && (shutdownRpiCurrent || timedOut(snoozeTime, nowTime, eepromConfig.config.snoozeTimeout)))) {
         powerState = false;
         setPower();
       }
     } else {
+      bool startupVoltage = sampleStats.mean1mSupplyVoltage >= eepromConfig.config.startupVoltage;
+
       if (startupVoltage && requestedPowerState) {
         powerState = true;
         setPower();
