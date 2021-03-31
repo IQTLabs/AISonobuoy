@@ -159,13 +159,17 @@ void bootmsg() {
   runCmd("sensors");
 }
 
+void writeDefaultConfig() {
+  memcpy(&eepromConfig.config, &defaultConfig, sizeof(defaultConfig));
+  writeEeprom();
+}
+
 void setup() {
   Serial.begin(9600);
   readEeprom();
   uint32_t crc = calcCRC();
   if (crc != eepromConfig.crc) {
-    memcpy(&eepromConfig.config, &defaultConfig, sizeof(defaultConfig));
-    writeEeprom();
+    writeDefaultConfig();
   }
   pinMode(statusLED, OUTPUT);
   digitalWrite(statusLED, LOW);
@@ -300,6 +304,15 @@ void handleSetConfig() {
   handleGetConfig();
 }
 
+void handleDefaultConfig() {
+  writeDefaultConfig();
+  handleGetConfig();
+}
+
+const cmdHandler defaultConfigCmd = {
+  "defaultconfig", &handleDefaultConfig,
+};
+
 const cmdHandler setConfigCmd = {
   "setconfig", &handleSetConfig,
 };
@@ -321,6 +334,7 @@ const cmdHandler sensorsCmd = {
 };
 
 const cmdHandler cmdHandlers[] = {
+  defaultConfigCmd,
   setConfigCmd,
   getConfigCmd,
   snoozeCmd,
