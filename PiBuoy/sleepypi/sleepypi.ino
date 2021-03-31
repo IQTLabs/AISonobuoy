@@ -126,6 +126,7 @@ void setup() {
   pinMode(statusLED, OUTPUT);
   digitalWrite(statusLED, LOW);
   memset(cmdBuffer, 0, sizeof(cmdBuffer));
+  // cppcheck-suppress memsetClassFloat
   memset(&sampleStats, 0, sizeof(sampleStatsType));
   initRtc();
   Serial.begin(9600);
