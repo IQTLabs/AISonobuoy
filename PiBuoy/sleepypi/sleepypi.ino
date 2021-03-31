@@ -7,8 +7,9 @@
 //
 // * ArduinoJson
 // * CRC32
-// * Sleepy Pi 2
+// * LowPower_LowPowerLab (needed for Sleepy Pi 2 lib)
 // * PCF8523
+// * Sleepy Pi 2
 // * Time
 
 #include <CRC32.h>
