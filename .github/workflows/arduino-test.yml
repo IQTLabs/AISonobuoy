@@ -30,6 +30,7 @@ jobs:
           PATH=~/bin:$PATH arduino-cli lib install Time
           PATH=~/bin:$PATH arduino-cli lib install LowPower_LowPowerLab
           PATH=~/bin:$PATH arduino-cli lib install ArduinoJson
+          PATH=~/bin:$PATH arduino-cli lib install CRC32
       - name: Compile Sketch
         run: PATH=~/bin:$PATH arduino-cli compile --fqbn ${{ matrix.fqbn }} PiBuoy/sleepypi/sleepypi.ino
       - name: cppcheck
