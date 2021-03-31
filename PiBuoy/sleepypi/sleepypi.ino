@@ -436,7 +436,7 @@ void loop() {
 
   if (!powerStateOverride && sampleStats.meanValid) {
     if (powerState) {
-      bool shutdownVoltage = sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage
+      bool shutdownVoltage = sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage;
       bool shutdownRpiCurrent = sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent;
 
       if (shutdownVoltage || (!requestedPowerState && (shutdownRpiCurrent || timedOut(snoozeTime, nowTime, eepromConfig.config.snoozeTimeout)))) {
