@@ -432,7 +432,7 @@ void loop() {
     requestedPowerState = powerState;
     setPower();
   }
-  powerStateOverride = lastButtonCheck && timedOut(powerOverrideTime, nowTime, overrideInterval);
+  powerStateOverride = lastButtonCheck && !timedOut(powerOverrideTime, nowTime, overrideInterval);
 
   if (!powerStateOverride && sampleStats.meanValid) {
     bool shutdownVoltage = sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage;
