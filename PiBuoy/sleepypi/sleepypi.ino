@@ -154,6 +154,11 @@ uint32_t calcCRC() {
   return CRC32::calculate((uint8_t*)&eepromConfig.config, sizeof(configType));
 }
 
+void bootmsg() {
+  runCmd("getconfig");
+  runCmd("sensors");
+}
+
 void setup() {
   Serial.begin(9600);
   readEeprom();
@@ -169,8 +174,7 @@ void setup() {
   memset(&sampleStats, 0, sizeof(sampleStatsType));
   initRtc();
   enableButton();
-  runCmd("getconfig");
-  runCmd("sensors");
+  bootmsg();
 }
 
 bool getCmd() {
@@ -252,7 +256,7 @@ bool voltageValid(float voltage) {
 }
 
 void handleSetConfig() {
-  float shutdownVoltage = inDoc["shutDownVoltage"];
+  float shutdownVoltage = inDoc["shutdownVoltage"];
   float startupVoltage = inDoc["startupVoltage"];
   float shutdownRpiCurrent = inDoc["shutdownRpiCurrent"];
   byte snoozeTimeout = inDoc["snoozeTimeout"];
@@ -365,6 +369,7 @@ void runCmd(const char *cmd) {
 #define RUNNING_MIN(x, y) x = min(x, y)
 
 void pollSample() {
+  digitalWrite(statusLED, HIGH);
   if (++currentSample == sampleCount) {
     currentSample = 0;
   }
@@ -400,6 +405,7 @@ void pollSample() {
   sampleStats.mean1mSupplyVoltage /= validSamples;
   sampleStats.mean1mRpiCurrent /= validSamples;
   sampleStats.meanValid = (validSamples == sampleCount);
+  digitalWrite(statusLED, LOW);
 }
 
 unsigned long timeDiff(unsigned long x, unsigned long nowTime) {
@@ -420,6 +426,7 @@ void loop() {
   if (gotAlarm) {
     requestedPowerState = true;
     disableAlarm();
+    bootmsg();
   }
   unsigned long nowTime = millis();
   if (timedOut(lastPollTime, nowTime, sampleInterval)) {
