@@ -22,6 +22,7 @@ typedef struct configType {
   float shutdownVoltage;
   float startupVoltage;
   float shutdownRpiCurrent;
+  byte snoozeTimeout;
 } configType;
 
 typedef struct eepromConfigType {
@@ -33,6 +34,7 @@ const configType defaultConfig {
   12.8,
   13.0,
   150,
+  90,
 };
 
 const byte alarmPin = 0;
@@ -85,6 +87,7 @@ unsigned long lastPollTime = millis();
 unsigned long powerOverrideTime = 0;
 unsigned long lastButtonTime = 0;
 unsigned long lastButtonCheck = 0;
+unsigned long snoozeTime = 0;
 
 DynamicJsonDocument inDoc(128);
 DynamicJsonDocument outDoc(128);
@@ -156,7 +159,6 @@ void setup() {
   if (crc != eepromConfig.crc) {
     memcpy(&eepromConfig.config, &defaultConfig, sizeof(defaultConfig));
     writeEeprom();
-    Serial.println("checksum invalid, default config");
   }
   pinMode(statusLED, OUTPUT);
   digitalWrite(statusLED, LOW);
@@ -165,6 +167,7 @@ void setup() {
   memset(&sampleStats, 0, sizeof(sampleStatsType));
   initRtc();
   enableButton();
+  runCmd("getconfig");
   runCmd("sensors");
 }
 
@@ -226,7 +229,78 @@ void handleSnooze() {
   outDoc["minute"] = alarmTime.minute();
   outDoc["unixtime"] = alarmTime.unixtime();
   requestedPowerState = false;
+  snoozeTime = millis();
 }
+
+void handleGetConfig() {
+  outDoc["shutdownVoltage"] = eepromConfig.config.shutdownVoltage;
+  outDoc["startupVoltage"] = eepromConfig.config.startupVoltage;
+  outDoc["shutdownRpiCurrent"] = eepromConfig.config.shutdownRpiCurrent;
+  outDoc["snoozeTimeout"] = eepromConfig.config.snoozeTimeout;
+}
+
+bool voltageValid(float voltage) {
+  if (voltage < 12) {
+    return false;
+  }
+  if (voltage > 14) {
+    return false;
+  }
+  return true;
+}
+
+void handleSetConfig() {
+  float shutdownVoltage = inDoc["shutDownVoltage"];
+  float startupVoltage = inDoc["startupVoltage"];
+  float shutdownRpiCurrent = inDoc["shutdownRpiCurrent"];
+  byte snoozeTimeout = inDoc["snoozeTimeout"];
+  if (shutdownVoltage == 0) {
+    shutdownVoltage = eepromConfig.config.shutdownVoltage;
+  }
+  if (startupVoltage == 0) {
+    startupVoltage = eepromConfig.config.startupVoltage;
+  }
+  if (shutdownRpiCurrent == 0) {
+    shutdownRpiCurrent = eepromConfig.config.shutdownRpiCurrent;
+  }
+  if (snoozeTimeout == 0) {
+    snoozeTimeout = eepromConfig.config.snoozeTimeout;
+  }
+  if (!voltageValid(shutdownVoltage)) {
+    outDoc["error"] = "invalid shutdownVoltage";
+    return;
+  }
+  if (!voltageValid(startupVoltage)) {
+    outDoc["error"] = "invalid startupVoltage";
+    return;
+  }
+  if (shutdownVoltage >= startupVoltage) {
+    outDoc["error"] = "startupVoltage must be greater than shutdownVoltage";
+    return;
+  }
+  if (shutdownRpiCurrent < 50 || shutdownRpiCurrent > 800) {
+    outDoc["error"] = "invalid shutdownRpiCurrent";
+    return;
+  }
+  if (snoozeTimeout < 90 || snoozeTimeout > 180) {
+    outDoc["error"] = "invalid snoozeTimeout";
+    return;
+  }
+  eepromConfig.config.shutdownVoltage = shutdownVoltage;
+  eepromConfig.config.startupVoltage = startupVoltage;
+  eepromConfig.config.shutdownRpiCurrent = shutdownRpiCurrent;
+  eepromConfig.config.snoozeTimeout = snoozeTimeout;
+  writeEeprom();
+  handleGetConfig();
+}
+
+const cmdHandler setConfigCmd = {
+  "setconfig", &handleSetConfig,
+};
+
+const cmdHandler getConfigCmd = {
+  "getconfig", &handleGetConfig,
+};
 
 const cmdHandler snoozeCmd = {
   "snooze", &handleSnooze,
@@ -241,6 +315,8 @@ const cmdHandler sensorsCmd = {
 };
 
 const cmdHandler cmdHandlers[] = {
+  setConfigCmd,
+  getConfigCmd,
   snoozeCmd,
   getTimeCmd,
   sensorsCmd,
@@ -261,12 +337,12 @@ void handleCmd() {
       outDoc["command"] = cmd;
       outDoc["error"] = "unknown command";
       for (byte j = 0; cmdHandlers[j].cmd; ++j) {
-        const char *compareCmd = cmdHandlers[j].cmd;
-        if (strncmp(cmd, compareCmd, strlen(compareCmd)) == 0) {
-          outDoc["error"] = "";
-          cmdHandlers[j].cmdHandlerFunc();
-          break;
-        }
+	const char *compareCmd = cmdHandlers[j].cmd;
+	if (strncmp(cmd, compareCmd, strlen(compareCmd)) == 0) {
+	  outDoc["error"] = "";
+	  cmdHandlers[j].cmdHandlerFunc();
+	  break;
+	}
       }
     } else {
       outDoc["error"] = "missing command";
@@ -331,6 +407,10 @@ unsigned long timeDiff(unsigned long x, unsigned long nowTime) {
   return (ULONG_MAX - x) + nowTime;
 }
 
+bool timedOut(unsigned long x, unsigned long nowTime, unsigned long timeoutSecs) {
+  return timeDiff(x, nowTime) > (timeoutSecs * 1000);
+}
+
 void loop() {
   if (getCmd()) {
     handleCmd();
@@ -340,7 +420,7 @@ void loop() {
     disableAlarm();
   }
   unsigned long nowTime = millis();
-  if (timeDiff(lastPollTime, nowTime) > (sampleInterval * 1000)) {
+  if (timedOut(lastPollTime, nowTime, sampleInterval)) {
     pollSample();
     lastPollTime = nowTime;
   }
@@ -351,18 +431,22 @@ void loop() {
     requestedPowerState = powerState;
     setPower();
   }
-  powerStateOverride = lastButtonCheck && timeDiff(powerOverrideTime, nowTime) < (overrideInterval * 1000);
+  powerStateOverride = lastButtonCheck && timedOut(powerOverrideTime, nowTime, overrideInterval);
+
   if (!powerStateOverride && sampleStats.meanValid) {
+    bool shutdownVoltage = sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage;
+    bool startupVoltage = sampleStats.mean1mSupplyVoltage >= eepromConfig.config.startupVoltage;
+    bool shutdownRpiCurrent = sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent;
+
     if (powerState) {
-      if ((sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage) ||
-            (!requestedPowerState && sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent)) {
-        powerState = false;
-        setPower();
+      if (shutdownVoltage || (!requestedPowerState && (shutdownRpiCurrent || timedOut(snoozeTime, nowTime, eepromConfig.config.snoozeTimeout)))) {
+	powerState = false;
+	setPower();
       }
     } else {
-      if (sampleStats.mean1mSupplyVoltage >= eepromConfig.config.startupVoltage && requestedPowerState) {
-        powerState = true;
-        setPower();
+      if (startupVoltage && requestedPowerState) {
+	powerState = true;
+	setPower();
       }
     }
   }
