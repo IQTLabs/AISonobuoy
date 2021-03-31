@@ -19,18 +19,23 @@
 typedef struct configType {
   float shutdownVoltage;
   float startupVoltage;
+  float shutdownRpiCurrent;
 } configType;
 
 const configType config {
   12.8,
   13.0,
+  150,
 };
 
+const byte alarmPin = 0;
 const byte buttonPin = 1;
 const byte statusLED = 13;
 const byte sampleCount = 12;
 const unsigned long sampleInterval = 5;
 const unsigned long overrideInterval = 120;
+const time_t minSnoozeDurationMin = 2;
+const time_t maxSnoozeDurationMin = 60 * 60;
 
 typedef struct sampleType {
   float supplyVoltage;
@@ -60,6 +65,9 @@ const cmdHandler endOfHandlers = {
 
 bool powerState = false;
 bool powerStateOverride = false;
+bool requestedPowerState = true;
+bool gotAlarm = false;
+bool alarmSet = false;
 byte i = 0;
 char cmdBuffer[64] = {};
 byte currentSample = 0;
@@ -86,14 +94,32 @@ void setPower() {
   SleepyPi.enableExtPower(powerState);
 }
 
-void enablePower() {
-  powerState = true;
-  setPower();
+void alarmISR() {
+  gotAlarm = true;
 }
 
-void disablePower() {
-  powerState = false;
-  setPower();
+void enableAlarm() {
+  SleepyPi.enableAlarm(true);
+  attachInterrupt(alarmPin, alarmISR, FALLING);
+  alarmSet = true;
+  gotAlarm = false;
+}
+
+void disableAlarm() {
+  detachInterrupt(alarmPin);
+  SleepyPi.enableAlarm(false);
+  alarmSet = false;
+  gotAlarm = false;
+}
+
+void initRtc() {
+  SleepyPi.rtcInit(true);
+  // After an init, the first alarm always triggers immediately, so configure and then cancel an alarm.
+  DateTime nowTime(SleepyPi.readTime());
+  DateTime alarmTime(nowTime.unixtime() + 60);
+  enableAlarm();
+  SleepyPi.setAlarm(alarmTime.hour(), alarmTime.minute()); 
+  disableAlarm();
 }
 
 void setup() {
@@ -101,9 +127,10 @@ void setup() {
   digitalWrite(statusLED, LOW);
   memset(cmdBuffer, 0, sizeof(cmdBuffer));
   memset(&sampleStats, 0, sizeof(sampleStatsType));
-  SleepyPi.rtcInit(true);
+  initRtc();
   Serial.begin(9600);
   enableButton();
+  runCmd("sensors");
 }
 
 bool getCmd() {
@@ -149,6 +176,27 @@ void handleGetTime() {
   outDoc["rtcRunning"] = SleepyPi.isrunning();
 }
 
+void handleSnooze() {
+  time_t duration = inDoc["duration"];
+  if (duration < minSnoozeDurationMin || duration > maxSnoozeDurationMin) {
+    outDoc["error"] = "invalid snooze duration";
+    return;
+  } 
+  DateTime nowTime(SleepyPi.readTime());
+  DateTime alarmTime(nowTime.unixtime() + (duration * 60));
+  SleepyPi.setAlarm(alarmTime.hour(), alarmTime.minute());
+  enableAlarm();
+  outDoc["duration"] = duration;
+  outDoc["hour"] = alarmTime.hour();
+  outDoc["minute"] = alarmTime.minute();
+  outDoc["unixtime"] = alarmTime.unixtime();
+  requestedPowerState = false;
+}
+
+const cmdHandler snoozeCmd = {
+  "snooze", &handleSnooze,
+};
+
 const cmdHandler getTimeCmd = {
   "gettime", &handleGetTime,
 };
@@ -158,6 +206,7 @@ const cmdHandler sensorsCmd = {
 };
 
 const cmdHandler cmdHandlers[] = {
+  snoozeCmd,
   getTimeCmd,
   sensorsCmd,
   endOfHandlers,
@@ -251,6 +300,10 @@ void loop() {
   if (getCmd()) {
     handleCmd();
   }
+  if (gotAlarm) {
+    requestedPowerState = true;
+    disableAlarm();
+  }
   unsigned long nowTime = millis();
   if (timeDiff(lastPollTime, nowTime) > (sampleInterval * 1000)) {
     pollSample();
@@ -260,17 +313,19 @@ void loop() {
     lastButtonCheck = lastButtonTime;
     powerOverrideTime = nowTime;
     powerState = !powerState;
+    requestedPowerState = powerState;
     setPower();
   }
   powerStateOverride = lastButtonCheck && timeDiff(powerOverrideTime, nowTime) < (overrideInterval * 1000);
   if (!powerStateOverride && sampleStats.meanValid) {
     if (powerState) {
-      if (sampleStats.mean1mSupplyVoltage < config.shutdownVoltage) {
+      if ((sampleStats.mean1mSupplyVoltage < config.shutdownVoltage) ||
+            (!requestedPowerState && sampleStats.mean1mRpiCurrent < config.shutdownRpiCurrent)) {
         powerState = false;
         setPower();
       }
     } else {
-      if (sampleStats.mean1mSupplyVoltage >= config.startupVoltage) {
+      if (sampleStats.mean1mSupplyVoltage >= config.startupVoltage && requestedPowerState) {
         powerState = true;
         setPower();
       }
