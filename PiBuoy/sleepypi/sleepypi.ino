@@ -10,7 +10,9 @@
 // * PCF8523
 // * Time
 
+#include <CRC32.h>
 #include <ArduinoJson.h>
+#include <EEPROM.h>
 #include <SleepyPi2.h>
 #include <TimeLib.h>
 #include <PCF8523.h>
@@ -22,7 +24,12 @@ typedef struct configType {
   float shutdownRpiCurrent;
 } configType;
 
-const configType config {
+typedef struct eepromConfigType {
+  uint32_t crc;
+  configType config;
+} eepromConfigType;
+
+const configType defaultConfig {
   12.8,
   13.0,
   150,
@@ -73,6 +80,7 @@ char cmdBuffer[64] = {};
 byte currentSample = 0;
 sampleType samples[sampleCount] = {};
 sampleStatsType sampleStats;
+eepromConfigType eepromConfig;
 unsigned long lastPollTime = millis();
 unsigned long powerOverrideTime = 0;
 unsigned long lastButtonTime = 0;
@@ -122,14 +130,40 @@ void initRtc() {
   disableAlarm();
 }
 
+void readEeprom() {
+  uint8_t *cp = (uint8_t*)&eepromConfig;
+  for (byte j = 0; j < sizeof(eepromConfigType); ++j) {
+    *(cp + j) = EEPROM.read(j);
+  }
+}
+
+void writeEeprom() {
+  eepromConfig.crc = calcCRC();
+  uint8_t *cp = (uint8_t*)&eepromConfig;
+  for (byte j = 0; j < sizeof(eepromConfigType); ++j) {
+    EEPROM.write(j, *(cp + j));
+  }
+}
+
+uint32_t calcCRC() {
+  return CRC32::calculate((uint8_t*)&eepromConfig.config, sizeof(configType));
+}
+
 void setup() {
+  Serial.begin(9600);
+  readEeprom();
+  uint32_t crc = calcCRC();
+  if (crc != eepromConfig.crc) {
+    memcpy(&eepromConfig.config, &defaultConfig, sizeof(defaultConfig));
+    writeEeprom();
+    Serial.println("checksum invalid, default config");
+  }
   pinMode(statusLED, OUTPUT);
   digitalWrite(statusLED, LOW);
   memset(cmdBuffer, 0, sizeof(cmdBuffer));
   // cppcheck-suppress memsetClassFloat
   memset(&sampleStats, 0, sizeof(sampleStatsType));
   initRtc();
-  Serial.begin(9600);
   enableButton();
   runCmd("sensors");
 }
@@ -320,13 +354,13 @@ void loop() {
   powerStateOverride = lastButtonCheck && timeDiff(powerOverrideTime, nowTime) < (overrideInterval * 1000);
   if (!powerStateOverride && sampleStats.meanValid) {
     if (powerState) {
-      if ((sampleStats.mean1mSupplyVoltage < config.shutdownVoltage) ||
-            (!requestedPowerState && sampleStats.mean1mRpiCurrent < config.shutdownRpiCurrent)) {
+      if ((sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage) ||
+            (!requestedPowerState && sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent)) {
         powerState = false;
         setPower();
       }
     } else {
-      if (sampleStats.mean1mSupplyVoltage >= config.startupVoltage && requestedPowerState) {
+      if (sampleStats.mean1mSupplyVoltage >= eepromConfig.config.startupVoltage && requestedPowerState) {
         powerState = true;
         setPower();
       }
