@@ -6,6 +6,7 @@
 // Library installation:
 //
 // * ArduinoJson
+// * CRC32
 // * Sleepy Pi 2
 // * PCF8523
 // * Time
@@ -337,12 +338,12 @@ void handleCmd() {
       outDoc["command"] = cmd;
       outDoc["error"] = "unknown command";
       for (byte j = 0; cmdHandlers[j].cmd; ++j) {
-	const char *compareCmd = cmdHandlers[j].cmd;
-	if (strncmp(cmd, compareCmd, strlen(compareCmd)) == 0) {
-	  outDoc["error"] = "";
-	  cmdHandlers[j].cmdHandlerFunc();
-	  break;
-	}
+        const char *compareCmd = cmdHandlers[j].cmd;
+        if (strncmp(cmd, compareCmd, strlen(compareCmd)) == 0) {
+          outDoc["error"] = "";
+          cmdHandlers[j].cmdHandlerFunc();
+          break;
+        }
       }
     } else {
       outDoc["error"] = "missing command";
@@ -440,13 +441,13 @@ void loop() {
 
     if (powerState) {
       if (shutdownVoltage || (!requestedPowerState && (shutdownRpiCurrent || timedOut(snoozeTime, nowTime, eepromConfig.config.snoozeTimeout)))) {
-	powerState = false;
-	setPower();
+        powerState = false;
+        setPower();
       }
     } else {
       if (startupVoltage && requestedPowerState) {
-	powerState = true;
-	setPower();
+        powerState = true;
+        setPower();
       }
     }
   }
