@@ -33,4 +33,4 @@ jobs:
       - name: Compile Sketch
         run: PATH=~/bin:$PATH arduino-cli compile --fqbn ${{ matrix.fqbn }} PiBuoy/sleepypi/sleepypi.ino
       - name: cppcheck
-        run: cppcheck --enable=style,performance,information,portability,warning --language=c++ --error-exitcode=1 --xml --inline-suppr PiBuoy/sleepypi/*.ino
+        run: cppcheck --enable=style,performance,information,portability,warning --suppress=missingInclude --language=c++ --error-exitcode=1 --xml --inline-suppr PiBuoy/sleepypi/*.ino
