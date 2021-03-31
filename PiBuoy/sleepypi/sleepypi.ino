@@ -227,12 +227,12 @@ void handleCmd() {
       outDoc["command"] = cmd;
       outDoc["error"] = "unknown command";
       for (byte j = 0; cmdHandlers[j].cmd; ++j) {
-	      const char *compareCmd = cmdHandlers[j].cmd;
-	      if (strncmp(cmd, compareCmd, strlen(compareCmd)) == 0) {
-		outDoc["error"] = "";
-		cmdHandlers[j].cmdHandlerFunc();
-		break;
-	      }
+        const char *compareCmd = cmdHandlers[j].cmd;
+        if (strncmp(cmd, compareCmd, strlen(compareCmd)) == 0) {
+          outDoc["error"] = "";
+          cmdHandlers[j].cmdHandlerFunc();
+          break;
+        }
       }
     } else {
       outDoc["error"] = "missing command";
@@ -321,14 +321,14 @@ void loop() {
   if (!powerStateOverride && sampleStats.meanValid) {
     if (powerState) {
       if ((sampleStats.mean1mSupplyVoltage < config.shutdownVoltage) ||
-	    (!requestedPowerState && sampleStats.mean1mRpiCurrent < config.shutdownRpiCurrent)) {
-	powerState = false;
-	setPower();
+            (!requestedPowerState && sampleStats.mean1mRpiCurrent < config.shutdownRpiCurrent)) {
+        powerState = false;
+        setPower();
       }
     } else {
       if (sampleStats.mean1mSupplyVoltage >= config.startupVoltage && requestedPowerState) {
-	powerState = true;
-	setPower();
+        powerState = true;
+        setPower();
       }
     }
   }
