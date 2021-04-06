@@ -90,6 +90,7 @@ unsigned long powerOverrideTime = 0;
 unsigned long lastButtonTime = 0;
 unsigned long lastButtonCheck = 0;
 unsigned long snoozeTime = 0;
+time_t snoozeUnixtime = 0;
 
 DynamicJsonDocument inDoc(128);
 DynamicJsonDocument outDoc(128);
@@ -224,6 +225,17 @@ void handleGetTime() {
   outDoc["rtcRunning"] = SleepyPi.isrunning();
 }
 
+void handleSetTime() {
+  uint32_t nowUnixtime = inDoc["unixtime"];
+  if (nowUnixtime == 0) {
+    outDoc["error"] = "invalid unixtime";
+    return;
+  }
+  DateTime nowTime(nowUnixtime);
+  SleepyPi.setTime(nowTime);
+  handleGetTime();
+}
+
 void handleSnooze() {
   time_t duration = inDoc["duration"];
   if (duration < minSnoozeDurationMin || duration > maxSnoozeDurationMin) {
@@ -240,6 +252,7 @@ void handleSnooze() {
   outDoc["unixtime"] = alarmTime.unixtime();
   requestedPowerState = false;
   snoozeTime = millis();
+  snoozeUnixtime = nowTime.unixtime();
 }
 
 void handleGetConfig() {
@@ -309,6 +322,15 @@ void handleDefaultConfig() {
   handleGetConfig();
 }
 
+void handleGetLastSnooze() {
+  outDoc["lastsnoozeunixtime"] = snoozeUnixtime;
+  outDoc["lastsnoozeuptimems"] = snoozeTime;
+}
+
+const cmdHandler getLastSnoozeCmd = {
+  "getlastsnooze", &handleGetLastSnooze,
+};
+
 const cmdHandler defaultConfigCmd = {
   "defaultconfig", &handleDefaultConfig,
 };
@@ -329,6 +351,10 @@ const cmdHandler getTimeCmd = {
   "gettime", &handleGetTime,
 };
 
+const cmdHandler setTimeCmd = {
+  "settime", &handleSetTime,
+};
+
 const cmdHandler sensorsCmd = {
   "sensors", &handleSensors,
 };
@@ -339,7 +365,9 @@ const cmdHandler cmdHandlers[] = {
   getConfigCmd,
   snoozeCmd,
   getTimeCmd,
+  setTimeCmd,
   sensorsCmd,
+  getLastSnoozeCmd,
   endOfHandlers,
 };
 
@@ -367,6 +395,7 @@ void handleCmd() {
     } else {
       outDoc["error"] = "missing command";
     }
+    outDoc["uptimems"] = millis();
   }
   serializeJson(outDoc, Serial);
   Serial.println();
