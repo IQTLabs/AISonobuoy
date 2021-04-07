@@ -1,0 +1,10 @@
+[Unit]
+Description=SleepyPi management
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/local/bin/sleepypid.py
+
+[Install]
+WantedBy=multi-user.target
