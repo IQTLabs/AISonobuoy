@@ -58,14 +58,14 @@ def loop(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='sleepypi hat manager')
     parser.add_argument(
-        '--port', default='/dev/ttyS0', help='sleepypi serial port')
+        '--port', default='/dev/ttyAMA1', help='sleepypi serial port')
     parser.add_argument(
         '--speed', default=9600, type=int, help='sleepypi baudrate')
     parser.add_argument(
         '--timeout', default=5, type=int, help='sleepypi serial timeout')
     parser.add_argument(
-        '--polltime', default=5, type=int, help='sleepypi sensor poll period')
+        '--polltime', default=60, type=int, help='sleepypi sensor poll period')
     parser.add_argument(
-        '--log', default='/home/pi/sleepypid.log', help='sleepypi serial port')
+        '--log', default='/var/log/sleepypid.log', help='sleepypi serial port')
     main_args = parser.parse_args()
     loop(main_args)
