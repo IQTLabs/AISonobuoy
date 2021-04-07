@@ -86,8 +86,8 @@ if __name__ == '__main__':
             u8Buf[1]=lps22hb._read_byte(LPS_TEMP_OUT_H)
             TEMP_DATA=((u8Buf[1]<<8)+u8Buf[0])/100.0
 
-         pressure.append(PRESS_DATA)
-         temp.append(TEMP_DATA)
+        pressure.append(PRESS_DATA)
+        temp.append(TEMP_DATA)
     records = {"start_time": start_time,
                "end_time": time.time(),
                "pressure": pressure,

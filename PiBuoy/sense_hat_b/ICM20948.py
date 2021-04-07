@@ -410,8 +410,8 @@ if __name__ == '__main__':
     yaw   = math.atan2(-2 * q1 * q2 - 2 * q0 * q3, 2 * q2 * q2 + 2 * q3 * q3 - 1) * 57.3
     rpy.append([roll, pitch, yaw])
     acceleration.append([Accel[0], Accel[1], Accel[2]])
-    gyroscope.append([Gyro[0],Gyro[1],Gyro[2]])
-    magnetic.append([Mag[0]),Mag[1],Mag[2]])
+    gyroscope.append([Gyro[0], Gyro[1], Gyro[2]])
+    magnetic.append([Mag[0], Mag[1], Mag[2]])
   records = {"start_time": start_time,
              "end_time": time.time(),
              "RPY": rpy,
