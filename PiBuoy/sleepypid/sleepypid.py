@@ -36,7 +36,7 @@ def send_command(command, port, baudrate, timeout):
         raise SerialException from err
     summary = {
         'timestamp': time.time(),
-        'loadvg': os.getloadavg(),
+        'loadavg': os.getloadavg(),
         'cputempc': get_temp(),
         'command': json.loads(command_bytes.decode()),
         'response': {},
