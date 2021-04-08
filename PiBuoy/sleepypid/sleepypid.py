@@ -5,11 +5,17 @@
 import argparse
 import json
 import time
+import os
 import serial
 
 
 class SerialException(Exception):
     """Serial port exception."""
+
+
+def get_temp():
+    """CPU temperature in C."""
+    return float(open('/sys/class/thermal/thermal_zone0/temp').read()) / 1e3
 
 
 def send_command(command, port, baudrate, timeout):
@@ -30,6 +36,8 @@ def send_command(command, port, baudrate, timeout):
         raise SerialException from err
     summary = {
         'timestamp': time.time(),
+        'loadavg': os.getloadavg(),
+        'cputempc': get_temp(),
         'command': json.loads(command_bytes.decode()),
         'response': {},
     }
