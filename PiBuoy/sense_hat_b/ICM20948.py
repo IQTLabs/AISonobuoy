@@ -123,7 +123,7 @@ MAG_DATA_LEN                         = 6
 class ICM20948(object):
   def __init__(self,address=I2C_ADD_ICM20948):
     self._address = address
-    self._bus = smbus.SMBus(6) # Use i2c6 instead of the default 1
+    self._bus = smbus.SMBus(1)
     bRet=self.icm20948Check()             # Initialization of the device multiple times after power on will result in a return error
     # while true != bRet:
     #   print("ICM-20948 Error\n" )

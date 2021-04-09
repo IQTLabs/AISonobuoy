@@ -37,7 +37,7 @@ LPS_RES               =  0x33        #Filter reset register
 class LPS22HB(object):
     def __init__(self,address=LPS22HB_I2C_ADDRESS):
         self._address = address
-        self._bus = smbus.SMBus(6) # Use i2c6 instead of the default 1
+        self._bus = smbus.SMBus(1)
         self.LPS22HB_RESET()                         #Wait for reset to complete
         self._write_byte(LPS_CTRL_REG1 ,0x02)        #Low-pass filter disabled , output registers not updated until MSB and LSB have been read , Enable Block Data Update , Set Output Data Rate to 0
 
