@@ -18,6 +18,7 @@ MIN_SLEEP_MINS = 15
 MAX_SLEEP_MINS = (24 * 60) - MIN_SLEEP_MINS
 MEAN_V = 'mean1mSupplyVoltage'
 MEAN_C = 'mean1mRpiCurrent'
+SHUTDOWN_TIMEOUT = 30
 
 
 class SerialException(Exception):
@@ -91,13 +92,20 @@ def configure_sleepypi(args):
         print('getconfig failed')
         sys.exit(-1)
 
-    shutdown_v = response['shutdownVoltage']
-    startup_v = response['startupVoltage']
-    if shutdown_v != args.deepsleepvoltage or startup_v != args.shutdownvoltage:
-        response, command_error = send_command({
-            'command': 'setconfig',
-            'shutdownVoltage': args.deepsleepvoltage,
-            'startupVoltage': args.shutdownvoltage}, args)
+    pid_config = {
+        'shutdownVoltage': args.deepsleepvoltage,
+        'startupVoltage': args.shutdownvoltage,
+        'snoozeTimeout': SHUTDOWN_TIMEOUT * 2,
+    }
+    pi_config = {
+        'shutdownVoltage': response['shutdownVoltage'],
+        'startupVoltage': response['startupVoltage'],
+        'snoozeTimeout': response['snoozeTimeout'],
+    }
+
+    if pid_config != pi_config:
+        pid_config.update({'command': 'setconfig'})
+        response, command_error = send_command(pid_config, args)
         if command_error or command_error is None:
             print('setconfig failed')
             sys.exit(-1)
@@ -164,7 +172,7 @@ def loop(args):
                     duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
                     if duration:
                         send_command({'command': 'snooze', 'duration': duration}, args)
-                        subprocess.call(['timeout', '30', args.sleepscript])
+                        subprocess.call(['timeout', str(SHUTDOWN_TIMEOUT), args.sleepscript])
                         sys.exit(0)
 
         time.sleep(args.polltime)
