@@ -249,7 +249,7 @@ void handleSnooze() {
   enableAlarm();
   outDoc["duration"] = duration;
   outDoc["alarmhour"] = alarmTime.hour();
-  outDoc["alamminute"] = alarmTime.minute();
+  outDoc["alarmminute"] = alarmTime.minute();
   outDoc["alarmunixtime"] = alarmTime.unixtime();
   outDoc["hour"] = nowTime.hour();
   outDoc["minute"] = nowTime.minute();
