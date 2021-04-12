@@ -81,7 +81,7 @@ bool requestedPowerState = true;
 bool gotAlarm = false;
 bool alarmSet = false;
 byte i = 0;
-char cmdBuffer[64] = {};
+char cmdBuffer[128] = {};
 byte currentSample = 0;
 sampleType samples[sampleCount] = {};
 sampleStatsType sampleStats;
