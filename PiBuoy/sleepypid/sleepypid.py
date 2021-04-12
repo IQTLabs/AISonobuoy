@@ -18,7 +18,7 @@ MIN_SLEEP_MINS = 15
 MAX_SLEEP_MINS = (24 * 60) - MIN_SLEEP_MINS
 MEAN_V = 'mean1mSupplyVoltage'
 MEAN_C = 'mean1mRpiCurrent'
-SHUTDOWN_TIMEOUT = 30
+SHUTDOWN_TIMEOUT = 60
 
 
 class SerialException(Exception):
