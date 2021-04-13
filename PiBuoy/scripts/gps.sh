@@ -1,15 +1,9 @@
 #!/bin/bash
 # enable gps
-atcom --port /dev/ttyUSB2 AT\$GPSP=0
+atcom --port /dev/ttyUSB2 AT\$GPSRST
 sleep 2
-atcom --port /dev/ttyUSB2 AT\$GPSR=0
-sleep 2
-atcom --port /dev/ttyUSB2 AT\$GPSP=1
-sleep 2
-atcom --port /dev/ttyUSB2 AT\$GPSP?
+atcom --port /dev/ttyUSB2 AT\$GPSACP
 sleep 2
 atcom --port /dev/ttyUSB2 AT\$GPSNMUN=2,1,1,1,1,1,1
 sleep 2
-atcom --port /dev/ttyUSB2 AT\$GPSQOS=0,0,0,0,2,3,1
-sleep 2
-atcom --port /dev/ttyUSB2 AT\$GPSSAV
+atcom --port /dev/ttyUSB2 AT\$GPSP=1

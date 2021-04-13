@@ -23,10 +23,10 @@ def collect_gpsd(session, filename):
         session = gps(mode=WATCH_ENABLE)
     return session
 
-start_time = time.time()
-filename = "gpsd-"+str(start_time)+".json"
 
 try:
+    start_time = time.time()
+    filename = "gpsd-"+str(start_time)+".json"
     session = gps(mode=WATCH_ENABLE)
     print("Connected to GPSD...")
     while True:
@@ -37,5 +37,6 @@ try:
             session = collect_gpsd(session, filename)
         except Exception as e:
             print("Retrying...")
+            session = gps(mode=WATCH_ENABLE)
 except Exception as e:
     print("Unable to connect to GPSD")
