@@ -150,12 +150,12 @@ def loop(args):
         except SerialException:
             pass
         if summary and not command_error:
+            sample_count += 1
             response = summary['response']
             for stat in (MEAN_C, MEAN_V):
                 window_stats[stat].append(response[stat])
             for stat in ('cputempc',):
                 window_stats[stat].append(summary[stat])
-            sample_count += 1
             for stat in window_stats:
                 window_stats[stat] = window_stats[stat][-(args.window_samples):]
                 if len(window_stats[stat]) > 1:
@@ -168,7 +168,7 @@ def loop(args):
                 }
                 log_json(args.log, window_summary)
 
-                if args.sleepscript:
+                if args.sleepscript and (sample_count % args.window_samples == 0):
                     duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
                     if duration:
                         send_command({'command': 'snooze', 'duration': duration}, args)
