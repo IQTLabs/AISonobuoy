@@ -46,7 +46,8 @@ const byte sampleCount = 12;
 const unsigned long sampleInterval = 5;
 const unsigned long overrideInterval = 120;
 const time_t minSnoozeDurationMin = 2;
-const time_t maxSnoozeDurationMin = 60 * 60;
+// RTC day alarm must be set < 24h in the future to avoid wraparound.
+const time_t maxSnoozeDurationMin = (24 * 60) - minSnoozeDurationMin;
 
 typedef struct sampleType {
   float supplyVoltage;
@@ -80,7 +81,7 @@ bool requestedPowerState = true;
 bool gotAlarm = false;
 bool alarmSet = false;
 byte i = 0;
-char cmdBuffer[64] = {};
+char cmdBuffer[128] = {};
 byte currentSample = 0;
 sampleType samples[sampleCount] = {};
 sampleStatsType sampleStats;
@@ -247,9 +248,12 @@ void handleSnooze() {
   SleepyPi.setAlarm(alarmTime.hour(), alarmTime.minute());
   enableAlarm();
   outDoc["duration"] = duration;
-  outDoc["hour"] = alarmTime.hour();
-  outDoc["minute"] = alarmTime.minute();
-  outDoc["unixtime"] = alarmTime.unixtime();
+  outDoc["alarmhour"] = alarmTime.hour();
+  outDoc["alarmminute"] = alarmTime.minute();
+  outDoc["alarmunixtime"] = alarmTime.unixtime();
+  outDoc["hour"] = nowTime.hour();
+  outDoc["minute"] = nowTime.minute();
+  outDoc["unixtime"] = nowTime.unixtime();
   requestedPowerState = false;
   snoozeTime = millis();
   snoozeUnixtime = nowTime.unixtime();

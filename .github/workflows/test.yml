@@ -1,0 +1,10 @@
+name: python_test
+on: [push, pull_request]
+jobs:
+  sleepypidtest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: build 
+      run: |
+          sudo apt-get update && sudo apt-get install -f python3-dev && pip3 install -r ./PiBuoy/sleepypid/requirements.txt && ./PiBuoy/sleepypid/test_sleepypid.py
