@@ -1,0 +1,25 @@
+version: '3.7'
+services:
+  grafana:
+    restart: always
+    image: 'grafana/grafana:latest'
+    environment:
+      GF_INSTALL_PLUGINS: 'grafana-simple-json-datasource'
+    ports:
+      - 3000:3000
+    networks:
+      - app
+  api:
+    restart: always
+    build:
+      context: .
+    image: 'jsonapi'
+    volumes:
+      - '${VOL_PREFIX}/files:/files'
+    ports:
+      - 8081:8081
+    networks:
+      - app
+networks:
+  app:
+    name: app
