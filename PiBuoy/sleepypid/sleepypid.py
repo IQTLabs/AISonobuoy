@@ -5,6 +5,7 @@
 import argparse
 import datetime
 import json
+import platform
 import random
 import statistics
 import subprocess
@@ -113,7 +114,17 @@ def configure_sleepypi(args):
 
 def log_json(log, obj):
     """Log JSON object."""
-    with open(log, 'a') as logfile:
+
+    if os.path.isdir(log):
+        ns_time = int(time.time_ns() / 1e6)
+        log_dir = os.path.join(log, '%s-%u' % (platform.node(), ns_time))
+        if not os.path.exists(log_dir):
+            os.mkdir(log_dir)
+        log_path = os.path.join(log_dir, 'sleepypi.%u' % ns_time)
+    else:
+        log_path = log
+
+    with open(log_path, 'a') as logfile:
         obj.update({
             'timestamp': time.time(),
             'utctimestamp': str(datetime.datetime.utcnow()),
@@ -196,7 +207,7 @@ if __name__ == '__main__':
         help='sleepypi sensor poll period')
     parser.add_argument(
         '--log', default='/var/log/sleepypid.log',
-        help='sleepypi serial port')
+        help='if a file, log to this file, if a directory, log telemetry in a subdirectory')
     parser.add_argument(
         '--window_samples', default=DEFAULT_WINDOW_SAMPLES, type=int,
         help='window size for sample results')
