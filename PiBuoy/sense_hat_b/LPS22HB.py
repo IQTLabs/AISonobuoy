@@ -74,7 +74,7 @@ if __name__ == '__main__':
     u8Buf=[0,0,0]
     lps22hb=LPS22HB()
     sensor_data = {"pressure": [],
-                   "temperature": [],
+                   "pressure_temperature": [],
                   }
     for i in range(samples):
         time.sleep(1/samples)
