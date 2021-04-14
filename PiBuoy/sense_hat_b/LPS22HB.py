@@ -91,11 +91,11 @@ if __name__ == '__main__':
             TEMP_DATA=((u8Buf[1]<<8)+u8Buf[0])/100.0
 
         sensor_data['pressure'].append([PRESS_DATA, timestamp])
-        sensor_data['temperature'].append([TEMP_DATA, timestamp])
+        sensor_data['pressure_temperature'].append([TEMP_DATA, timestamp])
 
     hostname = socket.gethostname()
     timestamp = int(time.time()*1000)
-    f_dir = f'/telemetry/sensors/pressure'
+    f_dir = f'/telemetry/sensors'
     os.makedirs(f_dir, exist_ok=True)
 
     with open(f'{f_dir}/{hostname}-{timestamp}-lps22hb.json', 'w') as f:

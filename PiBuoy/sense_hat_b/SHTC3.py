@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     timestamp = int(time.time()*1000)
-    f_dir = f'/telemetry/sensors/temperature'
+    f_dir = f'/telemetry/sensors'
     os.makedirs(f_dir, exist_ok=True)
 
     with open(f'{f_dir}/{hostname}-{timestamp}-shtc3.json', 'w') as f:
