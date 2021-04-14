@@ -1,7 +1,10 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
-import time
+import json
+import os
 import smbus
+import socket
+import time
 
 samples = 100
 
@@ -70,11 +73,12 @@ if __name__ == '__main__':
     TEMP_DATA = 0.0
     u8Buf=[0,0,0]
     lps22hb=LPS22HB()
-    start_time = time.time()
-    pressure = []
-    temp = []
+    sensor_data = {"pressure": [],
+                   "temperature": [],
+                  }
     for i in range(samples):
         time.sleep(1/samples)
+        timestamp = int(time.time()*1000)
         lps22hb.LPS22HB_START_ONESHOT()
         if (lps22hb._read_byte(LPS_STATUS)&0x01)==0x01:  # a new pressure data is generated
             u8Buf[0]=lps22hb._read_byte(LPS_PRESS_OUT_XL)
@@ -86,12 +90,15 @@ if __name__ == '__main__':
             u8Buf[1]=lps22hb._read_byte(LPS_TEMP_OUT_H)
             TEMP_DATA=((u8Buf[1]<<8)+u8Buf[0])/100.0
 
-        pressure.append(PRESS_DATA)
-        temp.append(TEMP_DATA)
-    records = {"start_time": start_time,
-               "end_time": time.time(),
-               "pressure": pressure,
-               "temperature": temp,
-              }
-    # TODO do something with records
-    print(records)
+        sensor_data['pressure'].append([PRESS_DATA, timestamp])
+        sensor_data['temperature'].append([TEMP_DATA, timestamp])
+
+    hostname = socket.gethostname()
+    timestamp = int(time.time()*1000)
+    f_dir = f'/telemetry/sensors/pressure'
+    os.makedirs(f_dir, exist_ok=True)
+
+    with open(f'{f_dir}/{hostname}-{timestamp}-lps22hb.json', 'w') as f:
+        for key in sensor_data.keys():
+            record = {"target":key, "datapoints": sensor_data[key]}
+            f.write(f'{json.dumps(record)}\n')
