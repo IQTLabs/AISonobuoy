@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 import ctypes
+import json
+import os
+import socket
 import time
 
 samples = 100
@@ -28,16 +31,21 @@ class SHTC3:
 
 if __name__ == "__main__":
     shtc3 = SHTC3()
-    start_time = time.time()
-    temp = []
-    humidity = []
+    sensor_data = {"humidity": [],
+                   "temperature": [],
+                  }
     for i in range(samples):
-        temp.append(shtc3.SHTC3_Read_Temperature())
-        humidity.append(shtc3.SHTC3_Read_Humidity())
-    records = {"start_time": start_time,
-               "end_time": time.time(),
-               "temperature": temp,
-               "humidity": humidity,
-              }
-    # TODO do something with records
-    print(records)
+        time.sleep(1/samples)
+        timestamp = int(time.time()*1000)
+        sensor_data['temperature'].append([shtc3.SHTC3_Read_Temperature(), timestamp])
+        sensor_data['humidity'].append([shtc3.SHTC3_Read_Humidity(), timestamp])
+
+    hostname = socket.gethostname()
+    timestamp = int(time.time()*1000)
+    f_dir = f'/telemetry/sensors/temperature'
+    os.makedirs(f_dir, exist_ok=True)
+
+    with open(f'{f_dir}/{hostname}-{timestamp}-shtc3.json', 'w') as f:
+        for key in sensor_data.keys():
+            record = {"target":key, "datapoints": sensor_data[key]}
+            f.write(f'{json.dumps(record)}\n')

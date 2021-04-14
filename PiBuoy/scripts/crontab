@@ -1,7 +1,7 @@
 # every five minutes
 */5 * * * * /scripts/system_health.sh
-2-59/5 * * * * /scripts/lps22hb.sh
-3-59/5 * * * * /scripts/icm20948.sh
-4-59/5 * * * * /scripts/shtc3.sh
+2-59/5 * * * * python3 /scripts/LPS22HB.py
+3-59/5 * * * * python3 /scripts/ICM20948.py
+4-59/5 * * * * python3 /scripts/SHTC3.py
 # once an hour, one minute past the hour
 1 * * * * /scripts/s3_prep.sh

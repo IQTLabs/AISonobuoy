@@ -1,8 +1,11 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
-import time
-import smbus
+import json
 import math
+import os
+import smbus
+import socket
+import time
 
 samples = 100
 Gyro  = [0,0,0]
@@ -392,32 +395,51 @@ class ICM20948(object):
 if __name__ == '__main__':
   MotionVal=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
   icm20948=ICM20948()
-  start_time = time.time()
-  rpy = []
-  acceleration = []
-  gyroscope = []
-  magnetic = []
+  sensor_data = {"roll": [],
+                 "pitch": [],
+                 "yaw": [],
+                 "acceleration_x": [],
+                 "acceleration_y": [],
+                 "acceleration_z": [],
+                 "gyroscope_x": [],
+                 "gyroscope_y": [],
+                 "gyroscope_z": [],
+                 "magnetic_x": [],
+                 "magnetic_y": [],
+                 "magnetic_z": [],
+                }
+
   for i in range(samples):
     icm20948.icm20948_Gyro_Accel_Read()
     icm20948.icm20948MagRead()
     icm20948.icm20948CalAvgValue()
     time.sleep(1/samples)
+    timestamp = int(time.time()*1000)
     icm20948.imuAHRSupdate(MotionVal[0] * 0.0175, MotionVal[1] * 0.0175,MotionVal[2] * 0.0175,
                 MotionVal[3],MotionVal[4],MotionVal[5],
                 MotionVal[6], MotionVal[7], MotionVal[8])
     pitch = math.asin(-2 * q1 * q3 + 2 * q0* q2)* 57.3
     roll  = math.atan2(2 * q2 * q3 + 2 * q0 * q1, -2 * q1 * q1 - 2 * q2* q2 + 1)* 57.3
     yaw   = math.atan2(-2 * q1 * q2 - 2 * q0 * q3, 2 * q2 * q2 + 2 * q3 * q3 - 1) * 57.3
-    rpy.append([roll, pitch, yaw])
-    acceleration.append([Accel[0], Accel[1], Accel[2]])
-    gyroscope.append([Gyro[0], Gyro[1], Gyro[2]])
-    magnetic.append([Mag[0], Mag[1], Mag[2]])
-  records = {"start_time": start_time,
-             "end_time": time.time(),
-             "RPY": rpy,
-             "Acceleration": acceleration,
-             "Gyroscope": gyroscope,
-             "Magnetic": magnetic,
-            }
-  # TODO do something with records
-  print(records)
+    sensor_data['roll'].append([roll, timestamp])
+    sensor_data['pitch'].append([pitch, timestamp])
+    sensor_data['yaw'].append([yaw, timestamp])
+    sensor_data['acceleration_x'].append([Accel[0], timestamp])
+    sensor_data['acceleration_y'].append([Accel[1], timestamp])
+    sensor_data['acceleration_z'].append([Accel[2], timestamp])
+    sensor_data['gyroscope_x'].append([Gyro[0], timestamp])
+    sensor_data['gyroscope_y'].append([Gyro[1], timestamp])
+    sensor_data['gyroscope_z'].append([Gyro[2], timestamp])
+    sensor_data['magnetic_x'].append([Mag[0], timestamp])
+    sensor_data['magnetic_y'].append([Mag[1], timestamp])
+    sensor_data['magnetic_z'].append([Mag[2], timestamp])
+
+  hostname = socket.gethostname()
+  timestamp = int(time.time()*1000)
+  f_dir = f'/telemetry/sensors/9axis'
+  os.makedirs(f_dir, exist_ok=True)
+
+  with open(f'{f_dir}/{hostname}-{timestamp}-icm20948.json', 'w') as f:
+    for key in sensor_data.keys():
+      record = {"target":key, "datapoints": sensor_data[key]}
+      f.write(f'{json.dumps(record)}\n')
