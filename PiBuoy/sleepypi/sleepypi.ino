@@ -75,6 +75,7 @@ const cmdHandler endOfHandlers = {
   NULL, NULL,
 };
 
+char fwVersion[10] = "1.0.0";
 bool powerState = false;
 bool powerStateOverride = false;
 bool requestedPowerState = true;
@@ -217,6 +218,7 @@ void handleSensors() {
   outDoc["meanValid"] = sampleStats.meanValid;
   outDoc["powerState"] = powerState;
   outDoc["powerStateOverride"] = powerStateOverride;
+  outDoc["version"] = fwVersion;
 }
 
 void handleGetTime() {
@@ -401,6 +403,7 @@ void handleCmd() {
     }
     outDoc["uptimems"] = millis();
   }
+  outDoc["version"] = fwVersion;
   serializeJson(outDoc, Serial);
   Serial.println();
   memset(cmdBuffer, 0, sizeof(cmdBuffer));
