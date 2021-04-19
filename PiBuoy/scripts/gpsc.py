@@ -19,7 +19,10 @@ try:
 
         # Write messages out to line delimited json file
         with open(filename, 'a') as f:
-            json.dump(dict(report), f)
-            f.write("\n")
+            try:
+                json.dump(dict(report), f)
+                f.write("\n")
+            except Exception as e:
+                print(f'Unable to write: {report} because: {e}')
 except Exception as e:
     print("Unable to connect to GPSD")
