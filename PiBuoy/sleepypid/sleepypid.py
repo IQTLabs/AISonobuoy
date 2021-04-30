@@ -7,6 +7,7 @@ import datetime
 import json
 import platform
 import random
+import socket
 import statistics
 import subprocess
 import sys
@@ -81,7 +82,7 @@ def send_command(command, args):
         summary['response'] = json.loads(response_bytes.decode())
         command_error = summary['response'].get('error', None)
 
-    log_json(args.log, summary)
+    log_json(args.log, args.grafana, args.grafana_path, summary)
     return (summary, command_error)
 
 
@@ -112,7 +113,7 @@ def configure_sleepypi(args):
             sys.exit(-1)
 
 
-def log_json(log, obj):
+def log_json(log, grafana, grafana_path, obj):
     """Log JSON object."""
 
     if os.path.isdir(log):
@@ -124,15 +125,40 @@ def log_json(log, obj):
     else:
         log_path = log
 
+    obj.update({
+        'timestamp': time.time(),
+        'utctimestamp': str(datetime.datetime.utcnow()),
+        'loadavg': os.getloadavg(),
+        'uptime': get_uptime(),
+        'cputempc': get_temp(),
+    })
     with open(log_path, 'a') as logfile:
-        obj.update({
-            'timestamp': time.time(),
-            'utctimestamp': str(datetime.datetime.utcnow()),
-            'loadavg': os.getloadavg(),
-            'uptime': get_uptime(),
-            'cputempc': get_temp(),
-        })
         logfile.write(json.dumps(obj) + '\n')
+
+    if grafana:
+        sensor_data = {}
+        timestamp = int(time.time()*1000)
+        if "loadavg" in obj:
+            loadavg = obj["loadavg"]
+            del obj["loadavg"]
+            m1, m5, m15 = loadavg
+            obj["loadavg1m"] = m1
+            obj["loadavg5m"] = m5
+            obj["loadavg15m"] = m15
+        if "response" in obj and "command" in  obj["response"] and obj["response"]["command"] == "sensors":
+            for key in obj["response"]:
+                obj[key] = obj["response"][key]
+        for key in obj.keys():
+            if key in sensor_data:
+                sensor_data[key].append([obj[key], timestamp])
+            else:
+                sensor_data[key] = [[obj[key], timestamp]]
+        hostname = socket.gethostname()
+        os.makedirs(grafana_path, exist_ok=True)
+        with open(f'{grafana_path}/{hostname}-{timestamp}-sleepypi.json', 'w') as f:
+            for key in sensor_data.keys():
+                record = {"target":key, "datapoints": sensor_data[key]}
+                f.write(f'{json.dumps(record)}\n')
 
 
 def calc_soc(mean_v, args):
@@ -177,7 +203,7 @@ def loop(args):
                     'window_diffs': window_diffs,
                     'soc': soc,
                 }
-                log_json(args.log, window_summary)
+                log_json(args.log, args.grafana, args.grafana_path, window_summary)
 
                 if args.sleepscript and (sample_count % args.window_samples == 0):
                     duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
@@ -222,6 +248,12 @@ if __name__ == '__main__':
         help='voltage at which the battery is considered full')
     parser.add_argument('--sleepscript', default='',
         help='script to run to clean poweroff')
+    parser.add_argument(
+        '--grafana-path', default='/telemetry/sensors',
+        help='directory to write out JSON files for Grafana, only enabled if Grafana is enabled')
+    parser.add_argument('--grafana', dest='grafana', action='store_true')
+    parser.add_argument('--no-grafana', dest='grafana', action='store_false')
+    parser.set_defaults(grafana=True)
     main_args = parser.parse_args()
     assert main_args.shutdownvoltage > main_args.deepsleepvoltage
     assert main_args.fullvoltage > main_args.shutdownvoltage
