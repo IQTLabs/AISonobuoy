@@ -59,7 +59,7 @@ def index():
 @app.post('/search')
 def search():
     # TODO read from file, don't hardcode
-    return HTTPResponse(body=dumps(['roll', 'pitch', 'yaw', 'acceleration_x', 'acceleration_y', 'acceleration_z', 'gyroscope_x', 'gyroscope_y', 'gyroscope_z', 'magnetic_x', 'magnetic_y', 'magnetic_z', 'temperature', 'pressure', 'pressure_temperature', 'humidity']),
+    return HTTPResponse(body=dumps(['roll', 'pitch', 'yaw', 'acceleration_x', 'acceleration_y', 'acceleration_z', 'gyroscope_x', 'gyroscope_y', 'gyroscope_z', 'magnetic_x', 'magnetic_y', 'magnetic_z', 'temperature', 'pressure', 'pressure_temperature', 'humidity', 'soc', 'uptime', 'cputempc', 'loadavg1m', 'loadavg5m', 'loadavg15m', 'mean1mRpiCurrent_window_diffs', 'mean1mSupplyVoltage_window_diffs', 'cputempc_window_diffs', 'error', 'rpiCurrent', 'supplyVoltage', 'mean1mSupplyVoltage', 'mean1mRpiCurrent', 'min1mSupplyVoltage', 'min1mRpiCurrent', 'max1mSupplyVoltage', 'max1mRpiCurrent', 'meanValid', 'powerState', 'powerStateOverride', 'version']),
                         headers={'Content-Type': 'application/json'})
 
 

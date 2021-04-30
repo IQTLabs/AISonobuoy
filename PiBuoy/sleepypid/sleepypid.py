@@ -148,6 +148,11 @@ def log_json(log, grafana, grafana_path, obj):
         if "response" in obj and "command" in  obj["response"] and obj["response"]["command"] == "sensors":
             for key in obj["response"]:
                 obj[key] = obj["response"][key]
+            del obj["response"]
+        if "window_diffs" in obj:
+            for key in obj["window_diffs"]:
+                obj[key+"_window_diffs"] = obj["window_diffs"][key]
+            del obj["window_diffs"]
         for key in obj.keys():
             if key in sensor_data:
                 sensor_data[key].append([obj[key], timestamp])
