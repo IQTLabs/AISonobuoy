@@ -3,6 +3,7 @@
 """SleepyPi hat manager."""
 
 import argparse
+import copy
 import datetime
 import json
 import platform
@@ -113,6 +114,43 @@ def configure_sleepypi(args):
             sys.exit(-1)
 
 
+def log_grafana(grafana, grafana_path, obj):
+    """Log grafana telemetry."""
+    if not grafana:
+        return
+    grafana_obj = copy.copy(obj)
+    sensor_data = {}
+    timestamp = int(time.time()*1000)
+    if "loadavg" in grafana_obj:
+        loadavg = grafana_obj["loadavg"]
+        del grafana_obj["loadavg"]
+        m1, m5, m15 = loadavg
+        grafana_obj["loadavg1m"] = m1
+        grafana_obj["loadavg5m"] = m5
+        grafana_obj["loadavg15m"] = m15
+    if ("response" in grafana_obj and
+            "command" in grafana_obj["response"] and
+            grafana_obj["response"]["command"] == "sensors"):
+        for key in grafana_obj["response"]:
+            grafana_obj[key] = grafana_obj["response"][key]
+        del grafana_obj["response"]
+    if "window_diffs" in grafana_obj:
+        for key in grafana_obj["window_diffs"]:
+            grafana_obj[key+"_window_diffs"] = grafana_obj["window_diffs"][key]
+        del grafana_obj["window_diffs"]
+    for key in grafana_obj.keys():
+        if key in sensor_data:
+            sensor_data[key].append([grafana_obj[key], timestamp])
+        else:
+            sensor_data[key] = [[grafana_obj[key], timestamp]]
+    hostname = socket.gethostname()
+    os.makedirs(grafana_path, exist_ok=True)
+    with open(f'{grafana_path}/{hostname}-{timestamp}-sleepypi.json', 'w') as f:
+        for key in sensor_data.keys():
+            record = {"target":key, "datapoints": sensor_data[key]}
+            f.write(f'{json.dumps(record)}\n')
+
+
 def log_json(log, grafana, grafana_path, obj):
     """Log JSON object."""
 
@@ -135,35 +173,7 @@ def log_json(log, grafana, grafana_path, obj):
     with open(log_path, 'a') as logfile:
         logfile.write(json.dumps(obj) + '\n')
 
-    if grafana:
-        sensor_data = {}
-        timestamp = int(time.time()*1000)
-        if "loadavg" in obj:
-            loadavg = obj["loadavg"]
-            del obj["loadavg"]
-            m1, m5, m15 = loadavg
-            obj["loadavg1m"] = m1
-            obj["loadavg5m"] = m5
-            obj["loadavg15m"] = m15
-        if "response" in obj and "command" in  obj["response"] and obj["response"]["command"] == "sensors":
-            for key in obj["response"]:
-                obj[key] = obj["response"][key]
-            del obj["response"]
-        if "window_diffs" in obj:
-            for key in obj["window_diffs"]:
-                obj[key+"_window_diffs"] = obj["window_diffs"][key]
-            del obj["window_diffs"]
-        for key in obj.keys():
-            if key in sensor_data:
-                sensor_data[key].append([obj[key], timestamp])
-            else:
-                sensor_data[key] = [[obj[key], timestamp]]
-        hostname = socket.gethostname()
-        os.makedirs(grafana_path, exist_ok=True)
-        with open(f'{grafana_path}/{hostname}-{timestamp}-sleepypi.json', 'w') as f:
-            for key in sensor_data.keys():
-                record = {"target":key, "datapoints": sensor_data[key]}
-                f.write(f'{json.dumps(record)}\n')
+    log_grafana(grafana, grafana_path, obj)
 
 
 def calc_soc(mean_v, args):
@@ -184,7 +194,6 @@ def loop(args):
     window_diffs = {}
 
     # TODO: sync sleepypi rtc with settime/hwclock -w if out of sync
-    # TODO: thresholds/FSM for duty cycle snoozing on low battery
     while True:
         summary = None
         try:
@@ -192,30 +201,31 @@ def loop(args):
         except SerialException:
             pass
         if summary and not command_error:
-            sample_count += 1
-            response = summary['response']
-            for stat in (MEAN_C, MEAN_V):
-                window_stats[stat].append(response[stat])
-            for stat in ('cputempc',):
-                window_stats[stat].append(summary[stat])
-            for stat in window_stats:
-                window_stats[stat] = window_stats[stat][-(args.window_samples):]
-                if len(window_stats[stat]) > 1:
-                    window_diffs[stat] = mean_diff(window_stats[stat])
-            if window_diffs and sample_count >= args.window_samples:
-                soc = calc_soc(response[MEAN_V], args)
-                window_summary = {
-                    'window_diffs': window_diffs,
-                    'soc': soc,
-                }
-                log_json(args.log, args.grafana, args.grafana_path, window_summary)
+            response = summary.get('response', None)
+            if response:
+                sample_count += 1
+                for stat in (MEAN_C, MEAN_V):
+                    window_stats[stat].append(response[stat])
+                for stat in ('cputempc',):
+                    window_stats[stat].append(summary[stat])
+                for stat in window_stats:
+                    window_stats[stat] = window_stats[stat][-(args.window_samples):]
+                    if len(window_stats[stat]) > 1:
+                        window_diffs[stat] = mean_diff(window_stats[stat])
+                if window_diffs and sample_count >= args.window_samples:
+                    soc = calc_soc(response[MEAN_V], args)
+                    window_summary = {
+                        'window_diffs': window_diffs,
+                        'soc': soc,
+                    }
+                    log_json(args.log, args.grafana, args.grafana_path, window_summary)
 
-                if args.sleepscript and (sample_count % args.window_samples == 0):
-                    duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
-                    if duration:
-                        send_command({'command': 'snooze', 'duration': duration}, args)
-                        subprocess.call(['timeout', str(SHUTDOWN_TIMEOUT), args.sleepscript])
-                        sys.exit(0)
+                    if args.sleepscript and (sample_count % args.window_samples == 0):
+                        duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
+                        if duration:
+                            send_command({'command': 'snooze', 'duration': duration}, args)
+                            subprocess.call(['timeout', str(SHUTDOWN_TIMEOUT), args.sleepscript])
+                            sys.exit(0)
 
         time.sleep(args.polltime)
 
