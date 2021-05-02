@@ -145,7 +145,7 @@ def log_json(log, grafana, grafana_path, obj):
             obj["loadavg1m"] = m1
             obj["loadavg5m"] = m5
             obj["loadavg15m"] = m15
-        if "response" in obj and "command" in  obj["response"] and obj["response"]["command"] == "sensors":
+        if "response" in obj and "command" in obj["response"] and obj["response"]["command"] == "sensors":
             for key in obj["response"]:
                 obj[key] = obj["response"][key]
             del obj["response"]
@@ -184,7 +184,6 @@ def loop(args):
     window_diffs = {}
 
     # TODO: sync sleepypi rtc with settime/hwclock -w if out of sync
-    # TODO: thresholds/FSM for duty cycle snoozing on low battery
     while True:
         summary = None
         try:
@@ -192,30 +191,31 @@ def loop(args):
         except SerialException:
             pass
         if summary and not command_error:
-            sample_count += 1
-            response = summary['response']
-            for stat in (MEAN_C, MEAN_V):
-                window_stats[stat].append(response[stat])
-            for stat in ('cputempc',):
-                window_stats[stat].append(summary[stat])
-            for stat in window_stats:
-                window_stats[stat] = window_stats[stat][-(args.window_samples):]
-                if len(window_stats[stat]) > 1:
-                    window_diffs[stat] = mean_diff(window_stats[stat])
-            if window_diffs and sample_count >= args.window_samples:
-                soc = calc_soc(response[MEAN_V], args)
-                window_summary = {
-                    'window_diffs': window_diffs,
-                    'soc': soc,
-                }
-                log_json(args.log, args.grafana, args.grafana_path, window_summary)
+            response = summary.get('response', None)
+            if response:
+                sample_count += 1
+                for stat in (MEAN_C, MEAN_V):
+                    window_stats[stat].append(response[stat])
+                for stat in ('cputempc',):
+                    window_stats[stat].append(summary[stat])
+                for stat in window_stats:
+                    window_stats[stat] = window_stats[stat][-(args.window_samples):]
+                    if len(window_stats[stat]) > 1:
+                        window_diffs[stat] = mean_diff(window_stats[stat])
+                if window_diffs and sample_count >= args.window_samples:
+                    soc = calc_soc(response[MEAN_V], args)
+                    window_summary = {
+                        'window_diffs': window_diffs,
+                        'soc': soc,
+                    }
+                    log_json(args.log, args.grafana, args.grafana_path, window_summary)
 
-                if args.sleepscript and (sample_count % args.window_samples == 0):
-                    duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
-                    if duration:
-                        send_command({'command': 'snooze', 'duration': duration}, args)
-                        subprocess.call(['timeout', str(SHUTDOWN_TIMEOUT), args.sleepscript])
-                        sys.exit(0)
+                    if args.sleepscript and (sample_count % args.window_samples == 0):
+                        duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
+                        if duration:
+                            send_command({'command': 'snooze', 'duration': duration}, args)
+                            subprocess.call(['timeout', str(SHUTDOWN_TIMEOUT), args.sleepscript])
+                            sys.exit(0)
 
         time.sleep(args.polltime)
 
