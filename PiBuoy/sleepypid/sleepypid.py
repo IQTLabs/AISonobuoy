@@ -186,6 +186,11 @@ def calc_soc(mean_v, args):
     return (mean_v - args.shutdownvoltage) / (args.fullvoltage - args.shutdownvoltage) * 100
 
 
+def call_script(script, timeout=SHUTDOWN_TIMEOUT):
+    """Call an external script with a timeout."""
+    return subprocess.call(['timeout', str(timeout), script])
+
+
 def loop(args):
     """Event loop."""
 
@@ -224,7 +229,7 @@ def loop(args):
                         duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
                         if duration:
                             send_command({'command': 'snooze', 'duration': duration}, args)
-                            subprocess.call(['timeout', str(SHUTDOWN_TIMEOUT), args.sleepscript])
+                            call_script(args.sleepscript)
                             sys.exit(0)
 
         time.sleep(args.polltime)
@@ -263,6 +268,8 @@ if __name__ == '__main__':
         help='voltage at which the battery is considered full')
     parser.add_argument('--sleepscript', default='',
         help='script to run to clean poweroff')
+    parser.add_argument('--startscript', default='',
+        help='script to run to run on startup')
     parser.add_argument(
         '--grafana-path', default='/telemetry/sensors',
         help='directory to write out JSON files for Grafana, only enabled if Grafana is enabled')
@@ -272,5 +279,7 @@ if __name__ == '__main__':
     main_args = parser.parse_args()
     assert main_args.shutdownvoltage > main_args.deepsleepvoltage
     assert main_args.fullvoltage > main_args.shutdownvoltage
+    if main_args.startscript:
+        call_script(main_args.startscript)
     configure_sleepypi(main_args)
     loop(main_args)

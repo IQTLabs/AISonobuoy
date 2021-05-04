@@ -3,11 +3,16 @@
 import tempfile
 import unittest
 from collections import namedtuple
-from sleepypid import get_uptime, mean_diff, sleep_duty_seconds, calc_soc, log_grafana
+from sleepypid import get_uptime, mean_diff, sleep_duty_seconds, calc_soc, log_grafana, call_script
 
 
 class SleepyidTestCase(unittest.TestCase):
     """Test sleepypid"""
+
+    def test_call_script(self):
+        call_script('ls')
+        call_script('/bin/notsogood')
+        call_script('cat', timeout=2)
 
     def test_uptime(self):
         self.assertGreaterEqual(get_uptime(), 0)
