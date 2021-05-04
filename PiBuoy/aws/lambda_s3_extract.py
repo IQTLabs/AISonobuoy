@@ -1,9 +1,9 @@
-import json
-import urllib.parse
 import boto3
-import uuid
+import json
 import os
 import tarfile
+import urllib.parse
+import uuid
 
 print('Loading function')
 
