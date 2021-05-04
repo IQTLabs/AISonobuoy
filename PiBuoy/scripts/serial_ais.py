@@ -14,6 +14,7 @@ def getAIS(aisc):
     if data:
         print(data)
         msg = decode_raw(data)
+        # TODO save this
         print(msg)
 
 while running:
