@@ -1,10 +1,10 @@
 #!/bin/bash
 timeout 10 mount /dev/sda1 /flash
-timeout 60 ./gps.sh
+timeout 60 /scripts/gps.sh
 if [ $? -eq 1 ]
 then
   logger "Failed to bring up GPS, trying one more time"
-  timeout 60 ./gps.sh
+  timeout 60 /scripts/gps.sh
   if [ $? -eq 1 ]
   then
     logger "Last attempt to bring up GPS failed"
@@ -16,4 +16,4 @@ timeout 10 stty -F /dev/serial0 speed 38400
 timeout 10 stty -F /dev/ttyUSB1 speed 9600
 timeout 10 gpsd -n /dev/ttyUSB1 -F /var/run/gpsd.sock
 pindrop --daemon --conf=/scripts/pindrop.conf &
-python3 serial_ais.py &
+python3 /scripts/serial_ais.py &
