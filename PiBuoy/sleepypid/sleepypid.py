@@ -269,7 +269,7 @@ if __name__ == '__main__':
     parser.add_argument('--sleepscript', default='',
         help='script to run to clean poweroff')
     parser.add_argument('--startscript', default='',
-        help='script to run to run on startup')
+        help='script to run on startup')
     parser.add_argument(
         '--grafana-path', default='/telemetry/sensors',
         help='directory to write out JSON files for Grafana, only enabled if Grafana is enabled')
