@@ -15,6 +15,8 @@ def extract_files(download_path, upload_path):
             _tar.extractall(f'{upload_path}/sensors')
         elif 'system' in download_path:
             _tar.extractall(f'{upload_path}/system')
+        elif 'pindrop' in download_path:
+            _tar.extractall(f'{upload_path}/pindrop')
 
 
 def lambda_handler(event, context):
@@ -38,12 +40,14 @@ def lambda_handler(event, context):
                 for file in files:
                     newkey = ''
                     if 'sensors' in root:
-                        newkey = 'uncompressed/sensors/'+file
+                        newkey = 'sensors/'+file
                     elif 'system' in root:
-                        newkey = 'uncompressed/system/'+file
+                        newkey = 'system/'+file
+                    elif 'pindrop' in root:
+                        newkey = 'pindrop/'+file
                     if newkey:
                         print(f'Adding uncommpressed file: {newkey}')
-                        s3.upload_file(os.path.join(root, file), bucket, newkey)
+                        s3.upload_file(os.path.join(root, file), f'{bucket}-processed', newkey)
         return 200
     except Exception as e:
         print(e)

@@ -8,5 +8,8 @@ XZ_OPT="-9" tar --remove-files --sort='name' -cJf /s3/pindrop-"$timestamp".tar.x
 for file in /s3/*
 do
   /usr/local/bin/aws s3 cp $file s3://biggerboatwest/compressed/
-  rm $file
+  if [ $? -eq 0 ]
+  then
+    rm $file
+  fi
 done
