@@ -36,6 +36,7 @@ def lambda_handler(event, context):
             s3.download_file(bucket, key, download_path)
             extract_files(download_path, upload_path)
             print(upload_path)
+            unique_id = str(uuid.uuid4())
             for root, dirs, files in os.walk(upload_path):
                 for file in files:
                     newkey = ''
@@ -44,7 +45,8 @@ def lambda_handler(event, context):
                     elif 'system' in root:
                         newkey = 'system/'+file
                     elif 'pindrop' in root:
-                        newkey = 'pindrop/'+file
+                        name, ext = file.split('.')
+                        newkey = 'pindrop/'+name+unique_id+ext
                     if newkey:
                         print(f'Adding uncommpressed file: {newkey}')
                         s3.upload_file(os.path.join(root, file), f'{bucket}-processed', newkey)
