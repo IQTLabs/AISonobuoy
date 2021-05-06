@@ -35,10 +35,10 @@ class SleepyidTestCase(unittest.TestCase):
                               "mean1mRpiCurrent": 1, "min1mSupplyVoltage": 1, "min1mRpiCurrent": 1, "max1mSupplyVoltage": 1,
                               "max1mRpiCurrent": 1, "meanValid": True, "powerState": True, "powerStateOverride": False, "uptimems": 1},
                               "timestamp": 1, "utctimestamp": "2021-01-01 01:11:11.11",
-                              "loadavg": [1, 1, 1], "uptime": 1, "cputempc": 5})
+                              "loadavg": [1, 1, 1], "uptime": 1, "cputempc": 5}, True)
             log_grafana(True, test_dir,
                 {"window_diffs": {"mean1mRpiCurrent": 0.1, "mean1mSupplyVoltage": -0.01, "cputempc": 0.01}, "soc": 100, "timestamp": 1,
-                                  "utctimestamp": "2021-01-01 01:11:11.11", "loadavg": [1, 1, 1], "uptime": 1, "cputempc": 5})
+                                  "utctimestamp": "2021-01-01 01:11:11.11", "loadavg": [1, 1, 1], "uptime": 1, "cputempc": 5}, True)
 
     def test_mean_diff(self):
         self.assertEqual(0, mean_diff([0, 1, 2, 3, 4, 3, 2, 1, 0]))
