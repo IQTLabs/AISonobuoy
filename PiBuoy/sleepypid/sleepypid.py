@@ -22,6 +22,7 @@ MAX_SLEEP_MINS = (24 * 60) - MIN_SLEEP_MINS
 MEAN_V = 'mean1mSupplyVoltage'
 MEAN_C = 'mean1mRpiCurrent'
 SHUTDOWN_TIMEOUT = 60
+sensor_data = {}
 
 
 class SerialException(Exception):
@@ -114,12 +115,13 @@ def configure_sleepypi(args):
             sys.exit(-1)
 
 
-def log_grafana(grafana, grafana_path, obj):
+def log_grafana(grafana, grafana_path, obj, write_results):
     """Log grafana telemetry."""
+    global sensor_data
+
     if not grafana:
         return
     grafana_obj = copy.copy(obj)
-    sensor_data = {}
     timestamp = int(time.time()*1000)
     if "loadavg" in grafana_obj:
         loadavg = grafana_obj["loadavg"]
@@ -143,15 +145,17 @@ def log_grafana(grafana, grafana_path, obj):
             sensor_data[key].append([grafana_obj[key], timestamp])
         else:
             sensor_data[key] = [[grafana_obj[key], timestamp]]
-    hostname = socket.gethostname()
-    os.makedirs(grafana_path, exist_ok=True)
-    with open(f'{grafana_path}/{hostname}-{timestamp}-sleepypi.json', 'w') as f:
-        for key in sensor_data.keys():
-            record = {"target":key, "datapoints": sensor_data[key]}
-            f.write(f'{json.dumps(record)}\n')
+    if write_results:
+        hostname = socket.gethostname()
+        os.makedirs(grafana_path, exist_ok=True)
+        with open(f'{grafana_path}/{hostname}-{timestamp}-sleepypi.json', 'w') as f:
+            for key in sensor_data.keys():
+                record = {"target":key, "datapoints": sensor_data[key]}
+                f.write(f'{json.dumps(record)}\n')
+        sensor_data = {}
 
 
-def log_json(log, grafana, grafana_path, obj):
+def log_json(log, grafana, grafana_path, obj, rollover=900, iterations=0):
     """Log JSON object."""
 
     if os.path.isdir(log):
@@ -173,7 +177,10 @@ def log_json(log, grafana, grafana_path, obj):
     with open(log_path, 'a') as logfile:
         logfile.write(json.dumps(obj) + '\n')
 
-    log_grafana(grafana, grafana_path, obj)
+    write_results = False
+    if iterations != 0 and iterations % rollover == 0:
+        write_results = True
+    log_grafana(grafana, grafana_path, obj, write_results)
 
 
 def calc_soc(mean_v, args):
@@ -197,6 +204,7 @@ def loop(args):
     sample_count = 0
     window_stats = defaultdict(list)
     window_diffs = {}
+    ticker = 0
 
     # TODO: sync sleepypi rtc with settime/hwclock -w if out of sync
     while True:
@@ -223,7 +231,7 @@ def loop(args):
                         'window_diffs': window_diffs,
                         'soc': soc,
                     }
-                    log_json(args.log, args.grafana, args.grafana_path, window_summary)
+                    log_json(args.log, args.grafana, args.grafana_path, window_summary, args.window_samples*60, args.polltime*ticker)
 
                     if args.sleepscript and (sample_count % args.window_samples == 0):
                         duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
@@ -232,6 +240,7 @@ def loop(args):
                             call_script(args.sleepscript)
                             sys.exit(0)
 
+        ticker += 1
         time.sleep(args.polltime)
 
 
