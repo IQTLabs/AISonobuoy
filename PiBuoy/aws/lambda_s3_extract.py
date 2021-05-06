@@ -46,7 +46,7 @@ def lambda_handler(event, context):
                         newkey = 'system/'+file
                     elif 'pindrop' in root:
                         name, ext = file.split('.')
-                        newkey = 'pindrop/'+name+unique_id+ext
+                        newkey = 'pindrop/'+name+unique_id+'.'+ext
                     if newkey:
                         print(f'Adding uncommpressed file: {newkey}')
                         s3.upload_file(os.path.join(root, file), f'{bucket}-processed', newkey)
