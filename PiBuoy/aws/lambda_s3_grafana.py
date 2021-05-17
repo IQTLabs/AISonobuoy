@@ -12,13 +12,61 @@ import uuid
 from calendar import timegm
 from datetime import datetime
 
+icm20948_fields = [
+    'roll',
+    'pitch',
+    'yaw',
+    'acceleration_x',
+    'acceleration_y',
+    'acceleration_z',
+    'gyroscope_x',
+    'gyroscope_y',
+    'gyroscope_z',
+    'magnetic_x',
+    'magnetic_y',
+    'magnetic_z'
+]
+shtc3_fields = [
+    'humidity',
+    'temperature'
+]
+lps22hb_fields = [
+    'pressure',
+    'pressure_temperature'
+]
+sleepypi_fields = [
+    'soc',
+    'uptime',
+    'cputempc',
+    'loadavg1m',
+    'loadavg5m',
+    'loadavg15m',
+    'mean1mRpiCurrent_window_diffs',
+    'mean1mSupplyVoltage_window_diffs',
+    'cputempc_window_diffs',
+    'error',
+    'rpiCurrent',
+    'supplyVoltage',
+    'mean1mSupplyVoltage',
+    'mean1mRpiCurrent',
+    'min1mSupplyVoltage',
+    'min1mRpiCurrent',
+    'max1mSupplyVoltage',
+    'max1mRpiCurrent',
+    'meanValid',
+    'powerState',
+    'powerStateOverride',
+    'version'
+]
+
+fields = icm20948_fields + shtc3_fields + lps22hb_fields + sleepypi_fields
 
 def convert_to_time_ms(timestamp):
     return 1000 * timegm(
             datetime.strptime(
                 timestamp, '%Y-%m-%dT%H:%M:%S.%fZ').timetuple())
-                
-   
+
+
 def get_matching_s3_keys(bucket, prefix='', suffix=''):
     """
     Generate the keys in an S3 bucket.
@@ -52,17 +100,27 @@ def get_matching_s3_keys(bucket, prefix='', suffix=''):
             kwargs['ContinuationToken'] = resp['NextContinuationToken']
         except KeyError:
             break
-        
-        
-def get_files_in_range(start, end):
+
+
+def get_files_in_range(start, end, requested_targets):
     files = []
     bucket = 'biggerboatwest-processed'
-    for key in get_matching_s3_keys(bucket=bucket, prefix='sensors/', suffix='.json'):
-        # add an hour buffer (in milliseconds) on the end since files are compressed hourly
-        if int(key.split('-')[1]) >= start and int(key.split('-')[1]) <= end+3600000:
-            files.append(f'{bucket}/{key}')
+    for target in requested_targets:
+        suffix = '.json'
+        if target in icm20948_fields:
+            suffix = 'icm20948.json'
+        elif target in shtc3_fields:
+            suffix = 'shtc3.json'
+        elif target in lps22hb_fields:
+            suffix = 'lps22hb.json'
+        elif target in sleepypi_fields:
+            suffix = 'sleepypi.json'
+        for key in get_matching_s3_keys(bucket=bucket, prefix='sensors/', suffix=suffix):
+            # add an hour buffer (in milliseconds) on the end since files are compressed hourly
+            if int(key.split('-')[1]) >= start and int(key.split('-')[1]) <= end+3600000:
+                files.append(f'{bucket}/{key}')
     return files
-    
+
 
 def process_file(file, requested_targets):
     s3 = s3fs.S3FileSystem(anon=False)
@@ -78,34 +136,38 @@ def process_file(file, requested_targets):
     return records
 
 
-async def get_s3_data(files, requested_targets):
-    loop = asyncio.get_event_loop()
+def get_s3_data(files, requested_targets):
+    #loop = asyncio.get_event_loop()
     answers = []
     requests = []
     print(files)
     for file in files:
-        requests.append(loop.run_in_executor(None, functools.partial(process_file, file, requested_targets)))
-    return await asyncio.gather(*requests)
-    
-    
+        #requests.append(loop.run_in_executor(None, functools.partial(process_file, file, requested_targets)))
+        requests.append(process_file(file, requested_targets))
+    #results = await asyncio.gather(*requests)
+    #return results
+    return requests
+
+
 def query(body):
     print(body)
     body = json.loads(body)
-    start, end = body['range']['from'], body['range']['to']
-    start = convert_to_time_ms(start)
-    end = convert_to_time_ms(end)
-    files = get_files_in_range(start, end)
     requested_targets = []
     for t in body['targets']:
         requested_targets.append(t['target'])
-    
+    start, end = body['range']['from'], body['range']['to']
+    start = convert_to_time_ms(start)
+    end = convert_to_time_ms(end)
+    files = get_files_in_range(start, end, requested_targets)
+
     targets = {}
     body = []
     counter = 0
-    
-    loop = asyncio.get_event_loop()
-    answers = loop.run_until_complete(get_s3_data(files, requested_targets))
-    loop.close()
+
+    #loop = asyncio.get_event_loop()
+    #answers = loop.run_until_complete(get_s3_data(files, requested_targets))
+    #loop.close()
+    answers = get_s3_data(files, requested_targets)
     for answer in answers:
         for record in answer:
             if record['target'] in targets:
@@ -115,8 +177,8 @@ def query(body):
                 body.append(record)
                 counter += 1
     return body
-                        
-                        
+
+
 def lambda_handler(event, context):
     if event['requestContext']['resourceId'] in ['GET /', 'OPTIONS /']:
         return {
@@ -143,47 +205,9 @@ def lambda_handler(event, context):
             'headers': {
                 "Content-Type": "application/json",
             },
-            'body': json.dumps(['roll',
-                                'pitch',
-                                'yaw',
-                                'acceleration_x',
-                                'acceleration_y',
-                                'acceleration_z',
-                                'gyroscope_x',
-                                'gyroscope_y',
-                                'gyroscope_z',
-                                'magnetic_x',
-                                'magnetic_y',
-                                'magnetic_z',
-                                'temperature',
-                                'pressure',
-                                'pressure_temperature',
-                                'humidity',
-                                'soc',
-                                'uptime',
-                                'cputempc',
-                                'loadavg1m',
-                                'loadavg5m',
-                                'loadavg15m',
-                                'mean1mRpiCurrent_window_diffs',
-                                'mean1mSupplyVoltage_window_diffs',
-                                'cputempc_window_diffs',
-                                'error',
-                                'rpiCurrent',
-                                'supplyVoltage',
-                                'mean1mSupplyVoltage',
-                                'mean1mRpiCurrent',
-                                'min1mSupplyVoltage',
-                                'min1mRpiCurrent',
-                                'max1mSupplyVoltage',
-                                'max1mRpiCurrent',
-                                'meanValid',
-                                'powerState',
-                                'powerStateOverride',
-                                'version'])
+            'body': json.dumps(fields)
         }
     return {
         'statusCode': 500,
         'body': json.dumps('Not a valid method!')
     }
-

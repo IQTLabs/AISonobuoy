@@ -1,2 +1,2 @@
 gpsd-pindrop==1.1.3
-pyais==1.6.1
+pyais==1.5.0
