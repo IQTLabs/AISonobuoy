@@ -25,6 +25,7 @@ typedef struct configType {
   float startupVoltage;
   float shutdownRpiCurrent;
   byte snoozeTimeout;
+  bool overrideEnabled;
 } configType;
 
 typedef struct eepromConfigType {
@@ -37,6 +38,7 @@ const configType defaultConfig {
   13.0,
   150,
   90,
+  true,
 };
 
 const byte alarmPin = 0;
@@ -266,6 +268,7 @@ void handleGetConfig() {
   outDoc["startupVoltage"] = eepromConfig.config.startupVoltage;
   outDoc["shutdownRpiCurrent"] = eepromConfig.config.shutdownRpiCurrent;
   outDoc["snoozeTimeout"] = eepromConfig.config.snoozeTimeout;
+  outDoc["overrideEnabled"] = eepromConfig.config.overrideEnabled;
 }
 
 bool voltageValid(float voltage) {
@@ -283,6 +286,10 @@ void handleSetConfig() {
   float startupVoltage = inDoc["startupVoltage"];
   float shutdownRpiCurrent = inDoc["shutdownRpiCurrent"];
   byte snoozeTimeout = inDoc["snoozeTimeout"];
+  bool overrideEnabled = eepromConfig.config.overrideEnabled;
+  if (inDoc.containsKey("overrideEnabled")) {
+    overrideEnabled = bool(inDoc["overrideEnabled"]);
+  }
   if (shutdownVoltage == 0) {
     shutdownVoltage = eepromConfig.config.shutdownVoltage;
   }
@@ -319,6 +326,7 @@ void handleSetConfig() {
   eepromConfig.config.startupVoltage = startupVoltage;
   eepromConfig.config.shutdownRpiCurrent = shutdownRpiCurrent;
   eepromConfig.config.snoozeTimeout = snoozeTimeout;
+  eepromConfig.config.overrideEnabled = overrideEnabled;
   writeEeprom();
   handleGetConfig();
 }
@@ -485,10 +493,12 @@ void loop() {
   }
   if (lastButtonCheck != lastButtonTime) {
     lastButtonCheck = lastButtonTime;
-    powerOverrideTime = nowTime;
-    powerState = !powerState;
-    requestedPowerState = powerState;
-    setPower();
+    if (eepromConfig.config.overrideEnabled) {
+      powerOverrideTime = nowTime;
+      powerState = !powerState;
+      requestedPowerState = powerState;
+      setPower();
+    }
   }
   powerStateOverride = lastButtonCheck && !timedOut(powerOverrideTime, nowTime, overrideInterval);
 
