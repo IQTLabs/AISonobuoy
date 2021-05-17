@@ -16,5 +16,6 @@ timeout 10 stty -F /dev/serial0 speed 38400
 timeout 10 stty -F /dev/ttyUSB1 speed 9600
 timeout 10 gpsd -n /dev/ttyUSB1 -F /var/run/gpsd.sock
 mkdir -p /telemetry/pindrop
+amixer -D sysdefault cset name='ADC Capture Volume' 96,96
 pindrop --daemon --conf=/scripts/pindrop.conf &
 python3 /scripts/serial_ais.py &
