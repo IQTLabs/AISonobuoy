@@ -1,3 +1,4 @@
+# using pyais 1.5.0
 from pyais import decode_raw
 
 import json
@@ -9,34 +10,47 @@ import time
 SERIAL_PORT = "/dev/serial0"
 running = True
 
-print("Application started!")
+print("AIS application started!")
 aisc = serial.Serial(SERIAL_PORT, baudrate=38400, timeout=1)
 
 
-def getAIS(aisc, f_dir, hostname):
+def getAIS(aisc, results):
     data = aisc.readline()
     if data:
-        print(data)
         try:
             msg = decode_raw(data)
-            print(msg)
             timestamp = int(time.time()*1000)
-            with open(f'{f_dir}/{hostname}-{timestamp}-ais.json', 'w') as f:
-                json.dump(msg, f)
-                f.write("\n")
+            for key in msg.keys():
+                if key in ['status', 'maneuver', 'epfd', 'shiptype', 'aid_type', 'station_type', 'ship_type', 'txrx', 'interval']:
+                    msg[key] = msg[key].name
+            msg['timestamp'] = timestamp
+            results.append(msg)
         except Exception as e:
             print(f'Bad formatted data: {data}')
+    return results
 
+start_time = int(time.time()*1000)
+records = []
 while running:
     hostname = socket.gethostname()
     f_dir = f'/telemetry/ais'
     os.makedirs(f_dir, exist_ok=True)
     try:
-        getAIS(aisc, f_dir, hostname)
+        # check if 15 minutes have elapsed
+        if int(time.time()*1000) >= (start_time + 900000):
+            start_time = int(time.time()*1000)
+            with open(f'{f_dir}/{hostname}-{start_time}-ais.json', 'w') as f:
+                for record in records:
+                    try:
+                        f.write(f'{json.dumps(record)}\n')
+                    except Exception as e:
+                        f.write('{"error":"'+str(record)+'"}\n')
+            records = []
+        records = getAIS(aisc, records)
         time.sleep(1)
     except KeyboardInterrupt:
         running = False
         aisc.close()
-        print("Application stopped!")
+        print("AIS application stopped!")
     except Exception as e:
-        print(f"Application error: {e}")
+        print(f"AIS application error: {e}")
