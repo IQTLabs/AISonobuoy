@@ -1,0 +1,14 @@
+diff --git a/pindrop/pindrop.py b/pindrop/pindrop.py
+index b22038d..891a9f3 100644
+--- a/pindrop/pindrop.py
++++ b/pindrop/pindrop.py
+@@ -129,8 +129,9 @@ def log_results(results, config, kml=None, kml_fname=None, kml_line=None):
+     if('json' in config['output_types']):
+         full_path= config['output_dir']+datetime.datetime.utcnow().strftime(config['naming_pattern'])+".json"
+         try:
+-            with open(full_path,'w') as fp:
++            with open(full_path,'a') as fp:
+                 json.dump(results, fp)
++                fp.write("\n")
+         except Exception as e:
+             print("Error: ",e)
