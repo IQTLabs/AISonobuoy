@@ -100,11 +100,13 @@ def configure_sleepypi(args):
         'shutdownVoltage': args.deepsleepvoltage,
         'startupVoltage': args.shutdownvoltage,
         'snoozeTimeout': SHUTDOWN_TIMEOUT * 2,
+        'overrideEnabled': args.overrideenabled,
     }
     pi_config = {
         'shutdownVoltage': response['shutdownVoltage'],
         'startupVoltage': response['startupVoltage'],
         'snoozeTimeout': response['snoozeTimeout'],
+        'overrideEnabled': response['overrideEnabled'],
     }
 
     if pid_config != pi_config:
@@ -275,6 +277,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--fullvoltage', default=13.3, type=float,
         help='voltage at which the battery is considered full')
+    parser.add_argument(
+        '--overrideenabled', default=1, type=int,
+        help='enable the sleepypi power override button')
     parser.add_argument('--sleepscript', default='',
         help='script to run to clean poweroff')
     parser.add_argument('--startscript', default='',
