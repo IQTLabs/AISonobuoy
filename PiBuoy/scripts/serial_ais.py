@@ -39,7 +39,8 @@ while running:
         # check if 15 minutes have elapsed
         if int(time.time()*1000) >= (start_time + 900000):
             start_time = int(time.time()*1000)
-            with open(f'{f_dir}/{hostname}-{start_time}-ais.json', 'w') as f:
+        if len(records) > 0:
+            with open(f'{f_dir}/{hostname}-{start_time}-ais.json', 'a') as f:
                 for record in records:
                     try:
                         f.write(f'{json.dumps(record)}\n')
