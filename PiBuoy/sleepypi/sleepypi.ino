@@ -50,6 +50,8 @@ const unsigned long overrideInterval = 120;
 const time_t minSnoozeDurationMin = 2;
 // RTC day alarm must be set < 24h in the future to avoid wraparound.
 const time_t maxSnoozeDurationMin = (24 * 60) - minSnoozeDurationMin;
+// Power cycle for this long if Pi is stuck in shutdown.
+#define RESETMS (2 * 1e3)
 
 typedef struct sampleType {
   float supplyVoltage;
@@ -77,7 +79,7 @@ const cmdHandler endOfHandlers = {
   NULL, NULL,
 };
 
-char fwVersion[10] = "1.0.0";
+char fwVersion[10] = "1.0.1";
 bool powerState = false;
 bool powerStateOverride = false;
 bool requestedPowerState = true;
@@ -504,12 +506,35 @@ void loop() {
 
   if (!powerStateOverride && sampleStats.meanValid) {
     if (powerState) {
+      // shutdown voltage for at least 1m
       bool shutdownVoltage = sampleStats.mean1mSupplyVoltage < eepromConfig.config.shutdownVoltage;
-      bool shutdownRpiCurrent = sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent;
 
-      if (shutdownVoltage || (!requestedPowerState && (shutdownRpiCurrent || timedOut(snoozeTime, nowTime, eepromConfig.config.snoozeTimeout)))) {
+      // shutdown on low voltage, no matter if Pi is on or off.
+      if (shutdownVoltage) {
         powerState = false;
         setPower();
+      } else {
+        // In shutdown current for at least 1m
+        bool shutdownRpiCurrent = sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent;
+
+        // Pi is on, did not request a shutdown, but is drawing only shutdown current for 1m. Reset it.
+        if (requestedPowerState) {
+          if (shutdownRpiCurrent) {
+            powerState = false;
+            setPower();
+            delay(RESETMS);
+            powerState = true;
+            setPower();
+          }
+        // Pi is on, requested a shutdown, and is now drawing shutdown current or timed out waiting for shutdown current.
+        } else {
+          bool snoozeTimedOut = timedOut(snoozeTime, nowTime, eepromConfig.config.snoozeTimeout);
+
+          if (shutdownRpiCurrent || snoozeTimedOut) {
+            powerState = false;
+            setPower();
+          }
+        }
       }
     } else {
       bool startupVoltage = sampleStats.mean1mSupplyVoltage >= eepromConfig.config.startupVoltage;
