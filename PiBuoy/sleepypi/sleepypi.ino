@@ -51,7 +51,7 @@ const time_t minSnoozeDurationMin = 2;
 // RTC day alarm must be set < 24h in the future to avoid wraparound.
 const time_t maxSnoozeDurationMin = (24 * 60) - minSnoozeDurationMin;
 // Power cycle for this long if Pi is stuck in shutdown.
-#define RESETMS (2 * 1e3)
+#define RESETMS (3 * 1e3)
 
 typedef struct sampleType {
   float supplyVoltage;
@@ -96,6 +96,7 @@ unsigned long powerOverrideTime = 0;
 unsigned long lastButtonTime = 0;
 unsigned long lastButtonCheck = 0;
 unsigned long snoozeTime = 0;
+unsigned long lastSetPowerTime = 0;
 time_t snoozeUnixtime = 0;
 
 DynamicJsonDocument inDoc(128);
@@ -110,6 +111,7 @@ void enableButton() {
 }
 
 void setPower() {
+  lastSetPowerTime = millis();
   SleepyPi.enablePiPower(powerState);
   SleepyPi.enableExtPower(powerState);
 }
@@ -517,9 +519,12 @@ void loop() {
         // In shutdown current for at least 1m
         bool shutdownRpiCurrent = sampleStats.mean1mRpiCurrent < eepromConfig.config.shutdownRpiCurrent;
 
-        // Pi is on, did not request a shutdown, but is drawing only shutdown current for 1m. Reset it.
+        // Pi is on, did not request a shutdown, but is drawing only shutdown current for 1m. Reset it,
+        // with at least snoozeTimeout seconds between power cycle attempts.
         if (requestedPowerState) {
-          if (shutdownRpiCurrent) {
+          bool setPowerTimeout = timedOut(lastSetPowerTime, nowTime, eepromConfig.config.snoozeTimeout);
+
+          if (shutdownRpiCurrent && setPowerTimeout) {
             powerState = false;
             setPower();
             delay(RESETMS);
