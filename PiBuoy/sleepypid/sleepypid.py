@@ -101,12 +101,14 @@ def configure_sleepypi(args):
         'startupVoltage': args.shutdownvoltage,
         'snoozeTimeout': SHUTDOWN_TIMEOUT * 2,
         'overrideEnabled': args.overrideenabled,
+        'shutdownRpiCurrent': args.shutdowncurrent,
     }
     pi_config = {
         'shutdownVoltage': response['shutdownVoltage'],
         'startupVoltage': response['startupVoltage'],
         'snoozeTimeout': response['snoozeTimeout'],
         'overrideEnabled': response['overrideEnabled'],
+        'shutdownRpiCurrent': response['shutdownRpiCurrent'],
     }
 
     if pid_config != pi_config:
@@ -274,6 +276,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '--shutdownvoltage', default=12.9, type=float,
         help='voltage at which sleepyid will disable power')
+    parser.add_argument(
+        '--shutdowncurrent', default=250, type=int,
+        help='current in mA at which the Pi is considered shutdown')
     parser.add_argument(
         '--fullvoltage', default=13.3, type=float,
         help='voltage at which the battery is considered full')
