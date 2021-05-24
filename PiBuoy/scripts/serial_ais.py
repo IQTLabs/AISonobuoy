@@ -24,6 +24,7 @@ def getAIS(aisc, results):
                 if key in ['status', 'maneuver', 'epfd', 'shiptype', 'aid_type', 'station_type', 'ship_type', 'txrx', 'interval']:
                     msg[key] = msg[key].name
             msg['timestamp'] = timestamp
+            print(f'{msg}')
             results.append(msg)
         except Exception as e:
             print(f'Bad formatted data: {data}')
@@ -33,7 +34,7 @@ start_time = int(time.time()*1000)
 records = []
 while running:
     hostname = socket.gethostname()
-    f_dir = f'/telemetry/ais'
+    f_dir = f'/flash/telemetry/ais'
     os.makedirs(f_dir, exist_ok=True)
     try:
         # check if 15 minutes have elapsed

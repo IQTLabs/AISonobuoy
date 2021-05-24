@@ -8,15 +8,4 @@ TODO
 
 # Initial installation
 1. Install Raspbian (buster)
-2. TODO
-
-# Installing crontab jobs
-```
-sudo crontab -e
-```
-
-Add the following to the end of the file:
-```
-*/5 * * * * /scripts/system_health.sh
-1 */12 * * * /scripts/s3_prep.sh
-```
+2. TODO (update config of pi, clone repo, install sleepypid, install crontab)
