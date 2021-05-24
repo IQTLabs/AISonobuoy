@@ -112,11 +112,12 @@ def configure_sleepypi(args):
     }
 
     if pid_config != pi_config:
-        pid_config.update({'command': 'setconfig'})
-        response, command_error = send_command(pid_config, args)
-        if command_error or command_error is None:
-            print('setconfig failed')
-            sys.exit(-1)
+        for k, v in pid_config.items():
+            single_command = {'command': 'setconfig', k: v}
+            response, command_error = send_command(single_command, args)
+            if command_error or command_error is None:
+                print('setconfig failed')
+                sys.exit(-1)
 
 
 def log_grafana(grafana, grafana_path, obj, write_results):
