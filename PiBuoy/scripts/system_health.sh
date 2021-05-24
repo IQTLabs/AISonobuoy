@@ -12,3 +12,5 @@ timeout 5 vcgencmd measure_volts > "$output_dir/$hostname-$timestamp"-volts.txt
 timeout 5 uptime > "$output_dir/$hostname-$timestamp"-uptime.txt
 timeout 5 free > "$output_dir/$hostname-$timestamp"-mem.txt
 timeout 10 raspinfo > "$output_dir/$hostname-$timestamp"-raspinfo.txt
+timeout 10 cat /var/log/sleepypid.log > "$output_dir/$hostname-$timestamp"-sleepypid.txt
+true > /var/log/sleepypid.log
