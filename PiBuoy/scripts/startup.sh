@@ -17,5 +17,6 @@ timeout 10 stty -F /dev/ttyUSB1 speed 9600
 timeout 10 gpsd -n /dev/ttyUSB1 -F /var/run/gpsd.sock
 mkdir -p /flash/telemetry/pindrop
 amixer -D sysdefault cset name='ADC Capture Volume' 96,96
+/opt/BiggerBoat/PiBouy/scripts/record.sh &
 pindrop --daemon --conf=/opt/BiggerBoat/PiBouy/config/pindrop.conf &
 python3 /opt/BiggerBoat/PiBouy/scripts/serial_ais.py &
