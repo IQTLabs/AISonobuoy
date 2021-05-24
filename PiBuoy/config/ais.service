@@ -1,0 +1,11 @@
+[Unit]
+Description=Pindrop GPS Tracking
+After=sleepypid.service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /opt/BiggerBoat/PiBuoy/scripts/serial_ais.py
+
+[Install]
+WantedBy=multi-user.target
