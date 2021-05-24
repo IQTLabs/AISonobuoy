@@ -1,5 +1,4 @@
 #!/bin/bash
-timeout 10 mount /dev/sda1 /flash
 timeout 60 /opt/BiggerBoat/PiBuoy/scripts/gps.sh
 if [ $? -eq 1 ]
 then
