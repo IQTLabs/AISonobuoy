@@ -1,0 +1,11 @@
+[Unit]
+Description=Pindrop GPS Tracking
+After=sleepypid.service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/local/bin/pindrop --daemon --conf=/opt/BiggerBoat/PiBuoy/config/pindrop.conf
+
+[Install]
+WantedBy=multi-user.target

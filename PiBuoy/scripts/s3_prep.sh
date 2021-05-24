@@ -16,6 +16,7 @@ mkdir -p /flash/telemetry/system
 mkdir -p /flash/telemetry/sensors
 mkdir -p /flash/telemetry/pindrop
 mkdir -p /flash/telemetry/ais
+mkdir -p /flash/telemetry/hydrophone
 for file in /flash/s3/*
 do
   /usr/local/bin/aws s3 cp $file s3://biggerboatwest/compressed/
