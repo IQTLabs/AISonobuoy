@@ -41,6 +41,7 @@ const configType defaultConfig {
   true,
 };
 
+const unsigned int bufferSize = 256;
 const byte alarmPin = 0;
 const byte buttonPin = 1;
 const byte statusLED = 13;
@@ -79,14 +80,14 @@ const cmdHandler endOfHandlers = {
   NULL, NULL,
 };
 
-char fwVersion[10] = "1.0.1";
+char fwVersion[10] = "1.0.2";
 bool powerState = false;
 bool powerStateOverride = false;
 bool requestedPowerState = true;
 bool gotAlarm = false;
 bool alarmSet = false;
 byte i = 0;
-char cmdBuffer[128] = {};
+char cmdBuffer[bufferSize] = {};
 byte currentSample = 0;
 sampleType samples[sampleCount] = {};
 sampleStatsType sampleStats;
@@ -99,8 +100,8 @@ unsigned long snoozeTime = 0;
 unsigned long lastSetPowerTime = 0;
 time_t snoozeUnixtime = 0;
 
-DynamicJsonDocument inDoc(128);
-DynamicJsonDocument outDoc(128);
+DynamicJsonDocument inDoc(bufferSize);
+DynamicJsonDocument outDoc(bufferSize);
 
 void buttonISR() {
   lastButtonTime = millis();
