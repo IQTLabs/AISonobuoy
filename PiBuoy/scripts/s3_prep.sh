@@ -8,7 +8,7 @@ XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/pindrop-"$timestamp"
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/ais-"$timestamp".tar.xz -C /flash/telemetry/ais .
 for file in /flash/telemetry/hydrophone/*
 do
-  ffmpeg -y -i $file -ac 1 -ar 16000 -sample_fmt s16 scaled-$file
+  ffmpeg -y -i $file -ac 1 -ar 16000 -sample_fmt s16 $file-scaled.wav
   rm $file
 done
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/hydrophone-"$timestamp".tar.xz -C /flash/telemetry/hydrophone .
