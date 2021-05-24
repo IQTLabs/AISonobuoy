@@ -19,4 +19,4 @@ mkdir -p /flash/telemetry/pindrop
 amixer -D sysdefault cset name='ADC Capture Volume' 96,96
 /opt/BiggerBoat/PiBuoy/scripts/record.sh &
 pindrop --daemon --conf=/opt/BiggerBoat/PiBuoy/config/pindrop.conf &
-python3 /opt/BiggerBoat/PiBuoy/scripts/serial_ais.py 
+python3 /opt/BiggerBoat/PiBuoy/scripts/serial_ais.py
