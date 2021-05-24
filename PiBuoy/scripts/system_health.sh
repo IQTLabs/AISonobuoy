@@ -2,7 +2,7 @@
 
 timestamp=$(date +%s%3N)
 hostname=$(hostname)
-output_dir=/telemetry/system/"$hostname-$timestamp"
+output_dir=/flash/telemetry/system/"$hostname-$timestamp"
 mkdir -p "$output_dir"
 
 timeout 5 df > "$output_dir/$hostname-$timestamp"-df.txt

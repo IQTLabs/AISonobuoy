@@ -182,7 +182,8 @@ def log_json(log, grafana, grafana_path, obj, rollover=900, iterations=0):
         logfile.write(json.dumps(obj) + '\n')
 
     write_results = False
-    if iterations != 0 and iterations % rollover == 0:
+    # wait for a rollover or a snooze command to write out results
+    if (iterations != 0 and iterations % rollover == 0) or ('command' in obj and 'command' in obj['command'] and 'snooze' in obj['command']['command']):
         write_results = True
     log_grafana(grafana, grafana_path, obj, write_results)
 
@@ -241,6 +242,7 @@ def loop(args):
                         duration = sleep_duty_seconds(soc, MIN_SLEEP_MINS, MAX_SLEEP_MINS)
                         if duration:
                             send_command({'command': 'snooze', 'duration': duration}, args)
+                            log_grafana(args.grafana, args.grafana_path, window_summary, True)
                             call_script(args.sleepscript)
                             sys.exit(0)
 
@@ -290,7 +292,7 @@ if __name__ == '__main__':
     parser.add_argument('--startscript', default='',
         help='script to run on startup')
     parser.add_argument(
-        '--grafana-path', default='/telemetry/sensors',
+        '--grafana-path', default='/flash/telemetry/sensors',
         help='directory to write out JSON files for Grafana, only enabled if Grafana is enabled')
     parser.add_argument('--grafana', dest='grafana', action='store_true')
     parser.add_argument('--no-grafana', dest='grafana', action='store_false')

@@ -1,8 +1,9 @@
 #!/bin/bash
 
-COUNTER=0
+hostname=$(hostname)
+mkdir -p /flash/hydrophone
 while true; do
-  arecord -q -D sysdefault -r 44100 -d 600 -f S16 -t wav -V mono hydrophone$COUNTER.wav
-  sleep 10
-  let COUNTER=COUNTER+1
+        timestamp=$(date +%s%3N)
+        arecord -q -D sysdefault -r 44100 -d 600 -f S16 -t wav -V mono /flash/hydrophone/$hostname-$timestamp-hydrophone.wav
+        sleep 10
 done
