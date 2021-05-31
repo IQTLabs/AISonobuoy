@@ -24,7 +24,7 @@ typedef struct configType {
   float shutdownVoltage;
   float startupVoltage;
   float shutdownRpiCurrent;
-  byte snoozeTimeout;
+  unsigned int snoozeTimeout;
   bool overrideEnabled;
 } configType;
 
@@ -34,14 +34,15 @@ typedef struct eepromConfigType {
 } eepromConfigType;
 
 const configType defaultConfig {
-  12.8,
-  13.0,
-  150,
-  90,
-  true,
+  12.8, // shutdownVoltage: 12V-14V
+  13.0, // startupVoltage: 12V-14V, less than shutdownVoltage
+  150, // shutdownRpiCurrent: 50mA-800mA
+  90, // snoozeTimeout: 90s-600s
+  true, // overrideEnabled
 };
 
-const unsigned int bufferSize = 256;
+const char fwVersion[] = "1.0.3";
+const byte bufferSize = 255;
 const byte alarmPin = 0;
 const byte buttonPin = 1;
 const byte statusLED = 13;
@@ -80,7 +81,6 @@ const cmdHandler endOfHandlers = {
   NULL, NULL,
 };
 
-char fwVersion[10] = "1.0.2";
 bool powerState = false;
 bool powerStateOverride = false;
 bool requestedPowerState = true;
@@ -290,7 +290,7 @@ void handleSetConfig() {
   float shutdownVoltage = inDoc["shutdownVoltage"];
   float startupVoltage = inDoc["startupVoltage"];
   float shutdownRpiCurrent = inDoc["shutdownRpiCurrent"];
-  byte snoozeTimeout = inDoc["snoozeTimeout"];
+  unsigned int snoozeTimeout = inDoc["snoozeTimeout"];
   bool overrideEnabled = eepromConfig.config.overrideEnabled;
   if (inDoc.containsKey("overrideEnabled")) {
     overrideEnabled = bool(inDoc["overrideEnabled"]);
@@ -323,7 +323,7 @@ void handleSetConfig() {
     outDoc["error"] = "invalid shutdownRpiCurrent";
     return;
   }
-  if (snoozeTimeout < 90 || snoozeTimeout > 180) {
+  if (snoozeTimeout < 90 || snoozeTimeout > 600) {
     outDoc["error"] = "invalid snoozeTimeout";
     return;
   }
