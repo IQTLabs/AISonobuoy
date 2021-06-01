@@ -42,7 +42,7 @@ const configType defaultConfig {
 };
 
 const char fwVersion[] = "1.0.3";
-const byte bufferSize = 255;
+const byte bufferSize = 192;
 const byte alarmPin = 0;
 const byte buttonPin = 1;
 const byte statusLED = 13;
@@ -74,7 +74,7 @@ typedef struct sampleStatsType {
 
 typedef struct cmdHandler {
   const char *cmd;
-  void (*cmdHandlerFunc)(void);
+  const char *(*cmdHandlerFunc)(void);
 } cmdHandler;
 
 const cmdHandler endOfHandlers = {
@@ -100,15 +100,14 @@ unsigned long snoozeTime = 0;
 unsigned long lastSetPowerTime = 0;
 time_t snoozeUnixtime = 0;
 
-DynamicJsonDocument inDoc(bufferSize);
-DynamicJsonDocument outDoc(bufferSize);
+DynamicJsonDocument doc(bufferSize);
 
 void buttonISR() {
   lastButtonTime = millis();
 }
 
 void enableButton() {
-  attachInterrupt(buttonPin, buttonISR, LOW);
+  attachInterrupt(buttonPin, buttonISR, FALLING);
 }
 
 void setPower() {
@@ -174,13 +173,17 @@ void writeDefaultConfig() {
   writeEeprom();
 }
 
-void setup() {
-  Serial.begin(9600);
-  readEeprom();
+void validateEeprom() {
   uint32_t crc = calcCRC();
   if (crc != eepromConfig.crc) {
     writeDefaultConfig();
   }
+}
+
+void setup() {
+  Serial.begin(9600);
+  readEeprom();
+  validateEeprom();
   pinMode(statusLED, OUTPUT);
   digitalWrite(statusLED, LOW);
   memset(cmdBuffer, 0, sizeof(cmdBuffer));
@@ -192,7 +195,6 @@ void setup() {
 }
 
 bool getCmd() {
-  bool gotCmd = false;
   if (Serial.available()) {
     char c = Serial.read();
     if (i == (sizeof(cmdBuffer) - 1)) {
@@ -203,77 +205,79 @@ bool getCmd() {
     }
     cmdBuffer[i] = c;
     if (c == 0) {
-      gotCmd = true;
       i = 0;
+      return true;
     } else {
       ++i;
     }
   }
-  return gotCmd;
+  return false;
 }
 
-void handleSensors() {
+const char *handleSensors() {
   sampleType *samplePtr = samples + currentSample;
-  outDoc["rpiCurrent"] = samplePtr->rpiCurrent;
-  outDoc["supplyVoltage"] = samplePtr->supplyVoltage;
-  outDoc["mean1mSupplyVoltage"] = sampleStats.mean1mSupplyVoltage;
-  outDoc["mean1mRpiCurrent"] = sampleStats.mean1mRpiCurrent;
-  outDoc["min1mSupplyVoltage"] = sampleStats.min1mSupplyVoltage;
-  outDoc["min1mRpiCurrent"] = sampleStats.min1mRpiCurrent;
-  outDoc["max1mSupplyVoltage"] = sampleStats.max1mSupplyVoltage;
-  outDoc["max1mRpiCurrent"] = sampleStats.max1mRpiCurrent;
-  outDoc["meanValid"] = sampleStats.meanValid;
-  outDoc["powerState"] = powerState;
-  outDoc["powerStateOverride"] = powerStateOverride;
-  outDoc["version"] = fwVersion;
+  doc["rpiCurrent"] = samplePtr->rpiCurrent;
+  doc["supplyVoltage"] = samplePtr->supplyVoltage;
+  doc["mean1mSupplyVoltage"] = sampleStats.mean1mSupplyVoltage;
+  doc["mean1mRpiCurrent"] = sampleStats.mean1mRpiCurrent;
+  doc["min1mSupplyVoltage"] = sampleStats.min1mSupplyVoltage;
+  doc["min1mRpiCurrent"] = sampleStats.min1mRpiCurrent;
+  doc["max1mSupplyVoltage"] = sampleStats.max1mSupplyVoltage;
+  doc["max1mRpiCurrent"] = sampleStats.max1mRpiCurrent;
+  doc["meanValid"] = sampleStats.meanValid;
+  doc["powerState"] = powerState;
+  doc["powerStateOverride"] = powerStateOverride;
+  return "";
 }
 
-void handleGetTime() {
+const char *handleGetTime() {
   DateTime nowTime = SleepyPi.readTime();
-  outDoc["unixtime"] = nowTime.unixtime();
-  outDoc["rtcBatteryLow"] = SleepyPi.rtcBatteryLow();
-  outDoc["rtcRunning"] = SleepyPi.isrunning();
+  doc["unixtime"] = nowTime.unixtime();
+  doc["rtcBatteryLow"] = SleepyPi.rtcBatteryLow();
+  doc["rtcRunning"] = SleepyPi.isrunning();
+  return "";
 }
 
-void handleSetTime() {
-  uint32_t nowUnixtime = inDoc["unixtime"];
+const char *handleSetTime() {
+  uint32_t nowUnixtime = doc["unixtime"];
   if (nowUnixtime == 0) {
-    outDoc["error"] = "invalid unixtime";
-    return;
+    return "invalid unixtime";
   }
   DateTime nowTime(nowUnixtime);
   SleepyPi.setTime(nowTime);
   handleGetTime();
+  return "";
 }
 
-void handleSnooze() {
-  time_t duration = inDoc["duration"];
+const char *handleSnooze() {
+  time_t duration = doc["duration"];
   if (duration < minSnoozeDurationMin || duration > maxSnoozeDurationMin) {
-    outDoc["error"] = "invalid snooze duration";
-    return;
+    return "invalid snooze duration";
   }
   DateTime nowTime(SleepyPi.readTime());
   DateTime alarmTime(nowTime.unixtime() + (duration * 60));
   SleepyPi.setAlarm(alarmTime.hour(), alarmTime.minute());
   enableAlarm();
-  outDoc["duration"] = duration;
-  outDoc["alarmhour"] = alarmTime.hour();
-  outDoc["alarmminute"] = alarmTime.minute();
-  outDoc["alarmunixtime"] = alarmTime.unixtime();
-  outDoc["hour"] = nowTime.hour();
-  outDoc["minute"] = nowTime.minute();
-  outDoc["unixtime"] = nowTime.unixtime();
+  doc["duration"] = duration;
+  doc["alarmhour"] = alarmTime.hour();
+  doc["alarmminute"] = alarmTime.minute();
+  doc["alarmunixtime"] = alarmTime.unixtime();
+  doc["hour"] = nowTime.hour();
+  doc["minute"] = nowTime.minute();
+  doc["unixtime"] = nowTime.unixtime();
   requestedPowerState = false;
   snoozeTime = millis();
   snoozeUnixtime = nowTime.unixtime();
+  return "";
 }
 
-void handleGetConfig() {
-  outDoc["shutdownVoltage"] = eepromConfig.config.shutdownVoltage;
-  outDoc["startupVoltage"] = eepromConfig.config.startupVoltage;
-  outDoc["shutdownRpiCurrent"] = eepromConfig.config.shutdownRpiCurrent;
-  outDoc["snoozeTimeout"] = eepromConfig.config.snoozeTimeout;
-  outDoc["overrideEnabled"] = eepromConfig.config.overrideEnabled;
+const char *handleGetConfig() {
+  doc["shutdownVoltage"] = eepromConfig.config.shutdownVoltage;
+  doc["startupVoltage"] = eepromConfig.config.startupVoltage;
+  doc["shutdownRpiCurrent"] = eepromConfig.config.shutdownRpiCurrent;
+  doc["snoozeTimeout"] = eepromConfig.config.snoozeTimeout;
+  doc["overrideEnabled"] = eepromConfig.config.overrideEnabled;
+  return "";
 }
 
 bool voltageValid(float voltage) {
@@ -286,14 +290,14 @@ bool voltageValid(float voltage) {
   return true;
 }
 
-void handleSetConfig() {
-  float shutdownVoltage = inDoc["shutdownVoltage"];
-  float startupVoltage = inDoc["startupVoltage"];
-  float shutdownRpiCurrent = inDoc["shutdownRpiCurrent"];
-  unsigned int snoozeTimeout = inDoc["snoozeTimeout"];
+const char *handleSetConfig() {
+  float shutdownVoltage = doc["shutdownVoltage"];
+  float startupVoltage = doc["startupVoltage"];
+  float shutdownRpiCurrent = doc["shutdownRpiCurrent"];
+  unsigned int snoozeTimeout = doc["snoozeTimeout"];
   bool overrideEnabled = eepromConfig.config.overrideEnabled;
-  if (inDoc.containsKey("overrideEnabled")) {
-    overrideEnabled = bool(inDoc["overrideEnabled"]);
+  if (doc.containsKey("overrideEnabled")) {
+    overrideEnabled = bool(doc["overrideEnabled"]);
   }
   if (shutdownVoltage == 0) {
     shutdownVoltage = eepromConfig.config.shutdownVoltage;
@@ -308,24 +312,19 @@ void handleSetConfig() {
     snoozeTimeout = eepromConfig.config.snoozeTimeout;
   }
   if (!voltageValid(shutdownVoltage)) {
-    outDoc["error"] = "invalid shutdownVoltage";
-    return;
-  }
+    return "invalid shutdownVoltage";
+   }
   if (!voltageValid(startupVoltage)) {
-    outDoc["error"] = "invalid startupVoltage";
-    return;
+    return "invalid startupVoltage";
   }
   if (shutdownVoltage >= startupVoltage) {
-    outDoc["error"] = "startupVoltage must be greater than shutdownVoltage";
-    return;
+    return "startupVoltage must be greater than shutdownVoltage";
   }
   if (shutdownRpiCurrent < 50 || shutdownRpiCurrent > 800) {
-    outDoc["error"] = "invalid shutdownRpiCurrent";
-    return;
+    return "invalid shutdownRpiCurrent";
   }
   if (snoozeTimeout < 90 || snoozeTimeout > 600) {
-    outDoc["error"] = "invalid snoozeTimeout";
-    return;
+    return "invalid snoozeTimeout";
   }
   eepromConfig.config.shutdownVoltage = shutdownVoltage;
   eepromConfig.config.startupVoltage = startupVoltage;
@@ -333,17 +332,18 @@ void handleSetConfig() {
   eepromConfig.config.snoozeTimeout = snoozeTimeout;
   eepromConfig.config.overrideEnabled = overrideEnabled;
   writeEeprom();
-  handleGetConfig();
+  return handleGetConfig();
 }
 
-void handleDefaultConfig() {
+const char *handleDefaultConfig() {
   writeDefaultConfig();
-  handleGetConfig();
+  return handleGetConfig();
 }
 
-void handleGetLastSnooze() {
-  outDoc["lastsnoozeunixtime"] = snoozeUnixtime;
-  outDoc["lastsnoozeuptimems"] = snoozeTime;
+const char *handleGetLastSnooze() {
+  doc["lastsnoozeunixtime"] = snoozeUnixtime;
+  doc["lastsnoozeuptimems"] = snoozeTime;
+  return "";
 }
 
 const cmdHandler getLastSnoozeCmd = {
@@ -392,32 +392,34 @@ const cmdHandler cmdHandlers[] = {
 
 void handleCmd() {
   digitalWrite(statusLED, HIGH);
-  inDoc.clear();
-  DeserializationError error = deserializeJson(inDoc, cmdBuffer);
-  outDoc.clear();
-  outDoc["command"] = "unknown";
+  doc.clear();
+  DeserializationError error = deserializeJson(doc, cmdBuffer);
+  const char *errPtr = NULL;
   if (error) {
-    outDoc["error"] = error.f_str();
+    doc.clear();
   } else {
-    char *cmd = inDoc["command"];
+    char *cmd = doc["command"];
+    errPtr = "unknown command";
     if (cmd) {
-      outDoc["command"] = cmd;
-      outDoc["error"] = "unknown command";
       for (byte j = 0; cmdHandlers[j].cmd; ++j) {
         const char *compareCmd = cmdHandlers[j].cmd;
         if (strncmp(cmd, compareCmd, strlen(compareCmd)) == 0) {
-          outDoc["error"] = "";
-          cmdHandlers[j].cmdHandlerFunc();
+          errPtr = cmdHandlers[j].cmdHandlerFunc();
           break;
         }
       }
     } else {
-      outDoc["error"] = "missing command";
+      errPtr = "missing command";
     }
-    outDoc["uptimems"] = millis();
   }
-  outDoc["version"] = fwVersion;
-  serializeJson(outDoc, Serial);
+  if (errPtr == NULL) {
+    doc["error"] = error.f_str();
+  } else {
+    doc["error"] = errPtr;
+  }
+  doc["uptimems"] = millis();
+  doc["version"] = fwVersion;
+  serializeJson(doc, Serial);
   Serial.println();
   memset(cmdBuffer, 0, sizeof(cmdBuffer));
   digitalWrite(statusLED, LOW);
