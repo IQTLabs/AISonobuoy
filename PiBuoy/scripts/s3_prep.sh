@@ -17,11 +17,20 @@ mkdir -p /flash/telemetry/sensors
 mkdir -p /flash/telemetry/pindrop
 mkdir -p /flash/telemetry/ais
 mkdir -p /flash/telemetry/hydrophone
-for file in /flash/s3/*
-do
-  /usr/local/bin/aws s3 cp $file s3://biggerboatwest/compressed/
-  if [ $? -eq 0 ]
-  then
-    rm $file
-  fi
-done
+
+ship_data () {
+  for file in /flash/s3/$1*
+  do
+    /usr/local/bin/aws s3 cp $file s3://biggerboatwest/compressed/
+    if [ $? -eq 0 ]
+    then
+      rm $file
+    fi
+  done
+}
+
+ship_data system
+ship_data sensors
+ship_data pindrop
+ship_data ais
+ship_data hydrophone
