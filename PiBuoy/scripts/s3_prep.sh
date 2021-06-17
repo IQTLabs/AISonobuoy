@@ -3,19 +3,19 @@
 timestamp=$(date +%s%3N)
 mkdir -p /flash/s3
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/system-"$timestamp".tar.xz -C /flash/telemetry/system .
+mkdir -p /flash/telemetry/system
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/sensors-"$timestamp".tar.xz -C /flash/telemetry/sensors .
+mkdir -p /flash/telemetry/sensors
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/pindrop-"$timestamp".tar.xz -C /flash/telemetry/pindrop .
+mkdir -p /flash/telemetry/pindrop
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/ais-"$timestamp".tar.xz -C /flash/telemetry/ais .
+mkdir -p /flash/telemetry/ais
 for file in /flash/telemetry/hydrophone/*
 do
   ffmpeg -y -i $file -ac 1 -ar 16000 -sample_fmt s16 $file-scaled.wav
   rm $file
 done
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/hydrophone-"$timestamp".tar.xz -C /flash/telemetry/hydrophone .
-mkdir -p /flash/telemetry/system
-mkdir -p /flash/telemetry/sensors
-mkdir -p /flash/telemetry/pindrop
-mkdir -p /flash/telemetry/ais
 mkdir -p /flash/telemetry/hydrophone
 
 ship_data () {
