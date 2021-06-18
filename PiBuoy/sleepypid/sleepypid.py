@@ -251,7 +251,7 @@ def loop(args):
         time.sleep(args.polltime)
 
 
-if __name__ == '__main__':
+def parse_args():
     DEFAULT_POLL_TIME = int(60)
     DEFAULT_WINDOW_SAMPLES = int(15 * DEFAULT_POLL_TIME / 60) # 15m
     parser = argparse.ArgumentParser(description='sleepypi hat manager')
@@ -295,12 +295,31 @@ if __name__ == '__main__':
     parser.add_argument(
         '--grafana-path', default='/flash/telemetry/sensors',
         help='directory to write out JSON files for Grafana, only enabled if Grafana is enabled')
+    parser.add_argument(
+        '--argjson', default='',
+        help='file with JSON to override arguments')
     parser.add_argument('--grafana', dest='grafana', action='store_true')
     parser.add_argument('--no-grafana', dest='grafana', action='store_false')
     parser.set_defaults(grafana=True)
     main_args = parser.parse_args()
     assert main_args.shutdownvoltage > main_args.deepsleepvoltage
     assert main_args.fullvoltage > main_args.shutdownvoltage
+    return main_args
+
+
+def override_args(main_args):
+    if main_args.argjson:
+        with open(main_args.argjson) as f:
+            argjson = json.loads(f.read())
+            for k, v in argjson.items():
+                if hasattr(main_args, k):
+                    setattr(main_args, k, v)
+    return main_args
+
+
+if __name__ == '__main__':
+    main_args = parse_args()
+    main_args = override_args(main_args)
     if main_args.startscript:
         call_script(main_args.startscript)
     configure_sleepypi(main_args)

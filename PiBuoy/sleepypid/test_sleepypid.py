@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
+import json
+import os
 import tempfile
 import unittest
 from collections import namedtuple
-from sleepypid import get_uptime, mean_diff, sleep_duty_seconds, calc_soc, log_grafana, call_script
+from sleepypid import get_uptime, mean_diff, sleep_duty_seconds, calc_soc, log_grafana, call_script, parse_args, override_args
 
 
 class SleepyidTestCase(unittest.TestCase):
@@ -62,6 +64,20 @@ class SleepyidTestCase(unittest.TestCase):
             pct10_sleep_time += sleep_duty_seconds(10, 15, 1440)
         self.assertGreater(pct10_sleep_time, pct50_sleep_time)
         self.assertGreater(pct50_sleep_time, pct75_sleep_time)
+
+    def test_parse_args(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            argjson_file = os.path.join(test_dir, 'asgjson.txt')
+            with open(argjson_file, 'w') as f:
+                argsjson_txt = json.dumps({'shutdowncurrent': 123})
+                print(argsjson_txt)
+                f.write(argsjson_txt)
+
+            main_args = parse_args()
+            self.assertNotEqual(main_args.shutdowncurrent, 123)
+            main_args.argjson = argjson_file
+            main_args = override_args(main_args)
+            self.assertEqual(main_args.shutdowncurrent, 123)
 
 
 if __name__ == '__main__':
