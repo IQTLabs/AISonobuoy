@@ -70,7 +70,6 @@ class SleepyidTestCase(unittest.TestCase):
             argjson_file = os.path.join(test_dir, 'asgjson.txt')
             with open(argjson_file, 'w') as f:
                 argsjson_txt = json.dumps({'shutdowncurrent': 123})
-                print(argsjson_txt)
                 f.write(argsjson_txt)
 
             main_args = parse_args()
