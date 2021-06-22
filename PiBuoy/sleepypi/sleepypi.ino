@@ -10,7 +10,9 @@
 // * LowPower_LowPowerLab (needed for Sleepy Pi 2 lib)
 // * PCF8523
 // * Sleepy Pi 2
-// * Time
+// * Time 1.6
+//
+// TODO: upgrade Time, when Sleepy Pi 2 releases > 1.0.0.
 
 #include <CRC32.h>
 #include <ArduinoJson.h>
