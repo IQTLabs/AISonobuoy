@@ -25,9 +25,9 @@ jobs:
           PATH=~/bin:$PATH arduino-cli core update-index
           PATH=~/bin:$PATH arduino-cli core install ${{ matrix.arduino-platform }}
           PATH=~/bin:$PATH arduino-cli lib update-index
-          PATH=~/bin:$PATH arduino-cli lib install "Sleepy Pi 2@1.0.1"
+          PATH=~/bin:$PATH arduino-cli lib install "Sleepy Pi 2"
           PATH=~/bin:$PATH arduino-cli lib install PCF8523
-          PATH=~/bin:$PATH arduino-cli lib install "Time@1.6.1"
+          PATH=~/bin:$PATH arduino-cli lib install "Time@1.6.0"
           PATH=~/bin:$PATH arduino-cli lib install LowPower_LowPowerLab
           PATH=~/bin:$PATH arduino-cli lib install ArduinoJson
           PATH=~/bin:$PATH arduino-cli lib install CRC32
