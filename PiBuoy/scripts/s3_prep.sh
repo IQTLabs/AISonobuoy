@@ -21,7 +21,7 @@ mkdir -p /flash/telemetry/hydrophone
 ship_data () {
   for file in /flash/s3/$1*
   do
-    /usr/local/bin/aws s3 cp $file s3://biggerboatwest/compressed/
+    /usr/local/bin/aws s3 cp $file s3://aisonobuoywest/compressed/
     if [ $? -eq 0 ]
     then
       rm $file

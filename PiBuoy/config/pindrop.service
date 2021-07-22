@@ -5,7 +5,7 @@ After=sleepypid.service
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/local/bin/pindrop --daemon --conf=/opt/BiggerBoat/PiBuoy/config/pindrop.conf
+ExecStart=/usr/local/bin/pindrop --daemon --conf=/opt/AISonobuoy/PiBuoy/config/pindrop.conf
 
 [Install]
 WantedBy=multi-user.target

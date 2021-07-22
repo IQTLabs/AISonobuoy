@@ -104,7 +104,7 @@ def get_matching_s3_keys(bucket, prefix='', suffix=''):
 
 def get_files_in_range(start, end, requested_targets):
     files = []
-    bucket = 'biggerboatwest-processed'
+    bucket = 'aisonobuoywest-processed'
     for target in requested_targets:
         suffix = '.json'
         if target in icm20948_fields:
