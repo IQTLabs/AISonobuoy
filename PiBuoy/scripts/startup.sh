@@ -1,9 +1,9 @@
 #!/bin/bash
-timeout 60 /opt/BiggerBoat/PiBuoy/scripts/gps.sh
+timeout 60 /opt/AISonobuoy/PiBuoy/scripts/gps.sh
 if [ $? -eq 1 ]
 then
   logger "Failed to bring up GPS, trying one more time"
-  timeout 60 /opt/BiggerBoat/PiBuoy/scripts/gps.sh
+  timeout 60 /opt/AISonobuoy/PiBuoy/scripts/gps.sh
   if [ $? -eq 1 ]
   then
     logger "Last attempt to bring up GPS failed"

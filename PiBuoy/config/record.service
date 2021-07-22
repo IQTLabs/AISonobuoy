@@ -5,7 +5,7 @@ After=sleepypid.service
 [Service]
 Type=simple
 Restart=always
-ExecStart=/opt/BiggerBoat/PiBuoy/scripts/record.sh
+ExecStart=/opt/AISonobuoy/PiBuoy/scripts/record.sh
 
 [Install]
 WantedBy=multi-user.target

@@ -5,7 +5,7 @@ After=sleepypid.service
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/bin/python3 /opt/BiggerBoat/PiBuoy/scripts/serial_ais.py
+ExecStart=/usr/bin/python3 /opt/AISonobuoy/PiBuoy/scripts/serial_ais.py
 
 [Install]
 WantedBy=multi-user.target

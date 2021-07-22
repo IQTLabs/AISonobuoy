@@ -4,7 +4,7 @@ Description=SleepyPi management
 [Service]
 Type=simple
 Restart=always
-ExecStart=/opt/BiggerBoat/PiBuoy/sleepypid/sleepypid.py --deepsleepvoltage 12.4 --shutdownvoltage 12.5 --fullvoltage 12.8 --shutdowncurrent 600 --overrideenabled 0 --log /var/log/sleepypid.log --sleepscript /opt/BiggerBoat/PiBuoy/scripts/shutdown.sh --startscript /opt/BiggerBoat/PiBuoy/scripts/startup.sh
+ExecStart=/opt/AISonobuoy/PiBuoy/sleepypid/sleepypid.py --deepsleepvoltage 12.4 --shutdownvoltage 12.5 --fullvoltage 12.8 --shutdowncurrent 600 --overrideenabled 0 --log /var/log/sleepypid.log --sleepscript /opt/AISonobuoy/PiBuoy/scripts/shutdown.sh --startscript /opt/AISonobuoy/PiBuoy/scripts/startup.sh
 
 [Install]
 WantedBy=multi-user.target

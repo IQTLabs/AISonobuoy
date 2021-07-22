@@ -10,7 +10,7 @@ samples = 100
 
 class SHTC3:
     def __init__(self):
-        self.dll = ctypes.CDLL("/opt/BiggerBoat/PiBuoy/sense_hat_b/SHTC3.so")
+        self.dll = ctypes.CDLL("/opt/AISonobuoy/PiBuoy/sense_hat_b/SHTC3.so")
         init = self.dll.init
         init.restype = ctypes.c_int
         init.argtypes = [ctypes.c_void_p]
