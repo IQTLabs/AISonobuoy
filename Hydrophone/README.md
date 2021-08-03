@@ -30,6 +30,8 @@ The resulting board fits nicely on the back of the PyBadge and will work with th
 
 Unfortunately, the audio from the interface board is not as high quality as audio recorded from a digital recorder (Zoom H1n). In order to evaluate performance I used an underwater speaker to playback an audio clip. I placed both the microphone and hydrophone in bucket, to try and make it a little more realistic. 
 
+[Interface Board](media/FeatherWing-Audio-Test.wav)
+[Digital Recorder](media/Digital-Recorder.wav)
 As you can hear, the audio recorded by the interface board is a little more muffled and has more noise than the audio recorded by the digital recorder. (It is a little jumpy because it is recorded in 1 second segments.)
 
 The difference maybe from the sampling technique used to capture the audio, it is only 12-bits. It is more likely from the design of the interface board. Cleaning amplifying audio is an art... and I am not an artist. Any improvements to the design of the interface board would be greatly appreciated.
