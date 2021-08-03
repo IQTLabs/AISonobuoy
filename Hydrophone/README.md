@@ -16,7 +16,7 @@ This work was put together to see if it is possible to detect underwater events 
 
 ### Hydrophone Interface Board
 
-![board](media/feather.jpeg | width 500)
+<img src="media/feather.jpeg" width="500"/>
 
 This is a Featherwing form factor board that has a 3.5mm jack, a MAX4466 chip and adjustable gain. It outputs the amplified audio out on one of the Feather analog pinouts. Here is a short journey on how the board came to be:
 
