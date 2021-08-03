@@ -34,8 +34,8 @@ Adafruit does have a nice [breakout board](https://www.adafruit.com/product/1063
 
 One of the great things about Adafruit is that they open source all of their hardware designs. I started with the design files for the Electret Mic Breakout Board, moved them around to fit inside the feather form factor and added a 3.5mm jack.
 
-<img src="media/melting.jpeg" width="300"/>
-<img src="media/toasting_board.jpeg" width="300"/>
+<img src="media/melting.jpeg" height="500" float="left"/>
+<img src="media/toasting_board.jpeg" width="300" float="left"/>
 
 The resulting board fits nicely on the back of the PyBadge and will work with the large range of dev boards that are in the Feather form factor.
 
