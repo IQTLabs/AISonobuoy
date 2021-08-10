@@ -12,7 +12,7 @@ cycler==0.10.0
 docutils==0.15.2
 entrypoints==0.3
 gpsd-py3==0.3.0
-idna==2.6
+idna==2.10
 jmespath==0.10.0
 keyring==17.1.1
 keyrings.alt==3.1.1
