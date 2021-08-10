@@ -25,7 +25,7 @@ pip==19.2
 pyais==1.5.0
 pyasn1==0.4.8
 pycrypto==2.6.1
-PyGObject==3.30.4
+PyGObject==3.40.1
 pyparsing==2.2.0
 pyserial==3.5
 python-apt==1.8.4.3
