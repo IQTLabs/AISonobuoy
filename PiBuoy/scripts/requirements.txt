@@ -1,4 +1,4 @@
-asn1crypto==0.24.0
+asn1crypto==1.4.0
 atcom==0.2.0
 awscli==1.20.18
 bitarray==2.2.5
