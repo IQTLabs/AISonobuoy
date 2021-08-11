@@ -70,4 +70,4 @@ start_x=0
 enable_uart=1
 dtoverlay=uart3
 force_eeprom_read=0
-#dtoverlay=i2c-rtc,pcf8523
+dtoverlay=i2c-rtc,pcf8523
