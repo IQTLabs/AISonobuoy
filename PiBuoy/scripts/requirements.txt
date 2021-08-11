@@ -44,4 +44,4 @@ smbus==1.1.post2
 spidev==3.5
 ssh-import-id==5.11
 urllib3==1.26.6
-wheel==0.32.3
+wheel==0.37.0
