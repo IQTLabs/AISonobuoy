@@ -125,7 +125,9 @@ Add the following lines, save, and quit:
 
 15. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) using `aws configure`.
 
-16. Restart.
+16. Set hostname using `sudo raspi-config`.
+
+17. Restart.
 ```
 sudo reboot
 ```
@@ -155,4 +157,5 @@ sudo screen /dev/serial0 38400
 ```
 sudo screen /dev/ttyAMA1 9600
 {} (it should reply with a JSON response)
+<ctrl>+a k
 ```
