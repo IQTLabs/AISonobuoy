@@ -50,30 +50,32 @@ UUID=<insert uuid from blkid here> /flash ext4 defaults,auto,users,rw,nofail 0 0
 4. Install required packages.
 ```
 sudo apt-get update
-sudo apt-get install alsa-utils curl ffmpeg git python3-pip gpsd tmux screen libglib2.0-dev i2c-tools
+sudo apt-get install alsa-utils curl ffmpeg git python3-pip tmux screen libglib2.0-dev i2c-tools
 ```
 
-5. Install this repo.
+5. Install gpsd 3.23 from source following instructions [here](https://gpsd.gitlab.io/gpsd/installation.html)
+
+6. Install this repo.
 ```
 sudo su -
 cd /opt
 git clone https://github.com/IQTLabs/AISonobuoy.git
 ```
 
-6. Install required Python packages.
+7. Install required Python packages.
 ```
 cd /opt/AISonobuoy/PiBuoy/scripts
 sudo pip3 install -r requirements.txt
 ```
 
-7. Set WLAN Country using `sudo raspi-config`.
+8. Set WLAN Country using `sudo raspi-config`.
 
-8. Disable `gpsd` service.
+9. Disable `gpsd` service.
 ```
 sudo systemctl disable gpsd.service
 ```
 
-9. Install pindrop with modifications.
+10. Install pindrop with modifications.
 ```
 git clone https://github.com/needmorecowbell/pindrop.git
 cd pindrop
@@ -81,21 +83,21 @@ git apply -v /opt/AISonobuoy/PiBuoy/scripts/pindrop.diff
 sudo python3 setup.py install
 ```
 
-10. Setup [Sixfab](https://docs.sixfab.com/page/setting-up-the-ppp-connection-for-sixfab-shield-hat) for PPP.
+11. Setup [Sixfab](https://docs.sixfab.com/page/setting-up-the-ppp-connection-for-sixfab-shield-hat) for PPP.
 ```
 wget https://raw.githubusercontent.com/sixfab/Sixfab_PPP_Installer/master/ppp_install_standalone.sh
 sudo chmod +x ppp_install_standalone.sh
 sudo ./ppp_install_standalone.sh
 ```
 
-11. Setup [dAISy HAT](https://wegmatt.com/files/dAISy%20HAT%20AIS%20Receiver%20Manual.pdf).
+12. Setup [dAISy HAT](https://wegmatt.com/files/dAISy%20HAT%20AIS%20Receiver%20Manual.pdf).
 ```
 wget https://github.com/itemir/rpi_boat_utils/raw/master/uart_control/uart_control
 chmod +x ./uart_control
 sudo ./uart_control gpio
 ```
 
-12. Install services.
+13. Install services.
 ```
 sudo cp /opt/AISonobuoy/PiBuoy/config/*.service /etc/systemd/system/
 sudo cp /opt/AISonobuoy/PiBuoy/sleepypid/sleepypid.service /etc/systemd/system/
@@ -106,7 +108,7 @@ sudo systemctl enable ais.service
 sudo systemctl enable record.service
 ```
 
-13. Schedule jobs in crontab.
+14. Schedule jobs in crontab.
 ```
 sudo crontab -e
 ```
@@ -121,13 +123,13 @@ Add the following lines, save, and quit:
 1 * * * * /usr/bin/env bash /opt/AISonobuoy/PiBuoy/scripts/s3_prep.sh
 ```
 
-14. Edit the `s3://` path in `/opt/AISonobuoy/PiBuoy/scripts/s3_prep.sh` to be an S3 bucket you want to push data to.
+15. Edit the `s3://` path in `/opt/AISonobuoy/PiBuoy/scripts/s3_prep.sh` to be an S3 bucket you want to push data to.
 
-15. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) using `aws configure`.
+16. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) using `aws configure`.
 
-16. Set hostname using `sudo raspi-config`.
+17. Set hostname using `sudo raspi-config`.
 
-17. Restart.
+18. Restart.
 ```
 sudo reboot
 ```
