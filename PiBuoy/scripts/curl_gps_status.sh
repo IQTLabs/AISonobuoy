@@ -11,5 +11,5 @@ then
     echo -n '"}' >> /tmp/status.json
     curl -H 'Content-Type: application/json' -d @/tmp/status.json $URL
 else
-    curl -H 'Content-Type: application/json' -d '{"status": "no current GPS file to read from, but am still alive"}' $URL
+    curl -H 'Content-Type: application/json' -d '{"text": "no current GPS file to read from, but am still alive"}' $URL
 fi
