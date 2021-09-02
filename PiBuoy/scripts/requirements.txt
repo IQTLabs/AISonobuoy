@@ -20,7 +20,7 @@ kiwisolver==1.3.2
 matplotlib==3.4.3
 numpy==1.21.2
 olefile==0.46
-Pillow==8.3.1
+Pillow==8.3.2
 pip==21.2.4
 pyais==1.5.0
 pyasn1==0.4.8
