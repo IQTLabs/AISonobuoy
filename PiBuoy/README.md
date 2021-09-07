@@ -1,12 +1,23 @@
 The following are the hardware and software requirements and installation instructions for the Raspberry Pi 4 buoy version.
 
 # Hardware Requirements
+
 TODO
 
 # Hardware configuration installation
-TODO
+
+1. [Flash SleepyPi](sleepypi/README.md)
+
+2. Configure Sixfab/telit/quectel/sim card/cut jumper for GPIO conflict - TODO
+
+3. Wire sleepypi
+
+4. Wire sensehat
+
+5. Solder HifiBerry header
 
 # Initial installation
+
 1. Install Raspbian (buster) on the SD card for the Raspberry Pi.
 
 2. Put the [config.txt](config/config.txt) in `/boot/config.txt`. Reboot.
