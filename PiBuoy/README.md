@@ -14,6 +14,8 @@ TODO
 
 4. Wire sensehat
 
+5. Solder HifiBerry header
+
 # Initial installation
 
 1. Install Raspbian (buster) on the SD card for the Raspberry Pi.
