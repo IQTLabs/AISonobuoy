@@ -18,7 +18,23 @@ This work was put together to see if it is possible to detect underwater events 
 
 <img src="media/feather.jpeg" width="500"/>
 
-This is a Featherwing form factor board that has a 3.5mm jack, a MAX4466 chip and adjustable gain. It outputs the amplified audio out on one of the Feather analog pinouts. Here is a short journey on how the board came to be:
+This is a Featherwing form factor board that has a 3.5mm jack, a MAX4466 chip and adjustable gain. It outputs the amplified audio out on one of the Feather analog pinouts. There is a short step-by-step walk through on how I built the board on [Hackster.io](https://www.hackster.io/robotastic/hydrophone-feather-board-03f1d7).
+
+I used the following parts. I am not an EE, so feel free to pick more appropriate components (and send me a PR if you do!):
+- [Adafruit PyBadge](https://www.adafruit.com/product/4200)
+- [Capacitor 0.01uF / 10000pF 0805](https://www.digikey.com/en/products/detail/CL21C103JBFNNNG/1276-6487-1-ND/5958115?itemSeq=376128529)
+- [Capacitor 10uF 0805](https://www.digikey.com/short/m8wb1vc5)
+- [Capacitor 100pF 0805](https://www.digikey.com/short/bvph8r4p)
+- [Capacitor 0.1uF 0805](https://www.digikey.com/short/ftrt382h)
+- [Ferrite Bead 0805](https://www.digikey.com/short/7c5j278m)
+- [3.5mm Monojack](https://www.digikey.com/short/59mz8349)
+- [Resistor 1k ohm 0805](https://www.digikey.com/short/q990d7bq)
+- [Resistor 1M ohm 0805](https://www.digikey.com/short/53rz9h3m)
+- [Resistor 22K ohm 0805](https://www.digikey.com/short/hj1djmt8)
+- [MAX4466EXK+T  SC-70-5](https://www.digikey.com/short/vnww7j39)
+- [Featherwing Male Headers](https://www.adafruit.com/product/3002) 
+
+Here is a short journey on how the board came to be:
 
 I selected the Aquarian hydrophone to work with. The [H2A model](https://www.aquarianaudio.com/h2a-hydrophone.html) seemed to be rugged and reasonably priced, for a hydrophone. It uses a standard 3.5mm jack, making it easy to connect to a lot of different recorders. 
 
