@@ -8,7 +8,7 @@ chardet==4.0.0
 click==8.0.3
 colorama==0.4.4
 cryptography==35.0.0
-cycler==0.10.0
+cycler==0.11.0
 docutils==0.18
 entrypoints==0.3
 gpsd-py3==0.3.0
