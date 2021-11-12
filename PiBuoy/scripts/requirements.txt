@@ -26,7 +26,7 @@ pyais==1.5.0
 pyasn1==0.4.8
 pycrypto==2.6.1
 PyGObject==3.42.0
-pyparsing==3.0.5
+pyparsing==3.0.6
 pyserial==3.5
 python-apt==1.8.4.3
 python-dateutil==2.8.2
