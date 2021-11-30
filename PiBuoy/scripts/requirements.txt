@@ -9,7 +9,7 @@ click==8.0.3
 colorama==0.4.4
 cryptography==36.0.0
 cycler==0.11.0
-docutils==0.18
+docutils==0.18.1
 entrypoints==0.3
 gpsd-py3==0.3.0
 idna==3.3
