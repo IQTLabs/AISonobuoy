@@ -22,7 +22,7 @@ numpy==1.21.4
 olefile==0.46
 Pillow==8.4.0
 pip==21.3.1
-pyais==1.5.0
+pyais==1.6.3
 pyasn1==0.4.8
 pycrypto==2.6.1
 PyGObject==3.42.0
