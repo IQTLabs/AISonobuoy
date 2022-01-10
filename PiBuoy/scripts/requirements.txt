@@ -37,7 +37,7 @@ RPi.GPIO==0.7.0
 rsa==4.8
 s3transfer==0.5.0
 SecretStorage==3.3.1
-setuptools==60.3.1
+setuptools==60.5.0
 simplekml==1.3.6
 six==1.16.0
 smbus==1.1.post2
