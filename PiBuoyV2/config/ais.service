@@ -1,0 +1,10 @@
+[Unit]
+Description=AIS Tracking
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /opt/AISonobuoy/PiBuoy/scripts/serial_ais.py
+
+[Install]
+WantedBy=multi-user.target
