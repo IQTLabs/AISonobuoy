@@ -16,7 +16,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cppcheck
-          curl -fsSL https://downloads.arduino.cc/arduino-1.8.15-linux64.tar.xz | tar Jxf -
+          curl -fsSL https://downloads.arduino.cc/arduino-1.8.16-linux64.tar.xz | tar Jxf -
           mkdir ~/bin
           ln -s ~/arduino*/arduino ~/bin/arduino
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/bin sh

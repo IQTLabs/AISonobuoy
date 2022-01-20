@@ -1,0 +1,27 @@
+Partlist
+
+Exported from featherwing-interface.brd at 9/3/21 9:34 AM
+
+EAGLE Version 9.6.2 Copyright (c) 1988-2020 Autodesk, Inc.
+
+Assembly variant: 
+
+Part     Value               Package                Library      Position (mil)        Orientation
+
+C1       0.1µF               0805                   microbuilder (1350 2100)           R90
+C2       0.01uF              0805                   microbuilder (1150 1900)           R0
+C3       100pF               0805                   microbuilder (1700 1900)           R0
+C4       10uF                0805                   microbuilder (1650 2100)           R90
+FB1      FERRITE             0805                   microbuilder (500 2200)            R0
+FB2      FERRITE             0805                   microbuilder (850 1650)            R270
+J1       MJ-3502N            CUI_MJ-3502N           MJ-3502N     (500 1900)            R0
+MS1      FEATHERWING         FEATHERWING            adafruit     (150 1450)            R0
+R1       1K                  0805                   microbuilder (900 2050)            R270
+R2       1K                  0805                   microbuilder (900 1850)            R270
+R3       1M                  0805                   microbuilder (1500 2100)           R270
+R4       1M                  0805                   microbuilder (1400 1900)           R270
+R5       1K                  0805                   microbuilder (1800 2100)           R90
+R6                           0207/10                rcl          (1150 1600)           R180
+R7       22K                 0805                   microbuilder (1500 1700)           R180
+U1       MAX4466EXK+T        SC70-5                 microbuilder (1700 1700)           R90
+VR1      TC33X-2-104E (100K) TRIMPOT_BOURNS_TC33X-2 microbuilder (1250 1700)           R0

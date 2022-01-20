@@ -26,7 +26,7 @@
 //#define AUDIO_OUT A0     
 /* Includes ---------------------------------------------------------------- */
 
-#include <boat-detector_inference.h>
+#include <boat-detector_inferencing.h>
 #include <Adafruit_Arcada.h>
 #include <CircularBuffer.h>
 #include <Math.h>
