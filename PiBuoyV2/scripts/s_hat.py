@@ -127,6 +127,11 @@ def main():
     # Cycle through getting readings forever
     cycles = 1
     while True:
+        # If the middle button on the joystick is pressed, shutdown the system
+        for event in sense.stick.get_events():
+            if event.action == "released" and event.direction == "middle":
+                subprocess.run("/opt/AISonobuoy/PiBuoyV2/scripts/shutdown.sh")
+
         # Light up top left pixel for cycle
         display(0, 0, blue)
 
