@@ -10,7 +10,11 @@ sense.clear()
 sense.low_light = True
 
 # plus 0.5 second for status per wake and plus time to run loop
-MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds
+MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
+CYCLES_BEFORE_STATUS_CHECK = 1/MINUTES_BETWEEN_WAKES
+# if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
+if CYCLES_BEFORE_STATUS_CHECK < 1:
+    CYCLES_BEFORE_STATUS_CHECK = MINUTES_BETWEEN_WAKES
 
 # Define Colors
 # (generated from ColorBrewer)
@@ -101,47 +105,59 @@ def main():
     display(0, 0, off)
 
     # Cycle through getting readings forever
+    cycles = 1
     while True:
-        # Light up bottom right pixel for status
+        # Light up bottom right pixel for cycle
         display(7, 7, blue)
 
-        # TODO check other items for updates (ais, hydrophone recordings, battery, uploads, patching, internet connection)
-        # internet update
-        inet = check_internet()
-        if inet:
-            display(7, 6, blue)
-        else:
-            display(7, 6, red)
+        if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
+            # Light up bottom left pixel for status update
+            display(0, 7, blue)
+            cycles = 1
+            # TODO check other items for updates (ais, hydrophone recordings, battery, uploads, patching, internet connection)
+            # internet update
+            inet = check_internet()
+            if inet:
+                display(7, 6, blue)
+            else:
+                display(7, 6, red)
 
-        # patching: run update file which should do everything including restarting services or rebooting
+            # patching: run update file which should do everything including restarting services or rebooting
 
-        # ais: see if new detection since last cycle
+            # ais: see if new detection since last cycle
 
-        # recordings: see if new recording file since last session, or see if process to record is running
+            # recordings: see if new recording file since last session, or see if process to record is running
 
-        # battery: check current battery level from pijuice hopefully, change color based on level
+            # battery: check current battery level from pijuice hopefully, change color based on level
 
-        # uploads: see if files are gone ?
+            # uploads: see if files are gone ?
 
         # Take readings from sensors
         t = get_temperature()
+        display(0, 0, blue)
         p = get_pressure()
+        display(1, 0, blue)
         h = get_humidity()
+        display(2, 0, blue)
         ax, ay, az = get_acceleration()
+        display(3, 0, blue)
         gx, gy, gz = get_gyro()
+        display(4, 0, blue)
         cx, cy, cz = get_compass()
+        display(5, 0, blue)
 
         # TODO store data
 
         # Keep lights for 0.5 second
         time.sleep(0.5)
 
-        # Turn off pixels for status
-        display(7, 6, off)
-        display(7, 7, off)
+        # Turn off all pixels
+        sense.set_pixels([off]*64)
 
         # sleep between cycles
         time.sleep(60*MINUTES_BETWEEN_WAKES)
+
+        cycles += 1
 
 
 main()
