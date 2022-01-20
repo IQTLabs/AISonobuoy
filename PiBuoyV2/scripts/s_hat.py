@@ -1,7 +1,8 @@
 from sense_hat import SenseHat
 
-import time
+import os
 import subprocess
+import time
 
 
 # Initialize the Sense Hat
@@ -84,9 +85,28 @@ def check_internet():
     return False
 
 
+def check_ais(ais_dir, ais_file, ais_records):
+    # check for new files, in the newest file, check if the number of lines has increased
+    files = sorted([f for f in os.listdir(ais_dir) if os.path.isfile(os.path.join(ais_dir, f))])
+    if not files:
+        return False, ais_file, ais_records
+    elif files[-1] != ais_file:
+        ais_file = files[-1]
+        ais_records = sum(1 for line in open(ais_file))
+        return True, ais_file, ais_records
+    # file already exists, check if there's new records
+    num_lines = sum(1 for line in open(ais_file))
+    if num_lines > ais_records:
+        ais_records = num_lines
+        return True, ais_file, ais_records
+    return False, ais_file, ais_records
+
+
 def main():
     # TODO initial status states
+    ais_dir = '/flash/telemetry/ais'
     ais_file = None
+    ais_records = 0
     recording_file = None
     uploads = None
 
@@ -107,24 +127,29 @@ def main():
     # Cycle through getting readings forever
     cycles = 1
     while True:
-        # Light up bottom right pixel for cycle
-        display(7, 7, blue)
+        # Light up top left pixel for cycle
+        display(0, 0, blue)
 
         if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
-            # Light up bottom left pixel for status update
-            display(0, 7, blue)
+            # Light up bottom right pixel for status update
+            display(7, 7, blue)
             cycles = 1
             # TODO check other items for updates (ais, hydrophone recordings, battery, uploads, patching, internet connection)
-            # internet update
+            # internet: check if available
             inet = check_internet()
             if inet:
                 display(7, 6, blue)
             else:
                 display(7, 6, red)
 
-            # patching: run update file which should do everything including restarting services or rebooting
-
             # ais: see if new detection since last cycle
+            ais, ais_file, ais_record = check_ais(ais_dir, ais_file, ais_records)
+            if ais:
+                display(7, 5, blue)
+            else:
+                display(7, 5, yellow)
+
+            # patching: run update file which should do everything including restarting services or rebooting
 
             # recordings: see if new recording file since last session, or see if process to record is running
 
@@ -134,17 +159,17 @@ def main():
 
         # Take readings from sensors
         t = get_temperature()
-        display(0, 0, blue)
-        p = get_pressure()
         display(1, 0, blue)
-        h = get_humidity()
+        p = get_pressure()
         display(2, 0, blue)
-        ax, ay, az = get_acceleration()
+        h = get_humidity()
         display(3, 0, blue)
-        gx, gy, gz = get_gyro()
+        ax, ay, az = get_acceleration()
         display(4, 0, blue)
-        cx, cy, cz = get_compass()
+        gx, gy, gz = get_gyro()
         display(5, 0, blue)
+        cx, cy, cz = get_compass()
+        display(6, 0, blue)
 
         # TODO store data
 
