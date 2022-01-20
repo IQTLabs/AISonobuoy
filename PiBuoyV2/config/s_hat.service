@@ -1,0 +1,10 @@
+[Unit]
+Description=Sense Hat
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /opt/AISonobuoy/PiBuoy/scripts/s_hat.py
+
+[Install]
+WantedBy=multi-user.target
