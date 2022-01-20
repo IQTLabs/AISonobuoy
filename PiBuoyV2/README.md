@@ -49,6 +49,7 @@ sudo cp /opt/AISonobuoy/PiBuoyV2/config/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable ais.service
 sudo systemctl enable record.service
+sudo systemctl enable s_hat.service
 ```
 
 9. Schedule jobs in crontab.

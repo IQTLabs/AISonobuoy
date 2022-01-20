@@ -1,11 +1,10 @@
 [Unit]
-Description=Pindrop GPS Tracking
-After=sleepypid.service
+Description=Hydrophone Recorder
 
 [Service]
 Type=simple
 Restart=always
-ExecStart=/opt/AISonobuoy/PiBuoy/scripts/record.sh
+ExecStart=/opt/AISonobuoy/PiBuoyV2/scripts/record.sh
 
 [Install]
 WantedBy=multi-user.target

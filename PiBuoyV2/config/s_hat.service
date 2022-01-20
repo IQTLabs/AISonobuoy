@@ -4,7 +4,7 @@ Description=Sense Hat
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/bin/python3 /opt/AISonobuoy/PiBuoy/scripts/s_hat.py
+ExecStart=/usr/bin/python3 /opt/AISonobuoy/PiBuoyV2/scripts/s_hat.py
 
 [Install]
 WantedBy=multi-user.target
