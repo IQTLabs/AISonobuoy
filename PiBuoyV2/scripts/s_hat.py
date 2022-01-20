@@ -90,7 +90,7 @@ def check_ais(ais_dir, ais_file, ais_records):
     files = sorted([f for f in os.listdir(ais_dir) if os.path.isfile(os.path.join(ais_dir, f))])
     if not files:
         return False, ais_file, ais_records
-    elif files[-1] != ais_file:
+    elif os.path.join(ais_dir, files[-1]) != ais_file:
         ais_file = os.path.join(ais_dir, files[-1])
         ais_records = sum(1 for line in open(ais_file))
         return True, ais_file, ais_records
@@ -143,7 +143,7 @@ def main():
                 display(7, 6, red)
 
             # ais: see if new detection since last cycle
-            ais, ais_file, ais_record = check_ais(ais_dir, ais_file, ais_records)
+            ais, ais_file, ais_records = check_ais(ais_dir, ais_file, ais_records)
             if ais:
                 display(7, 5, blue)
             else:
