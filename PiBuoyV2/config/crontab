@@ -1,7 +1,4 @@
 # every five minutes
 */5 * * * * /opt/AISonobuoy/PiBuoy/scripts/system_health.sh
-2-59/5 * * * * python3 /opt/AISonobuoy/PiBuoy/sense_hat_b/LPS22HB.py
-3-59/5 * * * * python3 /opt/AISonobuoy/PiBuoy/sense_hat_b/ICM20948.py
-4-59/5 * * * * python3 /opt/AISonobuoy/PiBuoy/sense_hat_b/SHTC3.py
 # once an hour, one minute past the hour
 1 * * * * /usr/bin/env bash /opt/AISonobuoy/PiBuoy/scripts/s3_prep.sh
