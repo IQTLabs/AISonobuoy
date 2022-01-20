@@ -78,7 +78,7 @@ def display(x, y, color):
 
 
 def check_internet():
-    output = subprocess.check_output("/opt/AISonoBuoy/PiBuoyV2/scripts/internet_check.sh")
+    output = subprocess.check_output("/opt/AISonobuoy/PiBuoyV2/scripts/internet_check.sh")
     if "Online" in output:
         return True
     return False
