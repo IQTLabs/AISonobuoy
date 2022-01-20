@@ -91,7 +91,7 @@ def check_ais(ais_dir, ais_file, ais_records):
     if not files:
         return False, ais_file, ais_records
     elif files[-1] != ais_file:
-        ais_file = files[-1]
+        ais_file = os.path.join(ais_dir, files[-1])
         ais_records = sum(1 for line in open(ais_file))
         return True, ais_file, ais_records
     # file already exists, check if there's new records
