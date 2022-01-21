@@ -180,7 +180,12 @@ def main():
 
         # Take readings from sensors
         t = get_temperature()
-        display(1, 0, blue)
+        if t < 5 or t > 70:
+            display(1, 0, red)
+        elif t < 10 or t > 65:
+            display(1, 0, yellow)
+        else:
+            display(1, 0, blue)
         p = get_pressure()
         display(2, 0, blue)
         h = get_humidity()
