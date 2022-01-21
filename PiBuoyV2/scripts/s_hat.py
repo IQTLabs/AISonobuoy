@@ -136,33 +136,47 @@ def main():
         display(0, 0, blue)
 
         if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
-            # Light up bottom right pixel for status update
-            display(7, 7, blue)
             cycles = 1
             # TODO check other items for updates (load/memory?, hydrophone recordings, battery, uploads, patching)
             # internet: check if available
             inet = check_internet()
             if inet:
-                display(7, 6, blue)
+                display(7, 7, blue)
             else:
-                display(7, 6, red)
+                display(7, 7, red)
 
             # ais: see if new detection since last cycle
             ais, ais_file, ais_records = check_ais(ais_dir, ais_file, ais_records)
             if ais:
-                display(7, 5, blue)
+                display(7, 6, blue)
             else:
-                display(7, 5, yellow)
-
-            # patching: run update file which should do everything including restarting services or rebooting
+                display(7, 6, yellow)
 
             # recordings: see if new recording file since last session, or see if process to record is running
 
-            # battery: check current battery level from pijuice hopefully, change color based on level
-
             # uploads: see if files are gone ?
 
-            # system health: load, memory
+            # system health: load
+            load = os.getloadavg()
+            if load[0] > 2:
+                display(7, 3, red)
+            elif load[0] > 1:
+                display(7, 3, yellow)
+            else:
+                display(7, 3, blue)
+
+            # system health: memory
+            total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+            if used_memory/total_memory > 0.9:
+                display(7, 2, red)
+            elif used_memory/total_memory > 0.7:
+                display(7, 2, yellow)
+            else:
+                display(7, 2, blue)
+
+            # battery: check current battery level from pijuice hopefully, change color based on level
+
+            # patching: run update file which should do everything including restarting services or rebooting
 
         # Take readings from sensors
         t = get_temperature()
