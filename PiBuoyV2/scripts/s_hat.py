@@ -139,7 +139,7 @@ def main():
             # Light up bottom right pixel for status update
             display(7, 7, blue)
             cycles = 1
-            # TODO check other items for updates (ais, hydrophone recordings, battery, uploads, patching, internet connection)
+            # TODO check other items for updates (load/memory?, hydrophone recordings, battery, uploads, patching)
             # internet: check if available
             inet = check_internet()
             if inet:
@@ -161,6 +161,8 @@ def main():
             # battery: check current battery level from pijuice hopefully, change color based on level
 
             # uploads: see if files are gone ?
+
+            # system health: load, memory
 
         # Take readings from sensors
         t = get_temperature()
