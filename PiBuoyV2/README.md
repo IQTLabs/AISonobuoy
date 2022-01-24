@@ -12,21 +12,26 @@ TODO
 
 # Initial installation
 
-1. Install Raspberry Pi OS on the SD card for the Raspberry Pi.
+1. Install Raspberry Pi OS (based on Debian Bullseye) on the SD card for the Raspberry Pi using Raspberry Pi Imager.
+- Use `CTRL+SHIFT+x` to use advanced options when flashing the SD card. Set the hostname, enable SSH and add a password or key, configure WiFi and set the correct WiFi country, set the locale settings and Skip the first-run wizard.
 
-2. Put the [config.txt](config/config.txt) in `/boot/config.txt`. Reboot.
 
-3. Install required packages.
+2. Install required packages.
 ```
 sudo apt-get update
 sudo apt-get install curl ffmpeg tmux screen libglib2.0-dev
 ```
 
-4. Install this repo.
+3. Install this repo.
 ```
 sudo su -
 cd /opt
 git clone https://github.com/IQTLabs/AISonobuoy.git
+```
+
+4. Put the config.txt in `/boot/config.txt`.
+```
+sudo cp //opt/AISonobuoy/PiBuoyV2/configs/config.txt /boot/config.txt
 ```
 
 5. Install required Python packages.
@@ -34,16 +39,15 @@ git clone https://github.com/IQTLabs/AISonobuoy.git
 cd /opt/AISonobuoy/PiBuoyV2/scripts
 sudo pip3 install -r requirements.txt
 ```
-6. Set WLAN Country using `sudo raspi-config`.
 
-7. Setup [dAISy HAT](https://wegmatt.com/files/dAISy%20HAT%20AIS%20Receiver%20Manual.pdf).
+6. Setup [dAISy HAT](https://wegmatt.com/files/dAISy%20HAT%20AIS%20Receiver%20Manual.pdf).
 ```
 wget https://github.com/itemir/rpi_boat_utils/raw/master/uart_control/uart_control
 chmod +x ./uart_control
 sudo ./uart_control gpio
 ```
 
-8. Install services.
+7. Install services.
 ```
 sudo cp /opt/AISonobuoy/PiBuoyV2/config/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
@@ -52,7 +56,7 @@ sudo systemctl enable record.service
 sudo systemctl enable s_hat.service
 ```
 
-9. Schedule jobs in crontab.
+8. Schedule jobs in crontab.
 ```
 sudo crontab -e
 ```
@@ -64,13 +68,33 @@ Add the following lines, save, and quit:
 1 * * * * /usr/bin/env bash /opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh
 ```
 
-10. Edit the `s3://` path in `/opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh` to be an S3 bucket you want to push data to.
+9. Edit the `s3://` path in `/opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh` to be an S3 bucket you want to push data to.
 
-11. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) using `aws configure`.
+10. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) using `aws configure`.
 
-12. Set hostname using `sudo raspi-config`.
+11. Remove pulseaudio.
 
-13. Restart.
+```
+sudo apt-get remove pulseaudio
+sudo apt-get autoremove
+```
+
+12. Add asound.conf under configs to `/etc/asound.conf`
+```
+sudo cp /opt/AISonobuoy/PiBuoyV2/configs/asound.conf /etc/asound.conf
+```
+
+13. Add Mic Bias jumpers to the HiFiBerry hat.
+
+14. Set ADC settings for HiFiBerry hat.
+```
+amixer sset "ADC Mic Bias" "Mic Bias on"
+amixer sset "ADC Left Input" "VINL1[SE]"
+amixer sset "ADC Right Input" "VINL2[SE]"
+amixer sset ADC 40db
+```
+
+15. Restart.
 ```
 sudo reboot
 ```
