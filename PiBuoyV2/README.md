@@ -14,14 +14,14 @@ TODO
 
 # Initial installation
 
-1. Install Raspberry Pi OS (based on Debian Bullseye) on the SD card for the Raspberry Pi using Raspberry Pi Imager.
+1. Install Raspberry Pi OS (choose 'Raspberry Pi OS other' and then 'Raspberry Pi OS Lite 32-bit' based on Debian Bullseye) on the SD card for the Raspberry Pi using Raspberry Pi Imager.
 - Use `CTRL+SHIFT+x` to use advanced options when flashing the SD card. Set the hostname, enable SSH and add a password or key, configure WiFi and set the correct WiFi country, set the locale settings and Skip the first-run wizard.
 
 
 2. Install required packages.
 ```
 sudo apt-get update
-sudo apt-get install curl ffmpeg git libglib2.0-dev python3-pip screen tmux
+sudo apt-get install curl ffmpeg git libatlas-base-dev libglib2.0-dev python3-pip python3-rtimulib screen tmux
 ```
 
 3. Install this repo.
@@ -88,12 +88,18 @@ sudo apt-get autoremove
 sudo cp /opt/AISonobuoy/PiBuoyV2/config/asound.conf /etc/asound.conf
 ```
 
-13. Restart.
+13. Enable I2C in raspi-config.
+```
+sudo raspi-config
+-> Interface Options -> I2C -> Yes to enable
+```
+
+14. Restart.
 ```
 sudo reboot
 ```
 
-14. Set ADC settings for HiFiBerry hat.
+15. Set ADC settings for HiFiBerry hat.
 ```
 amixer sset "ADC Mic Bias" "Mic Bias on"
 amixer sset "ADC Left Input" "VINL1[SE]"
