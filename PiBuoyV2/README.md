@@ -10,6 +10,8 @@ TODO
 
 2. Solder HifiBerry header
 
+3. Add Mic Bias jumpers to the HiFiBerry hat.
+
 # Initial installation
 
 1. Install Raspberry Pi OS (based on Debian Bullseye) on the SD card for the Raspberry Pi using Raspberry Pi Imager.
@@ -19,7 +21,7 @@ TODO
 2. Install required packages.
 ```
 sudo apt-get update
-sudo apt-get install curl ffmpeg git libglib2.0-dev screen tmux
+sudo apt-get install curl ffmpeg git libglib2.0-dev python3-pip screen tmux
 ```
 
 3. Install this repo.
@@ -31,12 +33,13 @@ git clone https://github.com/IQTLabs/AISonobuoy.git
 
 4. Put the config.txt in `/boot/config.txt`.
 ```
-sudo cp //opt/AISonobuoy/PiBuoyV2/configs/config.txt /boot/config.txt
+sudo cp /opt/AISonobuoy/PiBuoyV2/config/config.txt /boot/config.txt
 ```
 
 5. Install required Python packages.
 ```
 cd /opt/AISonobuoy/PiBuoyV2/scripts
+sudo python3 -m pip install -U pip
 sudo pip3 install -r requirements.txt
 ```
 
@@ -66,6 +69,7 @@ Add the following lines, save, and quit:
 */5 * * * * /opt/AISonobuoy/PiBuoyV2/scripts/system_health.sh
 # once an hour, one minute past the hour
 1 * * * * /usr/bin/env bash /opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh
+@reboot /opt/AISonobuoy/PiBuoyV2/scripts/startup.sh
 ```
 
 9. Edit the `s3://` path in `/opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh` to be an S3 bucket you want to push data to.
@@ -81,10 +85,13 @@ sudo apt-get autoremove
 
 12. Add asound.conf under configs to `/etc/asound.conf`
 ```
-sudo cp /opt/AISonobuoy/PiBuoyV2/configs/asound.conf /etc/asound.conf
+sudo cp /opt/AISonobuoy/PiBuoyV2/config/asound.conf /etc/asound.conf
 ```
 
-13. Add Mic Bias jumpers to the HiFiBerry hat.
+13. Restart.
+```
+sudo reboot
+```
 
 14. Set ADC settings for HiFiBerry hat.
 ```
@@ -92,11 +99,6 @@ amixer sset "ADC Mic Bias" "Mic Bias on"
 amixer sset "ADC Left Input" "VINL1[SE]"
 amixer sset "ADC Right Input" "VINL2[SE]"
 amixer sset ADC 40db
-```
-
-15. Restart.
-```
-sudo reboot
 ```
 
 # Verify components are working
