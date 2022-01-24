@@ -19,7 +19,7 @@ TODO
 2. Install required packages.
 ```
 sudo apt-get update
-sudo apt-get install curl ffmpeg tmux screen libglib2.0-dev
+sudo apt-get install curl ffmpeg git libglib2.0-dev screen tmux
 ```
 
 3. Install this repo.
