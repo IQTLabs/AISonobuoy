@@ -1,4 +1,4 @@
-awscli==1.22.41
+awscli==1.22.42
 botocore==1.23.41
 pyais==1.5.0
 pyserial==3.5
