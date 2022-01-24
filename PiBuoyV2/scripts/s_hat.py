@@ -1,9 +1,10 @@
-from sense_hat import SenseHat
-
+import json
 import os
 import socket
 import subprocess
 import time
+
+from sense_hat import SenseHat
 
 
 # Initialize the Sense Hat
@@ -128,6 +129,15 @@ def init_sensor_data():
                    "data_files": [],
                   }
     return sensor_data
+
+
+def write_sensor_data(hostname, sensor_dir, sensor_data):
+    timestamp = int(time.time()*1000)
+    with open(f'{sensor_dir}/{hostname}-{timestamp}-sensehat.json', 'w') as f:
+        for key in sensor_data.keys():
+            record = {"target":key, "datapoints": sensor_data[key]}
+            f.write(f'{json.dumps(record)}\n')
+
 
 def main():
     hostname = socket.gethostname()
