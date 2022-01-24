@@ -1,6 +1,7 @@
 from sense_hat import SenseHat
 
 import os
+import socket
 import subprocess
 import time
 
@@ -102,7 +103,38 @@ def check_ais(ais_dir, ais_file, ais_records):
     return False, ais_file, ais_records
 
 
+def init_sensor_data():
+    sensor_data = {"temperature": [],
+                   "pressure": [],
+                   "humidity": [],
+                   "acceleration_x": [],
+                   "acceleration_y": [],
+                   "acceleration_z": [],
+                   "gyroscope_x": [],
+                   "gyroscope_y": [],
+                   "gyroscope_z": [],
+                   "compass_x": [],
+                   "compass_y": [],
+                   "compass_z": [],
+                   "system_load": [],
+                   "memory": [],
+                   "internet": [],
+                   "battery": [],
+                   "ais_record": [],
+                   "hydrophone_recording": [],
+                   "disk_space": [],
+                   "version": [],
+                   "files_to_upload": [],
+                   "data_files": [],
+                  }
+    return sensor_data
+
 def main():
+    hostname = socket.gethostname()
+    sensor_dir = '/flash/telemetry/sensors'
+    os.makedirs(sensor_dir, exist_ok=True)
+    sensor_data = init_sensor_data()
+
     # TODO initial status states
     ais_dir = '/flash/telemetry/ais'
     ais_file = None
@@ -127,6 +159,7 @@ def main():
     # Cycle through getting readings forever
     cycles = 1
     while True:
+        timestamp = int(time.time()*1000)
         # If the middle button on the joystick is pressed, shutdown the system
         for event in sense.stick.get_events():
             if event.action == "released" and event.direction == "middle":
@@ -137,7 +170,7 @@ def main():
 
         if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
             cycles = 1
-            # TODO check other items for updates (load/memory?, hydrophone recordings, battery, uploads, patching)
+            # TODO check other items for updates (disk space, hydrophone recordings, battery, uploads, patching)
             # internet: check if available
             inet = check_internet()
             if inet:
