@@ -1,4 +1,5 @@
 # every five minutes
-*/5 * * * * /opt/AISonobuoy/PiBuoy/scripts/system_health.sh
+*/5 * * * * /opt/AISonobuoy/PiBuoyV2/scripts/system_health.sh
 # once an hour, one minute past the hour
-1 * * * * /usr/bin/env bash /opt/AISonobuoy/PiBuoy/scripts/s3_prep.sh
+1 * * * * /usr/bin/env bash /opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh
+@reboot /opt/AISonobuoy/PiBuoyV2/scripts/startup.sh
