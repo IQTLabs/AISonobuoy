@@ -53,7 +53,7 @@ dtparam=i2c_arm=on
 #dtparam=audio=on
 
 # Automatically load overlays for detected cameras
-camera_auto_detect=1
+#camera_auto_detect=1
 
 # Automatically load overlays for detected DSI displays
 display_auto_detect=1
@@ -82,3 +82,5 @@ enable_uart=1
 dtoverlay=rpi-sense
 dtoverlay=disable-bt
 dtoverlay=hifiberry-dacplusadcpro
+start_x=0
+gpu_mem=16
