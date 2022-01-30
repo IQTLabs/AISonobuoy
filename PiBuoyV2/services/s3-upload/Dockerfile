@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM python:3.10-alpine
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 RUN apk update && apk add bash ffmpeg tar xz
 COPY requirements.txt requirements.txt

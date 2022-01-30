@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.10-slim
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 RUN apt-get update && apt-get install --no-install-recommends -y build-essential curl git procps wget
 RUN git clone https://github.com/RPi-Distro/RTIMULib.git -b V7.2.1
