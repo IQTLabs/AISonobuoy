@@ -6,11 +6,9 @@ TODO
 
 # Hardware configuration installation
 
-1. Wire sensehat
+1. Solder Pi Zero 2 W stacking header
 
-2. Solder HifiBerry header
-
-3. Add Mic Bias jumpers to the HiFiBerry hat.
+2. Add Mic Bias jumpers to the HiFiBerry hat.
 
 # Initial installation
 
