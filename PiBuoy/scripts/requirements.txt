@@ -21,7 +21,7 @@ matplotlib==3.5.1
 numpy==1.22.1
 olefile==0.46
 Pillow==9.0.0
-pip==21.3.1
+pip==22.0.1
 pyais==1.5.0
 pyasn1==0.4.8
 pycrypto==2.6.1
