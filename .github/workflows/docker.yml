@@ -43,17 +43,17 @@ jobs:
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} -f Dockerfile PiBuoyV2/services/ais && \
+          -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/ais && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} -f Dockerfile PiBuoyV2/services/record && \
+          -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/record && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} -f Dockerfile PiBuoyV2/services/s3-upload && \
+          -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/s3-upload && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.VERSION }} -f Dockerfile PiBuoyV2/services/sense
+          -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/sense
       if: github.repository == 'iqtlabs/aisonobuoy' && github.event_name == 'push'
