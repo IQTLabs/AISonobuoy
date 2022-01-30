@@ -6,9 +6,9 @@ TODO
 
 # Hardware configuration installation
 
-2. Solder Pi Zero 2 W stacking header
+1. Solder Pi Zero 2 W stacking header
 
-3. Add Mic Bias jumpers to the HiFiBerry hat.
+2. Add Mic Bias jumpers to the HiFiBerry hat.
 
 # Initial installation
 
