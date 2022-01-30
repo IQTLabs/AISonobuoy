@@ -1,0 +1,45 @@
+version: "3"
+# need to pass in the hostname as a variable
+services:
+  ais:
+    image: iqtlabs/aisonobuoy-ais:stable
+    restart: always
+    network_mode: "none"
+    environment:
+      - "HOSTNAME=${HOSTNAME}"
+    volumes:
+      - "/flash/telemetry/ais:/flash/telemetry/ais"
+    devices:
+      - "/dev/serial0:/dev/serial0"
+  record:
+    image: iqtlabs/aisonobuoy-record:stable
+    restart: always
+    network_mode: "none"
+    environment:
+      - "HOSTNAME=${HOSTNAME}"
+    volumes:
+      - "/flash/telemetry/hydrophone:/flash/telemetry/hydrophone"
+    devices:
+      - "/dev/snd:/dev/snd"
+  s3-upload:
+    image: iqtlabs/aisonobuoy-s3-upload:stable
+    restart: always
+    environment:
+      - "HOSTNAME=${HOSTNAME}"
+    volumes:
+      - "/flash/telemetry:/flash/telemetry"
+      - "/flash/s3:/flash/s3"
+      - $HOME/.aws:/root/.aws:ro
+  sense:
+    image: iqtlabs/aisonobuoy-sense:stable
+    restart: always
+    environment:
+      - "HOSTNAME=${HOSTNAME}"
+    volumes:
+      - "/flash/telemetry/sensors:/flash/telemetry/sensors"
+    devices:
+      - "/dev/i2c-1:/dev/i2c-1"
+  watchtower:
+    image: containrrr/watchtower:armhf-latest
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"

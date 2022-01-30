@@ -81,7 +81,7 @@ def display(x, y, color):
 
 
 def check_internet():
-    output = subprocess.check_output("/opt/AISonobuoy/PiBuoyV2/scripts/internet_check.sh")
+    output = subprocess.check_output("/internet_check.sh")
     if b'Online' in output:
         return True
     return False
@@ -180,9 +180,10 @@ def main():
 
         if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
             cycles = 1
-            # TODO check other items for updates (disk space, hydrophone recordings, battery, uploads, patching)
+            # TODO check other items for updates (hydrophone recordings, battery, uploads, patching)
             # internet: check if available
             inet = check_internet()
+            sensor_data["internet"].append([inet, timestamp])
             if inet:
                 display(7, 7, blue)
             else:
@@ -190,6 +191,7 @@ def main():
 
             # ais: see if new detection since last cycle
             ais, ais_file, ais_records = check_ais(ais_dir, ais_file, ais_records)
+            sensor_data["ais_record"].append([ais, timestamp])
             if ais:
                 display(7, 6, blue)
             else:
@@ -201,6 +203,7 @@ def main():
 
             # system health: load
             load = os.getloadavg()
+            sensor_data["system_load"].append([load[0], timestamp])
             if load[0] > 2:
                 display(7, 3, red)
             elif load[0] > 1:
@@ -210,6 +213,7 @@ def main():
 
             # system health: memory
             total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+            sensor_data["memory"].append([used_memory, timestamp])
             if used_memory/total_memory > 0.9:
                 display(7, 2, red)
             elif used_memory/total_memory > 0.7:
@@ -217,12 +221,25 @@ def main():
             else:
                 display(7, 2, blue)
 
+            # system health: disk space
+            st = os.statvfs('/')
+            bytes_avail = (st.f_bavail * st.f_frsize)
+            gb_free = bytes_avail / 1024 / 1024 / 1024
+            sensor_data["disk_space"].append([gb_free, timestamp])
+            if gb_free < 2:
+                display(6, 7, red)
+            elif gb_free < 10:
+                display(6, 7, yellow)
+            else:
+                display(6, 7, blue)
+
             # battery: check current battery level from pijuice hopefully, change color based on level
 
             # patching: run update file which should do everything including restarting services or rebooting
 
         # Take readings from sensors
         t = get_temperature()
+        sensor_data["temperature"].append([t, timestamp])
         if t < 5 or t > 70:
             display(1, 0, red)
         elif t < 10 or t > 65:
@@ -230,17 +247,29 @@ def main():
         else:
             display(1, 0, blue)
         p = get_pressure()
+        sensor_data["pressure"].append([p, timestamp])
         display(2, 0, blue)
         h = get_humidity()
+        sensor_data["humidity"].append([h, timestamp])
         display(3, 0, blue)
         ax, ay, az = get_acceleration()
+        sensor_data["acceleration_x"].append([ax, timestamp])
+        sensor_data["acceleration_y"].append([ay, timestamp])
+        sensor_data["acceleration_z"].append([az, timestamp])
         display(4, 0, blue)
         gx, gy, gz = get_gyro()
+        sensor_data["gyroscope_x"].append([gx, timestamp])
+        sensor_data["gyroscope_y"].append([gy, timestamp])
+        sensor_data["gyroscope_z"].append([gz, timestamp])
         display(5, 0, blue)
         cx, cy, cz = get_compass()
+        sensor_data["compass_x"].append([cx, timestamp])
+        sensor_data["compass_y"].append([cy, timestamp])
+        sensor_data["compass_z"].append([cz, timestamp])
         display(6, 0, blue)
 
-        # TODO store data
+        # Write out data
+        write_sensor_data(hostname, sensor_dir, sensor_data)
 
         # Keep lights for 0.5 second
         time.sleep(0.5)
@@ -248,7 +277,7 @@ def main():
         # Turn off all pixels
         sense.set_pixels([off]*64)
 
-        # sleep between cycles
+        # Sleep between cycles
         time.sleep(60*MINUTES_BETWEEN_WAKES)
 
         cycles += 1
