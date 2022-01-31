@@ -11,5 +11,5 @@ RUN python3 setup.py build
 RUN python3 setup.py install
 WORKDIR /var/lib/pijuice
 RUN python3 -c "from pijuice import PiJuice"
-ENTRYPOINT ["/usr/bin/pijuice_sys.py"]
+ENTRYPOINT ["/usr/local/bin/pijuice_sys.py"]
 CMD [""]
