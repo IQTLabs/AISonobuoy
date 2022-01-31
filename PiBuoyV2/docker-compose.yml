@@ -10,6 +10,15 @@ services:
       - "/flash/telemetry/ais:/flash/telemetry/ais"
     devices:
       - "/dev/serial0:/dev/serial0"
+  power:
+    image: iqtlabs/aisonobuoy-power:stable
+    restart: always
+    environment:
+      - "HOSTNAME=${HOSTNAME}"
+    volumes:
+      - "/flash/telemetry/power:/flash/telemetry/power"
+    devices:
+      - "/dev/i2c-1:/dev/i2c-1"
   record:
     image: iqtlabs/aisonobuoy-record:stable
     restart: always
