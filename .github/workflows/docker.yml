@@ -40,22 +40,32 @@ jobs:
       env:
         DOCKER_CLI_EXPERIMENTAL: enabled
       run: |
+        cd PiBuoyV2/services/ais && \
         docker buildx build \
           --platform linux/arm \
           --push \
           -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/ais && \
+        cd ../pijuice && \
+        docker buildx build \
+          --platform linux/arm \
+          --push \
+          -t iqtlabs/aisonobuoy-pijuice:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/pijuice && \
+        cd ../power && \
         docker buildx build \
           --platform linux/arm \
           --push \
           -t iqtlabs/aisonobuoy-power:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/power && \
+        cd ../record && \
         docker buildx build \
           --platform linux/arm \
           --push \
           -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/record && \
+        cd ../s3-upload && \
         docker buildx build \
           --platform linux/arm \
           --push \
           -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/s3-upload && \
+        cd ../sense && \
         docker buildx build \
           --platform linux/arm \
           --push \
