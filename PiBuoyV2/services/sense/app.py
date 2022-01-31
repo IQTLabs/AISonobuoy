@@ -276,6 +276,7 @@ def main():
         # Write out data
         if write_cycles == CYCLES_BETWEEN_WRITES:
             write_sensor_data(hostname, write_timestamp,  sensor_dir, sensor_data)
+            sensor_data = init_sensor_data()
 
         # Keep lights for 0.5 second
         time.sleep(0.5)
