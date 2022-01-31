@@ -33,7 +33,7 @@ def getAIS(aisc, results):
 start_time = int(time.time()*1000)
 records = []
 while running:
-    hostname = socket.gethostname()
+    hostname = os.getenv("HOSTNAME", socket.gethostname())
     f_dir = f'/flash/telemetry/ais'
     os.makedirs(f_dir, exist_ok=True)
     try:

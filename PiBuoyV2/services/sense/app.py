@@ -140,8 +140,7 @@ def write_sensor_data(hostname, timestamp, sensor_dir, sensor_data):
 
 
 def main():
-    # TODO: use environment variable not the hostname of the container
-    hostname = socket.gethostname()
+    hostname = os.getenv("HOSTNAME", socket.gethostname())
     sensor_dir = '/flash/telemetry/sensors'
     os.makedirs(sensor_dir, exist_ok=True)
     sensor_data = init_sensor_data()
