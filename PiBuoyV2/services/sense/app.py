@@ -14,6 +14,7 @@ sense.low_light = True
 
 # plus 0.5 second for status per wake and plus time to run loop
 MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
+MINUTES_BETWEEN_WRITES = 60
 CYCLES_BEFORE_STATUS_CHECK = 1/MINUTES_BETWEEN_WAKES
 # if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
 if CYCLES_BEFORE_STATUS_CHECK < 1:
@@ -131,15 +132,15 @@ def init_sensor_data():
     return sensor_data
 
 
-def write_sensor_data(hostname, sensor_dir, sensor_data):
-    timestamp = int(time.time()*1000)
-    with open(f'{sensor_dir}/{hostname}-{timestamp}-sensehat.json', 'w') as f:
+def write_sensor_data(hostname, timestamp, sensor_dir, sensor_data):
+    with open(f'{sensor_dir}/{hostname}-{timestamp}-sensehat.json', 'a') as f:
         for key in sensor_data.keys():
             record = {"target":key, "datapoints": sensor_data[key]}
             f.write(f'{json.dumps(record)}\n')
 
 
 def main():
+    # TODO: use environment variable not the hostname of the container
     hostname = socket.gethostname()
     sensor_dir = '/flash/telemetry/sensors'
     os.makedirs(sensor_dir, exist_ok=True)
@@ -168,7 +169,10 @@ def main():
 
     # Cycle through getting readings forever
     cycles = 1
+    write_cycles = 1
+    write_timestamp = int(time.time()*1000)
     while True:
+        # TODO: write out data if exception with a try/except
         timestamp = int(time.time()*1000)
         # If the middle button on the joystick is pressed, shutdown the system
         for event in sense.stick.get_events():
@@ -180,6 +184,7 @@ def main():
 
         if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
             cycles = 1
+            write_cycles += 1
             # TODO check other items for updates (hydrophone recordings, battery, uploads, patching)
             # internet: check if available
             inet = check_internet()
@@ -269,7 +274,8 @@ def main():
         display(6, 0, blue)
 
         # Write out data
-        write_sensor_data(hostname, sensor_dir, sensor_data)
+        if write_cycles == CYCLES_BETWEEN_WRITES:
+            write_sensor_data(hostname, write_timestamp,  sensor_dir, sensor_data)
 
         # Keep lights for 0.5 second
         time.sleep(0.5)
