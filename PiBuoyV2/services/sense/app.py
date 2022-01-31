@@ -273,7 +273,7 @@ def main():
         display(6, 0, blue)
 
         # Write out data
-        if write_cycles == CYCLES_BETWEEN_WRITES:
+        if write_cycles == MINUTES_BETWEEN_WRITES:
             write_sensor_data(hostname, write_timestamp,  sensor_dir, sensor_data)
             sensor_data = init_sensor_data()
 
