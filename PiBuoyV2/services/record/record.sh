@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 /usr/bin/amixer sset ADC 40db
 hostname=$HOSTNAME
