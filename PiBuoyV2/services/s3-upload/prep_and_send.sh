@@ -18,6 +18,10 @@ XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/system-"$timestamp".
 mkdir -p /flash/telemetry/system
 ship_data system
 
+XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/power-"$timestamp".tar.xz -C /flash/telemetry/power .
+mkdir -p /flash/telemetry/power
+ship_data power
+
 XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/sensors-"$timestamp".tar.xz -C /flash/telemetry/sensors .
 mkdir -p /flash/telemetry/sensors
 ship_data sensors
