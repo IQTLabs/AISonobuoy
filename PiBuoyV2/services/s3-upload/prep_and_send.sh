@@ -11,6 +11,9 @@ ship_data () {
   done
 }
 
+# wait an hour between runs
+sleep 3600
+
 timestamp=$(date +%s%3N)
 mkdir -p /flash/s3
 
@@ -39,4 +42,3 @@ tar --remove-files --sort='name' -cJf /flash/s3/hydrophone-"$timestamp".tar.xz -
 mkdir -p /flash/telemetry/hydrophone
 ship_data hydrophone
 
-sleep 3600
