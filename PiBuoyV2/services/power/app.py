@@ -45,7 +45,7 @@ def get_data(pj, data):
     return data
 
 
-def main();
+def main():
     hostname = os.getenv("HOSTNAME", socket.gethostname())
     data_dir = '/flash/telemetry/power'
     os.makedirs(data_dir, exist_ok=True)
