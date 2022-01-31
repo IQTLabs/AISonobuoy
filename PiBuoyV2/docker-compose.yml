@@ -10,6 +10,11 @@ services:
       - "/flash/telemetry/ais:/flash/telemetry/ais"
     devices:
       - "/dev/serial0:/dev/serial0"
+  pijuice:
+    image: iqtlabs/aisonobuoy-pijuice:stable
+    restart: always
+    devices:
+      - "/dev/i2c-1:/dev/i2c-1"
   power:
     image: iqtlabs/aisonobuoy-power:stable
     restart: always
