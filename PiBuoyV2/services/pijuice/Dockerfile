@@ -9,8 +9,7 @@ RUN git clone https://github.com/PiSupply/PiJuice.git
 WORKDIR /PiJuice/Software/Source
 RUN python3 setup.py build
 RUN python3 setup.py install
-WORKDIR /
+WORKDIR /var/lib/pijuice
 RUN python3 -c "from pijuice import PiJuice"
-COPY app.py /app.py
-ENTRYPOINT ["python3", "/app.py"]
+ENTRYPOINT ["/usr/bin/pijuice_sys.py"]
 CMD [""]
