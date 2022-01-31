@@ -44,30 +44,30 @@ jobs:
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/ais && \
+          -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../pijuice && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-pijuice:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/pijuice && \
+          -t iqtlabs/aisonobuoy-pijuice:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../power && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-power:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/power && \
+          -t iqtlabs/aisonobuoy-power:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../record && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/record && \
+          -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../s3-upload && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/s3-upload && \
+          -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../sense && \
         docker buildx build \
           --platform linux/arm \
           --push \
-          -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.VERSION }} PiBuoyV2/services/sense
+          -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.VERSION }} .
       if: github.repository == 'iqtlabs/aisonobuoy' && github.event_name == 'push'
