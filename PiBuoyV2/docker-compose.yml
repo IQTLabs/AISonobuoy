@@ -33,10 +33,11 @@ services:
   sense:
     image: iqtlabs/aisonobuoy-sense:stable
     restart: always
+    privileged: true
     environment:
       - "HOSTNAME=${HOSTNAME}"
     volumes:
-      - "/flash/telemetry/sensors:/flash/telemetry/sensors"
+      - "/flash/telemetry:/flash/telemetry"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   watchtower:
