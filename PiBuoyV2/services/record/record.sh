@@ -1,6 +1,7 @@
 #!/bin/bash
 
-hostname=$(hostname)
+/usr/bin/amixer sset ADC 40db
+hostname=$(HOSTNAME)
 mkdir -p /flash/telemetry/hydrophone
 while true; do
         timestamp=$(date +%s%3N)

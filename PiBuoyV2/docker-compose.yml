@@ -1,5 +1,4 @@
 version: "3"
-# need to pass in the hostname as a variable
 services:
   ais:
     image: iqtlabs/aisonobuoy-ais:stable
@@ -33,6 +32,7 @@ services:
   sense:
     image: iqtlabs/aisonobuoy-sense:stable
     restart: always
+    # TODO find out what it actually needs
     privileged: true
     environment:
       - "HOSTNAME=${HOSTNAME}"
@@ -42,5 +42,12 @@ services:
       - "/dev/i2c-1:/dev/i2c-1"
   watchtower:
     image: containrrr/watchtower:armhf-latest
+    restart: always
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - "WATCHTOWER_POLL_INTERVAL=3600"
+      - "WATCHTOWER_CLEANUP=true"
+      - "WATCHTOWER_INCLUDE_RESTARTING=true"
+      - "WATCHTOWER_INCLUDE_STOPPED=true"
+      - "WATCHTOWER_REVIVE_STOPPED=true"

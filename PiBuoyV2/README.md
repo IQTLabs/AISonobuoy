@@ -68,6 +68,7 @@ Add the following lines, save, and quit:
 # once an hour, one minute past the hour
 1 * * * * /usr/bin/env bash /opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh
 @reboot /opt/AISonobuoy/PiBuoyV2/scripts/startup.sh
+1 * * * * /usr/bin/git -C /opt/AISonobuoy pull
 ```
 
 9. Edit the `s3://` path in `/opt/AISonobuoy/PiBuoyV2/scripts/s3_prep.sh` to be an S3 bucket you want to push data to.
@@ -101,7 +102,7 @@ sudo reboot
 ```
 amixer sset "ADC Mic Bias" "Mic Bias on"
 amixer sset "ADC Left Input" "VINL1[SE]"
-amixer sset "ADC Right Input" "VINL2[SE]"
+amixer sset "ADC Right Input" "VINR1[SE]"
 amixer sset ADC 40db
 ```
 
