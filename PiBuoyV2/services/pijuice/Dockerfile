@@ -15,5 +15,7 @@ RUN dpkg -i ./pijuice-base_1.7_all.deb
 RUN chown -R root:root /usr/bin/pijuice*
 WORKDIR /var/lib/pijuice
 RUN python3 -c "from pijuice import PiJuice"
+ARG VERSION
+ENV VERSION $VERSION
 ENTRYPOINT ["/usr/bin/pijuice_sys.py"]
 CMD [""]

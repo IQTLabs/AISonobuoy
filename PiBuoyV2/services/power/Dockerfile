@@ -13,5 +13,7 @@ RUN python3 setup.py install
 WORKDIR /
 RUN python3 -c "from pijuice import PiJuice"
 COPY app.py /app.py
+ARG VERSION
+ENV VERSION $VERSION
 ENTRYPOINT ["python3", "/app.py"]
 CMD [""]
