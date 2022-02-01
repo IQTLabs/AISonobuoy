@@ -1,3 +1,5 @@
+*THIS VERSION IS DEPRECATED IN FAVOR OF [V2](../PiBuoyV2/README.md)*
+
 The following are the hardware and software requirements and installation instructions for the Raspberry Pi 4 buoy version.
 
 # Hardware Requirements
