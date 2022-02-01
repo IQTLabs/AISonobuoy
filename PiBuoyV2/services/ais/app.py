@@ -54,5 +54,3 @@ while running:
         running = False
         aisc.close()
         print("AIS application stopped!")
-    except Exception as e:
-        print(f"AIS application error: {e}")
