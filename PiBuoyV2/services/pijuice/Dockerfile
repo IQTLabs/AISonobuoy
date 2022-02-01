@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.10-slim
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 ENV PIJUICE_BUILD_BASE 1
 ENV PIJUICE_VERSION 1.7
@@ -15,5 +15,7 @@ RUN dpkg -i ./pijuice-base_1.7_all.deb
 RUN chown -R root:root /usr/bin/pijuice*
 WORKDIR /var/lib/pijuice
 RUN python3 -c "from pijuice import PiJuice"
+ARG VERSION
+ENV VERSION $VERSION
 ENTRYPOINT ["/usr/bin/pijuice_sys.py"]
 CMD [""]

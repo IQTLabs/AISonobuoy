@@ -10,5 +10,7 @@ COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 COPY app.py /app.py
 COPY internet_check.sh /internet_check.sh
+ARG VERSION
+ENV VERSION $VERSION
 ENTRYPOINT ["python3", "/app.py"]
 CMD [""]

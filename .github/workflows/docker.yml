@@ -16,7 +16,9 @@ jobs:
         fetch-depth: 0
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+      run: |
+        echo "::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)"
+        echo "::set-output name=SHA_SHORT::$(git rev-parse --short HEAD)"
     - name: Change for main
       id: change_version
       run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=VERSION::latest; else echo ::set-output name=VERSION::${{ steps.get_version.outputs.VERSION }} -t stable; fi
@@ -44,30 +46,36 @@ jobs:
         docker buildx build \
           --platform linux/arm \
           --push \
+          --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} && \
           -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../pijuice && \
         docker buildx build \
           --platform linux/arm \
           --push \
+          --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} && \
           -t iqtlabs/aisonobuoy-pijuice:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../power && \
         docker buildx build \
           --platform linux/arm \
           --push \
+          --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} && \
           -t iqtlabs/aisonobuoy-power:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../record && \
         docker buildx build \
           --platform linux/arm \
           --push \
+          --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} && \
           -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../s3-upload && \
         docker buildx build \
           --platform linux/arm \
           --push \
+          --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} && \
           -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../sense && \
         docker buildx build \
           --platform linux/arm \
           --push \
+          --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} && \
           -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.VERSION }} .
       if: github.repository == 'iqtlabs/aisonobuoy' && github.event_name == 'push'
