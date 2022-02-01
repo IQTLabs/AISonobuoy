@@ -7,9 +7,9 @@ import pijuice
 
 
 def write_data(hostname, timestamp, data_dir, data):
-    with open(f'{sensor_dir}/{hostname}-{timestamp}-power.json', 'a') as f:
-        for key in sensor_data.keys():
-            record = {"target":key, "datapoints": sensor_data[key]}
+    with open(f'{data_dir}/{hostname}-{timestamp}-power.json', 'a') as f:
+        for key in data.keys():
+            record = {"target":key, "datapoints": data[key]}
             f.write(f'{json.dumps(record)}\n')
 
 
