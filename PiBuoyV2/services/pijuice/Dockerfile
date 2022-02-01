@@ -12,6 +12,7 @@ RUN python3 setup.py build
 RUN python3 setup.py install
 WORKDIR /PiJuice/Software/Install
 RUN dpkg -i ./pijuice-base_1.7_all.deb
+RUN chown -R root:root /usr/bin/pijuice*
 WORKDIR /var/lib/pijuice
 RUN python3 -c "from pijuice import PiJuice"
 ENTRYPOINT ["/usr/bin/pijuice_sys.py"]
