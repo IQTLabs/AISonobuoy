@@ -14,22 +14,23 @@ ship_data () {
 # wait an hour between runs
 sleep 3600
 
+hostname=$HOSTNAME
 timestamp=$(date +%s%3N)
 mkdir -p /flash/s3
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/system-"$timestamp".tar.xz -C /flash/telemetry/system .
+XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/system-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/system .
 mkdir -p /flash/telemetry/system
 ship_data system
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/power-"$timestamp".tar.xz -C /flash/telemetry/power .
+XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/power-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/power .
 mkdir -p /flash/telemetry/power
 ship_data power
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/sensors-"$timestamp".tar.xz -C /flash/telemetry/sensors .
+XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/sensors-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/sensors .
 mkdir -p /flash/telemetry/sensors
 ship_data sensors
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/ais-"$timestamp".tar.xz -C /flash/telemetry/ais .
+XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/ais-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/ais .
 mkdir -p /flash/telemetry/ais
 ship_data ais
 
@@ -38,7 +39,7 @@ do
   ffmpeg -y -i $file -ac 1 -ar 16000 -sample_fmt s16 $file-scaled.flac
   rm $file
 done
-tar --remove-files --sort='name' -cJf /flash/s3/hydrophone-"$timestamp".tar.xz -C /flash/telemetry/hydrophone .
+tar --remove-files --sort='name' -cJf /flash/s3/hydrophone-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/hydrophone .
 mkdir -p /flash/telemetry/hydrophone
 ship_data hydrophone
 
