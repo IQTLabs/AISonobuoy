@@ -1,4 +1,4 @@
-The following are the hardware and software requirements and installation instructions for the Raspberry Pi 4 buoy version.
+The following are the hardware and software requirements and installation instructions for the Raspberry Pi Zero buoy version.
 
 # Hardware Requirements
 
