@@ -13,11 +13,13 @@ services:
   pijuice:
     image: iqtlabs/aisonobuoy-pijuice:stable
     restart: always
+    network_mode: "none"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   power:
     image: iqtlabs/aisonobuoy-power:stable
     restart: always
+    network_mode: "none"
     environment:
       - "HOSTNAME=${HOSTNAME}"
     volumes:
