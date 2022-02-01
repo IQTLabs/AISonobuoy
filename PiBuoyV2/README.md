@@ -68,11 +68,9 @@ Add the following lines, save, and quit:
 ```
 # every five minutes
 */5 * * * * /opt/AISonobuoy/PiBuoyV2/scripts/system_health.sh
-# once an hour, one minute past the hour
-1 * * * * /usr/bin/git -C /opt/AISonobuoy pull
 ```
 
-9. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) using `aws configure`.
+9. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that a role that can write to the S3 bucket.
 
 10. Enable I2C in raspi-config.
 ```
@@ -98,7 +96,20 @@ docker-compose up -d
 
 3. Check for data in `/flash/telemetry`.
 
-4. Check serial connection for AIS.
+4. Verify containers are running with `docker ps`.
+```
+$ docker ps
+CONTAINER ID   IMAGE                                 COMMAND                  CREATED          STATUS          PORTS      NAMES
+b76503cfbada   iqtlabs/aisonobuoy-s3-upload:latest   "/prep_and_send.sh "     36 minutes ago   Up 36 minutes              pibuoyv2_s3-upload_1
+492f3adf50a1   iqtlabs/aisonobuoy-sense:latest       "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_sense_1
+0e5a09f23127   iqtlabs/aisonobuoy-record:latest      "/record.sh "            36 minutes ago   Up 6 minutes               pibuoyv2_record_1
+f7795e64e06a   iqtlabs/aisonobuoy-pijuice:latest     "/usr/local/bin/piju…"   36 minutes ago   Up 36 minutes              pibuoyv2_pijuice_1
+da6bd9f59e0e   iqtlabs/aisonobuoy-ais:latest         "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_ais_1
+2bc024492d88   containrrr/watchtower:armhf-latest    "/watchtower"            36 minutes ago   Up 36 minutes   8080/tcp   pibuoyv2_watchtower_1
+802a7c8cab78   iqtlabs/aisonobuoy-power:latest       "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_power_1
+```
+
+5. Check serial connection for AIS.
 ```
 sudo screen /dev/serial0 38400
 <press ESC> (you should see a menu)
