@@ -29,38 +29,48 @@ sudo apt-get update
 sudo apt-get install git python3-pip screen tmux
 ```
 
-3. Install this repo.
+3. Disable unneeded services.
+```
+sudo systemctl stop avahi-daemon.service
+sudo systemctl stop avahi-daemon.socket
+sudo systemctl disable avahi-daemon.service
+sudo systemctl disable avahi-daemon.socket
+```
+
+4. Disable tvservice since this is going to be completely headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local before the `exit 0`.
+
+5. Install this repo.
 ```
 sudo su -
 cd /opt
 git clone https://github.com/IQTLabs/AISonobuoy.git
 ```
 
-4. Install Docker.
+6. Install Docker.
 ```
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker pi
 ```
 
-5. Install docker-compose.
+7. Install docker-compose.
 ```
 sudo pip3 install docker-compose
 ```
 
-6. Put the config.txt in `/boot/config.txt`.
+8. Put the config.txt in `/boot/config.txt`.
 ```
 sudo cp /opt/AISonobuoy/PiBuoyV2/config/config.txt /boot/config.txt
 ```
 
-7. Setup [dAISy HAT](https://wegmatt.com/files/dAISy%20HAT%20AIS%20Receiver%20Manual.pdf).
+9. Setup [dAISy HAT](https://wegmatt.com/files/dAISy%20HAT%20AIS%20Receiver%20Manual.pdf).
 ```
 wget https://github.com/itemir/rpi_boat_utils/raw/master/uart_control/uart_control
 chmod +x ./uart_control
 sudo ./uart_control gpio
 ```
 
-8. Schedule jobs in crontab.
+10. Schedule jobs in crontab.
 ```
 sudo crontab -e
 ```
@@ -70,20 +80,20 @@ Add the following lines, save, and quit:
 */5 * * * * /opt/AISonobuoy/PiBuoyV2/scripts/system_health.sh
 ```
 
-9. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that a role that can write to the S3 bucket.
+11. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that a role that can write to the S3 bucket.
 
-10. Enable I2C in raspi-config.
+12. Enable I2C in raspi-config.
 ```
 sudo raspi-config
 -> Interface Options -> I2C -> Yes to enable
 ```
 
-11. Restart.
+13. Restart.
 ```
 sudo reboot
 ```
 
-12. Start PiBuoy containers.
+14. Start PiBuoy containers.
 ```
 cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
