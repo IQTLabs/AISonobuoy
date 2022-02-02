@@ -133,10 +133,14 @@ def init_sensor_data():
 
 
 def write_sensor_data(hostname, timestamp, sensor_dir, sensor_data):
-    with open(f'{sensor_dir}/{hostname}-{timestamp}-sensehat.json', 'a') as f:
+    basename = f'{hostname}-{timestamp}-sensehat.json'
+    filename = f'{sensor_dir}/{basename}'
+    tmp_filename = f'{sensor_dir}/.{basename}'
+    with open(tmp_filename, 'a') as f:
         for key in sensor_data.keys():
             record = {"target":key, "datapoints": sensor_data[key]}
             f.write(f'{json.dumps(record)}\n')
+    os.rename(tmp_filename, filename)
 
 
 def main():
@@ -274,7 +278,7 @@ def main():
 
         # Write out data
         if write_cycles == MINUTES_BETWEEN_WRITES:
-            write_sensor_data(hostname, write_timestamp,  sensor_dir, sensor_data)
+            write_sensor_data(hostname, write_timestamp, sensor_dir, sensor_data)
             sensor_data = init_sensor_data()
 
         # Keep lights for 0.5 second

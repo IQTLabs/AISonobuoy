@@ -7,10 +7,14 @@ import pijuice
 
 
 def write_data(hostname, timestamp, data_dir, data):
-    with open(f'{data_dir}/{hostname}-{timestamp}-power.json', 'a') as f:
+    basename = f'{hostname}-{timestamp}-power.json'
+    filename = f'{data_dir}/{basename}'
+    tmp_filename = f'{data_dir}/.{basename}'
+    with open(tmp_filename, 'a') as f:
         for key in data.keys():
             record = {"target":key, "datapoints": data[key]}
             f.write(f'{json.dumps(record)}\n')
+    os.rename(tmp_filename, filename)
 
 
 def init_data():
