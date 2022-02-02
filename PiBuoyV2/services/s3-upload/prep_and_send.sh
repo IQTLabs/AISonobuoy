@@ -11,6 +11,15 @@ ship_data () {
   done
 }
 
+do_tar () {
+    local tarfile=$1
+    local tardir=$2
+    tarfiles=$(cd $tardir && find . -type f -regex '.+\/[^\.].+$' -print)
+    if [[ "$tarfiles" != "" ]] ; then
+	    XZ_OPT="-9" $(cd $tardir && tar --remove_files --sort='name' -cJf $tarfile ${tarfiles})
+    fi
+}
+
 # wait an hour between runs
 sleep 3600
 
@@ -18,28 +27,18 @@ hostname=$HOSTNAME
 timestamp=$(date +%s%3N)
 mkdir -p /flash/s3
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/system-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/system .
-mkdir -p /flash/telemetry/system
+do_tar /flash/s3/system-"$hostname"-"$timestamp".tar.xz /flash/telemetry/system
 ship_data system
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/power-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/power .
-mkdir -p /flash/telemetry/power
+do_tar /flash/s3/power-"$hostname"-"$timestamp".tar.xz /flash/telemetry/power
 ship_data power
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/sensors-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/sensors .
-mkdir -p /flash/telemetry/sensors
+do_tar /flash/s3/sensors-"$hostname"-"$timestamp".tar.xz /flash/telemetry/sensors
 ship_data sensors
 
-XZ_OPT="-9" tar --remove-files --sort='name' -cJf /flash/s3/ais-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/ais .
-mkdir -p /flash/telemetry/ais
+do_tar /flash/s3/ais-"$hostname"-"$timestamp".tar.xz /flash/telemetry/ais
 ship_data ais
 
-for file in /flash/telemetry/hydrophone/*
-do
-  ffmpeg -y -i $file -ac 1 -ar 16000 -sample_fmt s16 $file-scaled.flac
-  rm $file
-done
-tar --remove-files --sort='name' -cJf /flash/s3/hydrophone-"$hostname"-"$timestamp".tar.xz -C /flash/telemetry/hydrophone .
-mkdir -p /flash/telemetry/hydrophone
+do_tar /flash/s3/hydrophone-"$hostname"-"$timestamp".tar.xz /flash/telemetry/hydrophone
 ship_data hydrophone
 
