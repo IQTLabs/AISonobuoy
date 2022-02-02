@@ -146,10 +146,14 @@ class Telemetry:
 
 
     def write_sensor_data(self, timestamp):
-        with open(f'{self.sensor_dir}/{self.hostname}-{timestamp}-sensehat.json', 'a') as f:
+        basename = f'{self.hostname}-{timestamp}-sensehat.json'
+        filename = f'{self.sensor_dir}/{basename}'
+        tmp_filename = f'{self.sensor_dir}/.{basename}'
+        with open(tmp_filename, 'a') as f:
             for key in self.sensor_data.keys():
                 record = {"target":key, "datapoints": self.sensor_data[key]}
                 f.write(f'{json.dumps(record)}\n')
+        os.rename(tmp_filename, filename)
 
 
     def main(self):
