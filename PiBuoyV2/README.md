@@ -9,6 +9,7 @@ The following are the hardware and software requirements and installation instru
 - PiJuice Zero
 - pHAT Stack
 - 12000mAh PiJuice Battery
+- H2A Hydrophone
 
 # Hardware configuration installation
 
