@@ -37,7 +37,7 @@ class Telemetry:
         pass
 
 
-    def init_sense():
+    def init_sense(self):
         # Initialize the Sense Hat
         self.sense = SenseHat()
         self.sense.clear()
