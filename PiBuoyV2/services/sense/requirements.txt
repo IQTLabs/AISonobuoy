@@ -1,1 +1,2 @@
+httpx==0.22.0
 sense-hat==2.2.0
