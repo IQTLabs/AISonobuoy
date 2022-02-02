@@ -61,7 +61,7 @@ sudo pip3 install docker-compose
 
 8. Put the config.txt in `/boot/config.txt`.
 ```
-sudo cp /opt/AISonobuoy/PiBuoyV2/config/config.txt /boot/config.txt
+sudo cp /opt/AISonobuoy/PiBuoyV2/config.txt /boot/config.txt
 ```
 
 9. Setup [dAISy HAT](https://wegmatt.com/files/dAISy%20HAT%20AIS%20Receiver%20Manual.pdf).
