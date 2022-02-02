@@ -159,12 +159,13 @@ class Telemetry:
 
     def shutdown_hook(self, data):
         data = {}
-        data['title'] = self.hostname
-        data['right_title'] = "location"
+        # TODO don't use dummy data
+        data['title'] = self.hostname # TODO plus location
+        data['themeColor'] = "d95f02"
         data['body_title'] = "Shutting system down"
         data['body_subtitle'] = "Low battery"
         data['text'] = ""
-        data['facts'] = [{"title": "Battery Percent", "value": "5"}, {"title": "Uptime", "value": "12:17  up 51 days, 17:02"}]
+        data['facts'] = [{"name": "Battery Percent", "value": "5"}, {"name": "Uptime", "value": "12:17  up 51 days, 17:02"}]
         card = insert_message_data(data)
         status = send_hook(card)
         return status
