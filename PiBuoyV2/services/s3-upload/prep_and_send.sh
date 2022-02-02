@@ -14,6 +14,7 @@ ship_data () {
 do_tar () {
     local tarfile=$1
     local tardir=$2
+    # find files to tar and remove, that don't begin with "."
     tarfiles=$(cd $tardir && find . -type f -regex '.+\/[^\.].+$' -print)
     if [[ "$tarfiles" != "" ]] ; then
 	    XZ_OPT="-9" $(cd $tardir && tar --remove_files --sort='name' -cJf $tarfile ${tarfiles})
@@ -39,6 +40,6 @@ ship_data sensors
 do_tar /flash/s3/ais-"$hostname"-"$timestamp".tar.xz /flash/telemetry/ais
 ship_data ais
 
-do_tar /flash/s3/hydrophone-"$hostname"-"$timestamp".tar.xz /flash/telemetry/hydrophone
+do_tar /flash/s3/hydrophone-"$hostname"-"$timestamp".tar /flash/telemetry/hydrophone
 ship_data hydrophone
 
