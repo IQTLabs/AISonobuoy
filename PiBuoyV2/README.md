@@ -94,7 +94,9 @@ sudo raspi-config
 sudo reboot
 ```
 
-14. Start PiBuoy containers.
+14. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+
+15. Start PiBuoy containers.
 ```
 cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
