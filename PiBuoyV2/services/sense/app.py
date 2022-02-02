@@ -4,9 +4,10 @@ import socket
 import subprocess
 import time
 
-import httpx
 from sense_hat import SenseHat
 
+from hooks import insert_message_data
+from hooks import send_hook
 
 class Telemetry:
 
@@ -154,6 +155,19 @@ class Telemetry:
                 record = {"target":key, "datapoints": self.sensor_data[key]}
                 f.write(f'{json.dumps(record)}\n')
         os.rename(tmp_filename, filename)
+
+
+    def shutdown_hook(self, data):
+        data = {}
+        data['title'] = self.hostname
+        data['right_title'] = "location"
+        data['body_title'] = "Shutting system down"
+        data['body_subtitle'] = "Low battery"
+        data['text'] = ""
+        data['facts'] = [{"title": "Battery Percent", "value": "5"}, {"title": "Uptime", "value": "12:17  up 51 days, 17:02"}]
+        card = insert_message_data(data)
+        status = send_hook(card)
+        return status
 
 
     def main(self):

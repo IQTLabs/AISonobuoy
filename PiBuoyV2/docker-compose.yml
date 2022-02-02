@@ -52,6 +52,7 @@ services:
     privileged: true
     environment:
       - "HOSTNAME=${HOSTNAME}"
+      - "LOCATION=${LOCATION}"
       - "WEBHOOK_URL=${WEBHOOK_URL}"
     volumes:
       - "/flash/telemetry:/flash/telemetry"
