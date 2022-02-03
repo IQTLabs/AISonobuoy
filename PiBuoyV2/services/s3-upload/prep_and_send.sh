@@ -29,17 +29,17 @@ hostname=$HOSTNAME
 timestamp=$(date +%s%3N)
 mkdir -p /flash/s3
 
-do_tar /flash/telemetry/system-"$hostname"-"$timestamp".tar.xz /flash/telemetry/system -J
+do_tar /flash/s3/system-"$hostname"-"$timestamp".tar.xz /flash/telemetry/system -J
 ship_data system
 
-do_tar /flash/telemetry/power-"$hostname"-"$timestamp".tar.xz /flash/telemetry/power -J
+do_tar /flash/s3/power-"$hostname"-"$timestamp".tar.xz /flash/telemetry/power -J
 ship_data power
 
-do_tar /flash/telemetry/sensors-"$hostname"-"$timestamp".tar.xz /flash/telemetry/sensors -J
+do_tar /flash/s3/sensors-"$hostname"-"$timestamp".tar.xz /flash/telemetry/sensors -J
 ship_data sensors
 
-do_tar /flash/telemetry/ais-"$hostname"-"$timestamp".tar.xz /flash/telemetry/ais -J
+do_tar /flash/s3/ais-"$hostname"-"$timestamp".tar.xz /flash/telemetry/ais -J
 ship_data ais
 
-do_tar /flash/telemetry/hydrophone-"$hostname"-"$timestamp".tar /flash/telemetry/hydrophone ""
+do_tar /flash/s3/hydrophone-"$hostname"-"$timestamp".tar /flash/telemetry/hydrophone ""
 ship_data hydrophone
