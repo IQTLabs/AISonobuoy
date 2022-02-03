@@ -175,7 +175,7 @@ class Telemetry:
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
         base_dir = '/flash/telemetry'
         self.sensor_dir = os.path.join(base_dir, 'sensors')
-        os.makedirs(sensor_dir, exist_ok=True)
+        os.makedirs(self.sensor_dir, exist_ok=True)
         self.init_sensor_data()
 
         ais_dir = os.path.join(base_dir, 'ais')
