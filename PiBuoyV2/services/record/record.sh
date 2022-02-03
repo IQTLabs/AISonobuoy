@@ -8,5 +8,11 @@ mkdir -p $flacdir
 timestamp=$(date +%s%3N)
 flacout=$hostname-$timestamp-hydrophone.flac
 arecord -q -D sysdefault -r 44100 -d 600 -f S16 -V mono - | ffmpeg -i - -y -ac 1 -ar 16000 -sample_fmt s16 $flacdir/.$flacout
-mv $flacdir/.$flacout $flacdir/$flacout
+tmpflacs=$(find $flacdir -type f -name .*.flac)
+for tmpflac in $tmpflacs ; do
+    dname=$(dirname $tmpflac)
+    bname=$(basename $tmpflac)
+    outflac=$name/${bname:1}
+    mv $tmpflac $outflac
+done
 sleep 10
