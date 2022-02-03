@@ -246,7 +246,7 @@ class Telemetry:
 
                 # recordings: see if new recording file since last session, or if more bytes have been written
                 hydrophone, hydrophone_file, hydrophone_size = self.check_hydrophone(hydrophone_dir, hydrophone_file, hydrophone_size)
-                self.sensor_data["hydrophone_record"].append([hydrophone, timestamp])
+                self.sensor_data["hydrophone_recording"].append([hydrophone, timestamp])
                 if hydrophone:
                     self.display(7, 5, blue)
                 else:
