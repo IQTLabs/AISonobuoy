@@ -30,6 +30,14 @@ def getAIS(aisc, results):
             print(f'Bad formatted data: {data}')
     return results
 
+
+def rename_dotfiles(flashdir):
+    for dotfile in glob.glob(os.path.join(flashdir, '.*')):
+        basename = os.path.basename(dotfile)
+        non_dotfile = os.path.join(flashdir, basename[1:])
+        os.rename(dotfile, non_dotfile)
+
+
 start_time = int(time.time()*1000)
 records = []
 while running:
@@ -37,13 +45,10 @@ while running:
     f_dir = f'/flash/telemetry/ais'
     os.makedirs(f_dir, exist_ok=True)
     try:
-        basename = f'{hostname}-{start_time}-ais.json'
-        filename = f'{f_dir}/{basename}'
-        tmp_filename = f'{f_dir}/.{basename}'
+        tmp_filename = f'{f_dir}/.{hostname}-{start_time}-ais.json'
         # check if 15 minutes have elapsed
         if int(time.time()*1000) >= (start_time + 900000):
-            if os.path.exists(tmp_filename):
-                os.rename(tmp_filename, filename)
+            rename_dotfiles(f_dir)
             start_time = int(time.time()*1000)
         if len(records) > 0:
             with open(tmp_filename, 'a') as f:

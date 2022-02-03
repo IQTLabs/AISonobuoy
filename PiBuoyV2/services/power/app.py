@@ -5,16 +5,20 @@ import time
 
 import pijuice
 
+def rename_dotfiles(flashdir):
+    for dotfile in glob.glob(os.path.join(flashdir, '.*')):
+        basename = os.path.basename(dotfile)
+        non_dotfile = os.path.join(flashdir, basename[1:])
+        os.rename(dotfile, non_dotfile)
+
 
 def write_data(hostname, timestamp, data_dir, data):
-    basename = f'{hostname}-{timestamp}-power.json'
-    filename = f'{data_dir}/{basename}'
-    tmp_filename = f'{data_dir}/.{basename}'
+    tmp_filename = f'{data_dir}/.{hostname}-{timestamp}-power.json'
     with open(tmp_filename, 'a') as f:
         for key in data.keys():
             record = {"target":key, "datapoints": data[key]}
             f.write(f'{json.dumps(record)}\n')
-    os.rename(tmp_filename, filename)
+    rename_dotfiles(data_dir)
 
 
 def init_data():

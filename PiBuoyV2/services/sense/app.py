@@ -146,15 +146,20 @@ class Telemetry:
                            }
 
 
+    def rename_dotfiles(flashdir):
+        for dotfile in glob.glob(os.path.join(flashdir, '.*')):
+            basename = os.path.basename(dotfile)
+            non_dotfile = os.path.join(flashdir, basename[1:])
+            os.rename(dotfile, non_dotfile)
+
+
     def write_sensor_data(self, timestamp):
-        basename = f'{self.hostname}-{timestamp}-sensehat.json'
-        filename = f'{self.sensor_dir}/{basename}'
-        tmp_filename = f'{self.sensor_dir}/.{basename}'
+        tmp_filename = f'{self.sensor_dir}/.{self.hostname}-{timestamp}-sensehat.json'
         with open(tmp_filename, 'a') as f:
             for key in self.sensor_data.keys():
                 record = {"target":key, "datapoints": self.sensor_data[key]}
                 f.write(f'{json.dumps(record)}\n')
-        os.rename(tmp_filename, filename)
+        rename_dotfiles(self.sensor_dir)
 
 
     def shutdown_hook(self, data):
