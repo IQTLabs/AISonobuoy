@@ -10,29 +10,31 @@ from sense_hat import SenseHat
 from hooks import insert_message_data
 from hooks import send_hook
 
+
+# plus 0.5 second for status per wake and plus time to run loop
+MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
+MINUTES_BETWEEN_WRITES = 60
+CYCLES_BEFORE_STATUS_CHECK = 1/MINUTES_BETWEEN_WAKES
+# if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
+if CYCLES_BEFORE_STATUS_CHECK < 1:
+    CYCLES_BEFORE_STATUS_CHECK = MINUTES_BETWEEN_WAKES
+
+# Define Colors
+# (generated from ColorBrewer)
+# Credit: Cynthia Brewer, Mark Harrower and The Pennsylvania State University
+cb_orange = (252, 141, 89)
+cb_yellow = (255, 255, 191)
+cb_blue = (145, 191, 219)
+
+# Raw colors
+red = (255, 0, 0)
+yellow = (255, 255, 0)
+blue = (0, 0, 255)
+white = (255, 255, 255)
+off = (0, 0, 0)
+
+
 class Telemetry:
-
-    # plus 0.5 second for status per wake and plus time to run loop
-    MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
-    MINUTES_BETWEEN_WRITES = 60
-    CYCLES_BEFORE_STATUS_CHECK = 1/MINUTES_BETWEEN_WAKES
-    # if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
-    if CYCLES_BEFORE_STATUS_CHECK < 1:
-        CYCLES_BEFORE_STATUS_CHECK = MINUTES_BETWEEN_WAKES
-
-    # Define Colors
-    # (generated from ColorBrewer)
-    # Credit: Cynthia Brewer, Mark Harrower and The Pennsylvania State University
-    cb_orange = (252, 141, 89)
-    cb_yellow = (255, 255, 191)
-    cb_blue = (145, 191, 219)
-
-    # Raw colors
-    red = (255, 0, 0)
-    yellow = (255, 255, 0)
-    blue = (0, 0, 255)
-    white = (255, 255, 255)
-    off = (0, 0, 0)
 
     def __init__(self):
         pass
