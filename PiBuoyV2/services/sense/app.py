@@ -149,6 +149,7 @@ class Telemetry:
                            }
 
 
+    @staticmethod
     def rename_dotfiles(flashdir):
         for dotfile in glob.glob(os.path.join(flashdir, '.*')):
             basename = os.path.basename(dotfile)
@@ -162,7 +163,7 @@ class Telemetry:
             for key in self.sensor_data.keys():
                 record = {"target":key, "datapoints": self.sensor_data[key]}
                 f.write(f'{json.dumps(record)}\n')
-        rename_dotfiles(self.sensor_dir)
+        self.rename_dotfiles(self.sensor_dir)
 
 
     def shutdown_hook(self, data):
