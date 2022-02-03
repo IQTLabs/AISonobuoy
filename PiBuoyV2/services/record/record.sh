@@ -12,7 +12,7 @@ tmpflacs=$(find $flacdir -type f -name .*.flac)
 for tmpflac in $tmpflacs ; do
     dname=$(dirname $tmpflac)
     bname=$(basename $tmpflac)
-    outflac=$name/${bname:1}
+    outflac=$dname/${bname:1}
     mv $tmpflac $outflac
 done
 sleep 10
