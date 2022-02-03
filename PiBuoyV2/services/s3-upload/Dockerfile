@@ -3,8 +3,8 @@ LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
 RUN apk update && apk add bash tar xz
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
-COPY prep_and_send.sh /prep_and_send.sh
+COPY prep_and_send.py /prep_and_send.py
 ARG VERSION
 ENV VERSION $VERSION
-ENTRYPOINT ["/prep_and_send.sh"]
+ENTRYPOINT ["/prep_and_send.py"]
 CMD [""]
