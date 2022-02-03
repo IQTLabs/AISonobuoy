@@ -42,7 +42,8 @@ while running:
         tmp_filename = f'{f_dir}/.{basename}'
         # check if 15 minutes have elapsed
         if int(time.time()*1000) >= (start_time + 900000):
-            os.rename(tmp_filename, filename)
+            if os.path.exists(tmp_filename):
+                os.rename(tmp_filename, filename)
             start_time = int(time.time()*1000)
         if len(records) > 0:
             with open(tmp_filename, 'a') as f:
