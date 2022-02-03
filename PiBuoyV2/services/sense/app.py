@@ -163,24 +163,48 @@ class Telemetry:
                 record = {"target":key, "datapoints": self.sensor_data[key]}
                 f.write(f'{json.dumps(record)}\n')
         self.rename_dotfiles(self.sensor_dir)
+        status = self.status_hook()
+        print(f'Status update response: {status}')
 
 
-    def shutdown_hook(self, data):
+    def shutdown_hook(self):
         data = {}
         # TODO don't use dummy data
-        data['title'] = self.hostname # TODO plus location
+        data['title'] = os.path.join(self.hostname, self.location)
         data['themeColor'] = "d95f02"
         data['body_title'] = "Shutting system down"
         data['body_subtitle'] = "Low battery"
         data['text'] = ""
-        data['facts'] = [{"name": "Battery Percent", "value": "5"}, {"name": "Uptime", "value": "12:17  up 51 days, 17:02"}]
+        data['facts'] = self.status_data()
         card = insert_message_data(data)
         status = send_hook(card)
         return status
 
 
+    def status_hook(self):
+        data = {}
+        data['title'] = os.path.join(self.hostname, self.location)
+        data['body_title'] = "Status Update"
+        data['body_subtitle'] = "n / n checks healthy" # TODO replace n / n
+        # TODO if not all checks are healthy
+        #    data['themeColor'] = "d95f02"
+        data['text'] = ""
+        data['facts'] = self.status_data()
+        card = insert_message_data(data)
+        status = send_hook(card)
+        return status
+
+
+    def status_data(self):
+        facts = []
+        for key in self.sensor_data.keys():
+            # TODO check specific keys for healthy
+            facts.append({"name": key, "value": self.sensor_data[key][-1]})
+        return facts
+
     def main(self):
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
+        self.location = os.getenv("LOCATION", "unknown")
         base_dir = '/flash/telemetry'
         self.sensor_dir = os.path.join(base_dir, 'sensors')
         os.makedirs(self.sensor_dir, exist_ok=True)
