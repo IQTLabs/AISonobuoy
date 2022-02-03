@@ -18,7 +18,7 @@ do_tar () {
     # find files to tar and remove, that don't begin with "."
     tarfiles=$(cd $tardir && find . -type f -regex '.+\/[^\.].+$' -print)
     if [[ "$tarfiles" != "" ]] ; then
-	    XZ_OPT="-9" $(cd $tardir && tar --remove_files --sort='name' $tarflags -cf $tarfile ${tarfiles})
+        XZ_OPT="-9" $(cd $tardir && tar --remove_files --sort='name' $tarflags -cf $tarfile ${tarfiles})
     fi
 }
 

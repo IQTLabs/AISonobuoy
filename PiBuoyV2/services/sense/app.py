@@ -205,7 +205,6 @@ class Telemetry:
         # Cycle through getting readings forever
         cycles = 1
         write_cycles = 1
-        write_timestamp = int(time.time()*1000)
         while True:
             # TODO: write out data if exception with a try/except
             timestamp = int(time.time()*1000)
@@ -318,6 +317,7 @@ class Telemetry:
 
             # Write out data
             if write_cycles == MINUTES_BETWEEN_WRITES:
+                write_timestamp = int(time.time()*1000)
                 self.write_sensor_data(write_timestamp)
                 self.init_sensor_data()
 
