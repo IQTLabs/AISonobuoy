@@ -13,7 +13,7 @@ from hooks import send_hook
 
 # plus 0.5 second for status per wake and plus time to run loop
 MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
-MINUTES_BETWEEN_WRITES = 60
+MINUTES_BETWEEN_WRITES = 15
 CYCLES_BEFORE_STATUS_CHECK = 1/MINUTES_BETWEEN_WAKES
 # if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
 if CYCLES_BEFORE_STATUS_CHECK < 1:
@@ -149,11 +149,10 @@ class Telemetry:
                            }
 
 
-    @staticmethod
-    def rename_dotfiles(flashdir):
-        for dotfile in glob.glob(os.path.join(flashdir, '.*')):
+    def rename_dotfiles(self):
+        for dotfile in glob.glob(os.path.join(self.sensor_dir, '.*')):
             basename = os.path.basename(dotfile)
-            non_dotfile = os.path.join(flashdir, basename[1:])
+            non_dotfile = os.path.join(self.sensor_dir, basename[1:])
             os.rename(dotfile, non_dotfile)
 
 
@@ -329,6 +328,7 @@ class Telemetry:
                 write_timestamp = int(time.time()*1000)
                 self.write_sensor_data(write_timestamp)
                 self.init_sensor_data()
+                write_cycles = 1
 
             # Keep lights for 0.5 second
             time.sleep(0.5)
