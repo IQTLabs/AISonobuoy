@@ -13,7 +13,7 @@ from hooks import send_hook
 
 # plus 0.5 second for status per wake and plus time to run loop
 MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
-MINUTES_BETWEEN_WRITES = 60
+MINUTES_BETWEEN_WRITES = 15
 CYCLES_BEFORE_STATUS_CHECK = 1/MINUTES_BETWEEN_WAKES
 # if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
 if CYCLES_BEFORE_STATUS_CHECK < 1:
