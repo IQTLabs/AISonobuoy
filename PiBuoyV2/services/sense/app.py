@@ -149,11 +149,10 @@ class Telemetry:
                            }
 
 
-    @staticmethod
-    def rename_dotfiles(flashdir):
-        for dotfile in glob.glob(os.path.join(flashdir, '.*')):
+    def rename_dotfiles(self):
+        for dotfile in glob.glob(os.path.join(self.sensor_dir, '.*')):
             basename = os.path.basename(dotfile)
-            non_dotfile = os.path.join(flashdir, basename[1:])
+            non_dotfile = os.path.join(self.sensor_dir, basename[1:])
             os.rename(dotfile, non_dotfile)
 
 
@@ -329,6 +328,7 @@ class Telemetry:
                 write_timestamp = int(time.time()*1000)
                 self.write_sensor_data(write_timestamp)
                 self.init_sensor_data()
+                write_cycles = 1
 
             # Keep lights for 0.5 second
             time.sleep(0.5)
