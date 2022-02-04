@@ -4,7 +4,7 @@ import os
 import subprocess
 import tempfile
 import unittest
-from app import tar_dir, s3_copy
+from app import tar_dir, s3_copy  # pylint: disable=no-name-in-module
 
 
 class apptest(unittest.TestCase):
