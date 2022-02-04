@@ -191,6 +191,7 @@ class Telemetry:
         #    data['themeColor'] = "d95f02"
         data['text'] = ""
         data['facts'] = self.status_data()
+        print(f'{data}')
         card = insert_message_data(data)
         status = send_hook(card)
         return status
@@ -203,6 +204,7 @@ class Telemetry:
             if len(self.sensor_data[key]) > 0:
                 facts.append({"name": key, "value": self.sensor_data[key][-1]})
         return facts
+
 
     def main(self):
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
