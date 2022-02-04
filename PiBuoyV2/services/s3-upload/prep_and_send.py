@@ -10,7 +10,7 @@ from pathlib import Path
 
 START_SLEEP = 3600
 S3_BUCKET = 's3://aisonobuoy-pibuoy-v2/compressed/'
-FLASH_DIR = '/flash'
+FLASH_DIR = '/flash/telemetry'
 S3_DIR = os.path.join(FLASH_DIR, 's3')
 TELEMETRY_TYPES = [
     ('system', True), ('power', True), ('ais', True), ('hydrophone', False)]
