@@ -19,5 +19,5 @@ jobs:
           sudo apt-get update && sudo apt-get install python3-dev && \
               find PiBuoyV2 -type f -name \*requirements.txt -exec pip3 install -r {} \; && \
               pylint -E $(find PiBuoyV2 -type f -name \*py) && \
-              find PiBuoyV2 -type f -name \*py | xargs -0 -n1 pytype && \
+              find PiBuoyV2 -type f -name \*py | xargs -n1 pytype && \
               pytest PiBuoyV2
