@@ -10,7 +10,8 @@ from pathlib import Path
 
 START_SLEEP = 3600
 S3_BUCKET = 's3://aisonobuoy-pibuoy-v2/compressed/'
-FLASH_DIR = '/flash/telemetry'
+FLASH_DIR = '/flash'
+TELEMETRY_DIR = os.path.join(FLASH_DIR, 'telemetry')
 S3_DIR = os.path.join(FLASH_DIR, 's3')
 TELEMETRY_TYPES = [
     ('system', True), ('power', True), ('ais', True), ('hydrophone', False)]
@@ -20,9 +21,13 @@ def run_cmd(args, env=None):
     if env is None:
         env = os.environ.copy()
     print(f'running {args}')
-    ret = subprocess.check_call(args)
-    if not ret:
+    ret = -1
+    try:
+        ret = subprocess.check_call(args)
         print('%s returned %d' % (' '.join(args), ret))
+    except subprocess.CalledProcessError as err:
+        print('%s returned %s' % (' '.join(args), err))
+    return ret == 0
 
 
 def get_nondot_files(filedir):
@@ -30,11 +35,12 @@ def get_nondot_files(filedir):
             if not os.path.basename(path).startswith('.')]
 
 
-def s3_copy(filedir):
+def s3_copy(filedir, aws='/usr/local/bin/aws'):
     for path in Path(filedir).rglob('*'):
         if os.path.isfile(path):
-            s3_args = ['/usr/local/bin/aws', 's3', 'cp', str(path), S3_BUCKET]
-            run_cmd(s3_args)
+            s3_args = [aws, 's3', 'cp', str(path), S3_BUCKET]
+            if run_cmd(s3_args):
+                os.remove(path)
 
 
 def tar_dir(filedir, tarfile, xz=False):
@@ -60,7 +66,7 @@ def main():
         os.mkdir(S3_DIR)
 
     for telemetry, xz in TELEMETRY_TYPES:
-        filedir = os.path.join(FLASH_DIR, telemetry)
+        filedir = os.path.join(TELEMETRY_DIR, telemetry)
         if not os.path.exists(filedir):
             os.mkdir(filedir)
         tarfile = f'{S3_DIR}/{telemetry}-{hostname}-{timestamp}.tar'
