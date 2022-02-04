@@ -1,3 +1,5 @@
+![cad-image](media/cad-image.jpg)
+
 The following are the hardware and software requirements and installation instructions for the Raspberry Pi Zero buoy version.
 
 # Hardware Requirements
@@ -10,6 +12,8 @@ The following are the hardware and software requirements and installation instru
 - pHAT Stack
 - 12000mAh PiJuice Battery
 - H2A Hydrophone
+- Seahorse 56 Micro Case
+- [3D Printed Chasis](stl-files)
 
 # Hardware configuration installation
 
