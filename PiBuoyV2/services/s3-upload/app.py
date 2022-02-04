@@ -14,7 +14,7 @@ FLASH_DIR = '/flash'
 TELEMETRY_DIR = os.path.join(FLASH_DIR, 'telemetry')
 S3_DIR = os.path.join(FLASH_DIR, 's3')
 TELEMETRY_TYPES = [
-    ('system', True), ('power', True), ('ais', True), ('hydrophone', False)]
+    ('system', True), ('sensors', True), ('power', True), ('ais', True), ('hydrophone', False)]
 
 
 def run_cmd(args, env=None):

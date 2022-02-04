@@ -4,10 +4,10 @@ import os
 import subprocess
 import tempfile
 import unittest
-from prep_and_send import tar_dir, s3_copy
+from app import tar_dir, s3_copy  # pylint: disable=no-name-in-module
 
 
-class prepsendtest(unittest.TestCase):
+class apptest(unittest.TestCase):
 
     def test_s3_copy(self):
         with tempfile.TemporaryDirectory() as tmpdir:
