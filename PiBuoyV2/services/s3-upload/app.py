@@ -59,7 +59,7 @@ def tar_dir(filedir, tarfile, xz=False):
 
 def main():
     time.sleep(START_SLEEP)
-    hostname = platform.node()
+    hostname = os.getenv("HOSTNAME", platform.node())
     now = datetime.now()
     timestamp = now.strftime('%s%f')
     if not os.path.exists(S3_DIR):
