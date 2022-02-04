@@ -37,12 +37,13 @@ off = (0, 0, 0)
 class Telemetry:
 
     def __init__(self):
-        self.sense = SenseHat()
+        self.sense = None
         self.sensor_dir = None
         self.hostname = None
         self.location = None
 
     def init_sense(self):
+        self.sense = SenseHat()
         self.sense.clear()
         self.sense.low_light = True
 
