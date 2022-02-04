@@ -5,6 +5,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: build 
+    - name: test
       run: |
-          sudo apt-get update && sudo apt-get install -f python3-dev && pip3 install -r ./PiBuoy/sleepypid/requirements.txt && ./PiBuoy/sleepypid/test_sleepypid.py
+          sudo apt-get update && sudo apt-get install -f python3-dev && \
+          pip3 install -r ./PiBuoy/sleepypid/requirements.txt && \
+          ./PiBuoy/sleepypid/test_sleepypid.py
+  pibuoy2py:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: test
+      run: |
+          sudo apt-get update && sudo apt-get install python3-dev && \
+              find PiBuoyV2 -type f -name \*requirements.txt -exec pip3 install -r {} \; && \
+              pylint -E $(find PiBuoyV2 -type f -name \*py) && \
+              find PiBuoyV2 -type f -name \*py | xargs -0 -n1 pytype && \
+              pytest PiBuoyV2
