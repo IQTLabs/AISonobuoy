@@ -5,7 +5,7 @@ import socket
 import subprocess
 import time
 
-from sense_hat import SenseHat
+from sense_hat import SenseHat  # pytype: disable=import-error
 
 from hooks import insert_message_data
 from hooks import send_hook
@@ -37,11 +37,12 @@ off = (0, 0, 0)
 class Telemetry:
 
     def __init__(self):
-        pass
-
+        self.sense = None
+        self.sensor_dir = None
+        self.hostname = None
+        self.location = None
 
     def init_sense(self):
-        # Initialize the Sense Hat
         self.sense = SenseHat()
         self.sense.clear()
         self.sense.low_light = True

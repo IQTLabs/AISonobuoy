@@ -4,7 +4,7 @@ import os
 import socket
 import time
 
-import pijuice
+import pijuice  # pylint: disable=import-error # pytype: disable=import-error
 
 def rename_dotfiles(flashdir):
     for dotfile in glob.glob(os.path.join(flashdir, '.*')):
