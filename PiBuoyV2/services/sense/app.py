@@ -125,7 +125,7 @@ class Telemetry:
 
 
     def init_sensor_data(self):
-        self.sensor_data = {"temperature": [],
+        self.sensor_data = {"temperature_c": [],
                             "pressure": [],
                             "humidity": [],
                             "acceleration_x": [],
@@ -138,12 +138,12 @@ class Telemetry:
                             "compass_y": [],
                             "compass_z": [],
                             "system_load": [],
-                            "memory": [],
+                            "memory_mb": [],
                             "internet": [],
                             "battery": [],
                             "ais_record": [],
                             "hydrophone_recording": [],
-                            "disk_space": [],
+                            "disk_space_gb": [],
                             "version": [],
                             "files_to_upload": [],
                             "data_files": [],
@@ -191,7 +191,6 @@ class Telemetry:
         #    data['themeColor'] = "d95f02"
         data['text'] = ""
         data['facts'] = self.status_data()
-        print(f'{data}')
         card = insert_message_data(data)
         status = send_hook(card)
         return status
@@ -296,7 +295,7 @@ class Telemetry:
 
                 # system health: memory
                 total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-                self.sensor_data["memory"].append([used_memory, timestamp])
+                self.sensor_data["memory_mb"].append([used_memory, timestamp])
                 if used_memory/total_memory > 0.9:
                     self.display(7, 2, red)
                 elif used_memory/total_memory > 0.7:
@@ -307,8 +306,8 @@ class Telemetry:
                 # system health: disk space
                 st = os.statvfs('/')
                 bytes_avail = (st.f_bavail * st.f_frsize)
-                gb_free = bytes_avail / 1024 / 1024 / 1024
-                self.sensor_data["disk_space"].append([gb_free, timestamp])
+                gb_free = round(bytes_avail / 1024 / 1024 / 1024, 1)
+                self.sensor_data["disk_space_gb"].append([gb_free, timestamp])
                 if gb_free < 2:
                     self.display(6, 7, red)
                 elif gb_free < 10:
@@ -322,7 +321,7 @@ class Telemetry:
 
             # Take readings from sensors
             t = self.get_temperature()
-            self.sensor_data["temperature"].append([t, timestamp])
+            self.sensor_data["temperature_c"].append([t, timestamp])
             if t < 5 or t > 70:
                 self.display(1, 0, red)
             elif t < 10 or t > 65:
