@@ -202,7 +202,7 @@ class Telemetry:
         for key in self.sensor_data.keys():
             # TODO check specific keys for healthy
             if len(self.sensor_data[key]) > 0:
-                facts.append({"name": key, "value": self.sensor_data[key][-1]})
+                facts.append({"name": key, "value": str(self.sensor_data[key][-1][0])})
         return facts
 
 
