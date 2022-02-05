@@ -32,6 +32,8 @@ def init_data():
                     "power_input_5v": [],
                     "io_voltage": [],
                     "io_current": [],
+                    "watchdog_reset": [],
+                    "charging_temperature_fault": [],
                    }
     return pijuice_data
 
