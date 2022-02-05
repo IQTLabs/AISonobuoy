@@ -58,23 +58,24 @@ def tar_dir(filedir, tarfile, xz=False):
 
 
 def main():
-    time.sleep(START_SLEEP)
     hostname = os.getenv("HOSTNAME", platform.node())
-    now = datetime.now()
-    timestamp = now.strftime('%s%f')
-    if not os.path.exists(S3_DIR):
-        os.mkdir(S3_DIR)
+    while True:
+        time.sleep(START_SLEEP)
+        now = datetime.now()
+        timestamp = now.strftime('%s%f')
+        if not os.path.exists(S3_DIR):
+            os.mkdir(S3_DIR)
 
-    for telemetry, xz in TELEMETRY_TYPES:
-        filedir = os.path.join(TELEMETRY_DIR, telemetry)
-        if not os.path.exists(filedir):
-            os.mkdir(filedir)
-        tarfile = f'{S3_DIR}/{telemetry}-{hostname}-{timestamp}.tar'
-        if xz:
-            tarfile = tarfile + '.xz'
-        print(f'processing {filedir}, tar {tarfile}')
-        tar_dir(filedir, tarfile, xz=xz)
-    s3_copy(S3_DIR)
+        for telemetry, xz in TELEMETRY_TYPES:
+            filedir = os.path.join(TELEMETRY_DIR, telemetry)
+            if not os.path.exists(filedir):
+                os.mkdir(filedir)
+            tarfile = f'{S3_DIR}/{telemetry}-{hostname}-{timestamp}.tar'
+            if xz:
+                tarfile = tarfile + '.xz'
+            print(f'processing {filedir}, tar {tarfile}')
+            tar_dir(filedir, tarfile, xz=xz)
+        s3_copy(S3_DIR)
 
 
 if __name__ == '__main__':
