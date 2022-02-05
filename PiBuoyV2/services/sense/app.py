@@ -138,12 +138,12 @@ class Telemetry:
                             "compass_y": [],
                             "compass_z": [],
                             "system_load": [],
-                            "memory_mb": [],
+                            "memory_used_mb": [],
                             "internet": [],
                             "battery": [],
                             "ais_record": [],
-                            "hydrophone_recording": [],
-                            "disk_space_gb": [],
+                            "audio_record": [],
+                            "disk_free_gb": [],
                             "version": [],
                             "files_to_upload": [],
                             "data_files": [],
@@ -273,7 +273,7 @@ class Telemetry:
 
                 # recordings: see if new recording file since last session, or if more bytes have been written
                 hydrophone, hydrophone_file, hydrophone_size = self.check_hydrophone(hydrophone_dir, hydrophone_file, hydrophone_size)
-                self.sensor_data["hydrophone_recording"].append([hydrophone, timestamp])
+                self.sensor_data["audio_record"].append([hydrophone, timestamp])
                 if hydrophone:
                     self.display(7, 5, blue)
                 else:
@@ -295,7 +295,7 @@ class Telemetry:
 
                 # system health: memory
                 total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-                self.sensor_data["memory_mb"].append([used_memory, timestamp])
+                self.sensor_data["memory_used_mb"].append([used_memory, timestamp])
                 if used_memory/total_memory > 0.9:
                     self.display(7, 2, red)
                 elif used_memory/total_memory > 0.7:
@@ -307,7 +307,7 @@ class Telemetry:
                 st = os.statvfs('/')
                 bytes_avail = (st.f_bavail * st.f_frsize)
                 gb_free = round(bytes_avail / 1024 / 1024 / 1024, 1)
-                self.sensor_data["disk_space_gb"].append([gb_free, timestamp])
+                self.sensor_data["disk_free_gb"].append([gb_free, timestamp])
                 if gb_free < 2:
                     self.display(6, 7, red)
                 elif gb_free < 10:
