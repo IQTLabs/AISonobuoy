@@ -1,3 +1,3 @@
 #!/bin/sh
 
-echo true > /shutdown.signal
+echo true > /var/run/shutdown.signal
