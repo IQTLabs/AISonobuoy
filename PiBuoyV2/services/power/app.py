@@ -87,6 +87,7 @@ def main():
         if write_cycles == 15:  # write out every 15 minutes
             write_timestamp = int(time.time()*1000)
             write_data(hostname, write_timestamp, data_dir, data)
+            data = init_data()
             write_cycles = 1
         write_cycles += 1
         time.sleep(60)  # 1 minute between checks
