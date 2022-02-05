@@ -15,7 +15,7 @@ services:
     restart: always
     network_mode: "none"
     volumes:
-      - "/var/run/shutdown_signal:/shutdown_signal"
+      - "/var/run/shutdown.signal:/shutdown.signal"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   power:
