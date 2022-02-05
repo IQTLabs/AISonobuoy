@@ -10,7 +10,7 @@
  },
  "user_functions": {
     "USER_FUNC8": "",
-    "USER_FUNC1": "/opt/AISonobuoy/PiBuoyV2/shutdown.sh",
+    "USER_FUNC1": "/opt/AISonobuoy/PiBuoyV2/scripts/shutdown.sh",
     "USER_FUNC2": "",
     "USER_FUNC3": "",
     "USER_FUNC4": "",
