@@ -79,6 +79,8 @@ Add the following lines, save, and quit:
 ```
 # every five minutes
 */5 * * * * /opt/AISonobuoy/PiBuoyV2/scripts/system_health.sh
+# every minute check if need to shutdown
+* * * * * /opt/AISonobuoy/PiBuoyV2/scripts/shutdown.sh
 ```
 
 11. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that a role that can write to the S3 bucket.
