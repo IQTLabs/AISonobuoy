@@ -1,5 +1,6 @@
 FROM python:3.10-slim
 LABEL maintainer="Charlie Lewis <clewis@iqt.org>"
+ENV PYTHONUNBUFFERED 1
 ENV PIJUICE_BUILD_BASE 1
 ENV PIJUICE_VERSION 1.7
 RUN apt-get update && apt-get install --no-install-recommends -y build-essential git i2c-tools
