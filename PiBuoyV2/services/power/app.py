@@ -49,6 +49,9 @@ def get_data(pj, data):
         data["power_input_5v"].append([status["powerInput5vIo"], timestamp])
         data["io_voltage"].append([pj.status.GetIoVoltage()["data"] / 1000, timestamp])
         data["io_current"].append([pj.status.GetIoCurrent()["data"] / 1000, timestamp])
+        data["watchdog_reset"].append([pj.status.GetFaultStatus()["data"]["watchdog_reset"], timestamp])
+        data["charging_temperature_fault"].append([pj.status.GetFaultStatus()["data"]["charging_temperature_fault"], timestamp])
+        pj.status.ResetFaultFlags(["watchdog_reset"])
     except Exception as e:
         print(f'Failed to read PiJuice because: {e}')
     return data

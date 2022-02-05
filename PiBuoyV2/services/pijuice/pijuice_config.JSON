@@ -1,0 +1,40 @@
+{"system_events": {
+    "low_charge": {
+      "function": "USER_FUNC1",
+      "enabled": true
+    },
+    "watchdog_reset": {
+      "function": "USER_EVENT",
+      "enabled": true
+    }
+ },
+ "user_functions": {
+    "USER_FUNC8": "",
+    "USER_FUNC1": "/opt/AISonobuoy/PiBuoyV2/shutdown.sh",
+    "USER_FUNC2": "",
+    "USER_FUNC3": "",
+    "USER_FUNC4": "",
+    "USER_FUNC5": "",
+    "USER_FUNC6": "",
+    "USER_FUNC7": ""
+ },
+ "system_task": {
+    "watchdog": {
+      "enabled": true,
+      "period": "60"
+    },
+    "min_charge": {
+      "enabled": true,
+      "threshold": "5"
+    },
+    "wakeup_on_charge": {
+      "enabled": true,
+      "trigger_level": "10"
+    },
+    "ext_halt_power_off": {
+      "enabled": true,
+      "period": "30"
+    },
+    "enabled": true
+ }
+}
