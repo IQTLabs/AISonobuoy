@@ -14,6 +14,8 @@ services:
     image: iqtlabs/aisonobuoy-pijuice:stable
     restart: always
     network_mode: "none"
+    volumes:
+      - "/var/run/shutdown_signal:/shutdown_signal"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   power:
