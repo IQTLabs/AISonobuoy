@@ -167,6 +167,7 @@ class Telemetry:
                             "battery_voltage": [],
                             "battery_current": [],
                             "battery_temperature": [],
+                            "battery_status": [],
                             "power_input": [],
                             "power_input_5v": [],
                             "io_current": [],
