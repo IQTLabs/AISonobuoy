@@ -19,7 +19,7 @@ RUN python3 -c "from pijuice import PiJuice"
 COPY pijuice_config.JSON /var/lib/pijuice/pijuice_config.JSON
 COPY shutdown.sh /shutdown.sh
 RUN usermod -a -G pijuice pi
-RUN chown pi:pi /shutdown.sh
+RUN chown pi:root /shutdown.sh
 ARG VERSION
 ENV VERSION $VERSION
 ENTRYPOINT ["/usr/bin/pijuice_sys.py"]
