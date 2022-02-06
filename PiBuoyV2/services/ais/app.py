@@ -20,7 +20,7 @@ def getAIS(aisc, results):
     if data:
         try:
             msg = decode_raw(data)
-            timestamp = int(time.time()*1000)
+            timestamp = int(time.time())
             for key in msg.keys():
                 if key in ['status', 'maneuver', 'epfd', 'shiptype', 'aid_type', 'station_type', 'ship_type', 'txrx', 'interval']:
                     msg[key] = msg[key].name
@@ -39,7 +39,7 @@ def rename_dotfiles(flashdir):
         os.rename(dotfile, non_dotfile)
 
 
-start_time = int(time.time()*1000)
+start_time = int(time.time())
 records = []
 while running:
     hostname = os.getenv("HOSTNAME", socket.gethostname())
@@ -48,9 +48,9 @@ while running:
     try:
         tmp_filename = f'{f_dir}/.{hostname}-{start_time}-ais.json'
         # check if 15 minutes have elapsed
-        if int(time.time()*1000) >= (start_time + 900000):
+        if int(time.time()) >= (start_time + 900):
             rename_dotfiles(f_dir)
-            start_time = int(time.time()*1000)
+            start_time = int(time.time())
         if len(records) > 0:
             with open(tmp_filename, 'a') as f:
                 for record in records:
