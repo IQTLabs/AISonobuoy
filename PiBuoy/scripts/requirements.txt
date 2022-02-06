@@ -3,5 +3,5 @@ awscli==1.22.49
 gpsd-py3==0.3.0
 pyais==1.5.0
 pyserial==3.5
-RPi.GPIO==0.7.0
+RPi.GPIO==0.7.1
 smbus==1.1.post2
