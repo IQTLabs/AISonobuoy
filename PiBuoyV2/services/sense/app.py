@@ -119,6 +119,20 @@ class Telemetry:
         return False, ais_file, ais_records
 
 
+    def check_power(self, power_dir, power_file):
+        files = sorted([f for f in os.listdir(power_dir) if os.path.isfile(os.path.join(power_dir, f))])
+        if not files:
+            return power_file
+        elif os.path.join(power_dir, files[-1]) != power_file:
+            power_file = os.path.join(power_dir, files[-1])
+        with open(power_file, 'r') as f:
+            for line in f:
+                record = json.loads(line.strip())
+                if record['target'] in self.sensor_data:
+                    self.sensor_data[record['target']].append(record['datapoints'][-1])
+        return power_file
+
+
     def check_hydrophone(self, hydrophone_dir, hydrophone_file, hydrophone_size):
         # TODO
         return True, hydrophone_file, hydrophone_size
@@ -147,6 +161,16 @@ class Telemetry:
                             "version": [],
                             "files_to_upload": [],
                             "data_files": [],
+                            "uptime_seconds": [],
+                            "battery_charge": [],
+                            "battery_voltage": [],
+                            "battery_current": [],
+                            "battery_temperature": [],
+                            "power_input": [],
+                            "power_input_5v": [],
+                            "io_current": [],
+                            "watchdog_reset": [],
+                            "charging_temperature_fault": [],
                            }
 
 
@@ -220,6 +244,7 @@ class Telemetry:
         hydrophone_file = None
         hydrophone_size = 0
         power_dir = os.path.join(base_dir, 'power')
+        power_file = None
         s3_dir = '/flash/s3'
         s3_files = 0
 
@@ -246,7 +271,8 @@ class Telemetry:
             # If the middle button on the joystick is pressed, shutdown the system
             for event in self.sense.stick.get_events():
                 if event.action == "released" and event.direction == "middle":
-                    subprocess.run("/opt/AISonobuoy/PiBuoyV2/scripts/shutdown.sh")
+                    # TODO
+                    pass
 
             # Light up top left pixel for cycle
             self.display(0, 0, blue)
@@ -315,7 +341,11 @@ class Telemetry:
                 else:
                     self.display(6, 7, blue)
 
+                # system uptime (linux only!)
+                self.sensor_data["uptime_seconds"].append([time.clock_gettime(time.CLOCK_BOOTTIME), timestamp])
+
                 # battery: check current battery level from pijuice hopefully, change color based on level
+                power_file = self.check_power(power_dir, power_file)
 
                 # version: updated?
 
@@ -352,7 +382,7 @@ class Telemetry:
 
             # Write out data
             if write_cycles == MINUTES_BETWEEN_WRITES:
-                write_timestamp = int(time.time()*1000)
+                write_timestamp = int(time.time())
                 self.write_sensor_data(write_timestamp)
                 self.init_sensor_data()
                 write_cycles = 1

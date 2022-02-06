@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-from datetime import datetime
 import subprocess
 import time
 import os
@@ -61,8 +60,7 @@ def main():
     hostname = os.getenv("HOSTNAME", platform.node())
     while True:
         time.sleep(START_SLEEP)
-        now = datetime.now()
-        timestamp = now.strftime('%s%f')
+        timestamp = int(time.time())
         if not os.path.exists(S3_DIR):
             os.mkdir(S3_DIR)
 
