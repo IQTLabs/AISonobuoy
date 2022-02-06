@@ -38,6 +38,7 @@ class Telemetry:
 
     def __init__(self):
         self.sense = None
+        self.sensor_data = None
         self.sensor_dir = None
         self.hostname = None
         self.location = None
