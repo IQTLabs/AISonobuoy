@@ -1,6 +1,6 @@
 #!/bin/bash
 
-timestamp=$(date +%s%3N)
+timestamp=$(date +%s)
 hostname=$(hostname)
 output_dir=/flash/telemetry/system
 mkdir -p "$output_dir"
