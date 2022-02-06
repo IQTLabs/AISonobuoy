@@ -34,8 +34,10 @@ sudo apt-get install git python3-pip screen tmux
 ```
 sudo systemctl stop avahi-daemon.service
 sudo systemctl stop avahi-daemon.socket
+sudo systemctl stop apt-daily-upgrade.service
 sudo systemctl disable avahi-daemon.service
 sudo systemctl disable avahi-daemon.socket
+sudo systemctl disable apt-daily-upgrade.service
 ```
 
 4. Disable tvservice since this is going to be completely headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local before the `exit 0`.
