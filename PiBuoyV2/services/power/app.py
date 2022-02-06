@@ -77,9 +77,8 @@ def main():
 
     pj = pijuice.PiJuice(1, 0x14)
 
-    # TODO set config for wakeup/shutdown
     pj.config.SetBatteryProfile('PJLIPO_12000')
-    pj.rtcAlarm.SetWakeupEnabled(True)
+    pj.rtcAlarm.SetWakeupEnabled(False)
 
     write_cycles = 1
     while True:
