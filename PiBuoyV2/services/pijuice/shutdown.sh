@@ -1,3 +1,3 @@
 #!/bin/sh
 
-echo true > /var/run/shutdown.signal
+echo 'true' | sudo tee /var/run/shutdown.signal > /dev/null
