@@ -322,7 +322,7 @@ class Telemetry:
                     self.display(7, 3, blue)
 
                 # system health: memory
-                total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+                total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[1].split()[1:])
                 self.sensor_data["memory_used_mb"].append([used_memory, timestamp])
                 if used_memory/total_memory > 0.9:
                     self.display(7, 2, red)
