@@ -194,13 +194,12 @@ class Telemetry:
         print(f'Status update response: {status}')
 
 
-    def shutdown_hook(self):
+    def shutdown_hook(self, subtitle):
         data = {}
-        # TODO don't use dummy data
         data['title'] = os.path.join(self.hostname, self.location)
         data['themeColor'] = "d95f02"
         data['body_title'] = "Shutting system down"
-        data['body_subtitle'] = "Low battery"
+        data['body_subtitle'] = subtitle
         data['text'] = ""
         data['facts'] = self.status_data()
         card = insert_message_data(data)
@@ -267,17 +266,32 @@ class Telemetry:
         # Cycle through getting readings forever
         cycles = 1
         write_cycles = 1
+        user_shutdown = False
         while True:
             # TODO: write out data if exception with a try/except
             timestamp = int(time.time()*1000)
             # If the middle button on the joystick is pressed, shutdown the system
             for event in self.sense.stick.get_events():
                 if event.action == "released" and event.direction == "middle":
-                    # TODO
-                    pass
+                    user_shutdown = True
+                    self.shutdown_hook("User initiated")
+                    subprocess.run("/shutdown.sh")
+
+            ## check if a shutdown has been signaled
+            signal_contents = ""
+            try:
+                with open('/var/run/shutdown.signal', 'r') as f:
+                    signal_contents = f.read()
+            except Exception as e:
+                pass
 
             # Light up top left pixel for cycle
             self.display(0, 0, blue)
+
+            if signal_contents.strip() == 'true':
+                self.display(0, 0, red)
+                if not user_shutdown:
+                    self.shutdown_hook("Low battery")
 
             if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
                 cycles = 1

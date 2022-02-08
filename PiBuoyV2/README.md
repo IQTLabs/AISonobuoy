@@ -110,6 +110,11 @@ cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
 ```
 
+16. Update the firmware on the PiJuice to V1.5 (choose 'Firmware' from the menu).
+```
+docker exec -it pibuoyv2_pijuice_1 pijuice_cli
+```
+
 # Verify components are working
 1. Check logs in `/var/log/syslog`, `/var/log/messages`.
 
