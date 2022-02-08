@@ -5,6 +5,7 @@ import socket
 import subprocess
 import time
 
+import docker
 from sense_hat import SenseHat  # pytype: disable=import-error
 
 from hooks import insert_message_data
@@ -42,6 +43,8 @@ class Telemetry:
         self.sensor_dir = None
         self.hostname = None
         self.location = None
+        self.docker = docker.from_env()
+
 
     def init_sense(self):
         self.sense = SenseHat()
@@ -139,6 +142,25 @@ class Telemetry:
         return True, hydrophone_file, hydrophone_size
 
 
+    def get_container_version(self, container):
+        env_vars = container.attrs['Config']['Env']
+        for env_var in env_vars:
+            if env_var.startswith("VERSION="):
+                return env_var.split("=")[-1]
+        return ""
+
+
+    def check_version(self, timestamp):
+        self.sensor_data["version_sense"].append([self.version, timestamp])
+        containers = ["ais", "pijuice", "power", "record", "s3-upload"]
+        for container in containers:
+            try:
+                self.sensor_data["version_"+container].append(
+                    [self.get_container_version(self.docker.containers.get("pibuoyv2_"+container+"_1")), timestamp])
+            except Exception as e:
+                self.sensor_data["version_"+container].append([str(e), timestamp])
+
+
     def init_sensor_data(self):
         self.sensor_data = {"temperature_c": [],
                             "pressure": [],
@@ -173,6 +195,12 @@ class Telemetry:
                             "io_current": [],
                             "watchdog_reset": [],
                             "charging_temperature_fault": [],
+                            "version_ais": [],
+                            "version_pijuice": [],
+                            "version_power": [],
+                            "version_record": [],
+                            "version_s3-upload": [],
+                            "version_sense": [],
                            }
 
 
@@ -233,6 +261,7 @@ class Telemetry:
     def main(self):
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
         self.location = os.getenv("LOCATION", "unknown")
+        self.version = os.getenv("VERSION", "")
         base_dir = '/flash/telemetry'
         self.sensor_dir = os.path.join(base_dir, 'sensors')
         os.makedirs(self.sensor_dir, exist_ok=True)
@@ -252,7 +281,7 @@ class Telemetry:
         # Throwaway readings to calibrate
         for i in range(5):
             # Light up top left to indicate running calibration
-            self.display(0, 0, white)
+            self.display(7, 7, white)
             t = self.get_temperature()
             p = self.get_pressure()
             h = self.get_humidity()
@@ -261,7 +290,7 @@ class Telemetry:
             cx, cy, cz = self.get_compass()
 
         # Turn off top left to indicate calibration is done
-        self.display(0, 0, off)
+        self.display(7, 7, off)
 
         # Cycle through getting readings forever
         cycles = 1
@@ -286,64 +315,71 @@ class Telemetry:
                 pass
 
             # Light up top left pixel for cycle
-            self.display(0, 0, blue)
+            self.display(7, 7, blue)
 
             if signal_contents.strip() == 'true':
-                self.display(0, 0, red)
+                self.display(7, 7, red)
                 if not user_shutdown:
                     self.shutdown_hook("Low battery")
 
             if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
                 cycles = 1
                 write_cycles += 1
-                # TODO check other items for updates (hydrophone recordings, battery, uploads, patching, version)
+
+                # version:
+                self.check_version(timestamp)
+
                 # internet: check if available
                 inet = self.check_internet()
                 self.sensor_data["internet"].append([inet, timestamp])
                 if inet:
-                    self.display(7, 7, blue)
+                    self.display(5, 7, blue)
                 else:
-                    self.display(7, 7, red)
+                    self.display(5, 7, red)
+
+                # docker container health
+                # TODO
+                self.display(4, 7, white)
 
                 # ais: see if new detection since last cycle
                 ais, ais_file, ais_records = self.check_ais(ais_dir, ais_file, ais_records)
                 self.sensor_data["ais_record"].append([ais, timestamp])
                 if ais:
-                    self.display(7, 6, blue)
+                    self.display(6, 5, blue)
                 else:
-                    self.display(7, 6, yellow)
+                    self.display(6, 5, yellow)
 
                 # recordings: see if new recording file since last session, or if more bytes have been written
                 hydrophone, hydrophone_file, hydrophone_size = self.check_hydrophone(hydrophone_dir, hydrophone_file, hydrophone_size)
                 self.sensor_data["audio_record"].append([hydrophone, timestamp])
                 if hydrophone:
-                    self.display(7, 5, blue)
+                    self.display(5, 5, blue)
                 else:
-                    self.display(7, 5, yellow)
-
-                # docker container health
+                    self.display(5, 5, yellow)
 
                 # uploads: see if files are gone ?
+                # TODO
+                self.display(4, 5, white)
 
                 # system health: load
                 load = os.getloadavg()
                 self.sensor_data["system_load"].append([load[0], timestamp])
                 if load[0] > 2:
-                    self.display(7, 3, red)
+                    self.display(6, 6, red)
                 elif load[0] > 1:
-                    self.display(7, 3, yellow)
+                    self.display(6, 6, yellow)
                 else:
-                    self.display(7, 3, blue)
+                    self.display(6, 6, blue)
 
                 # system health: memory
                 total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[1].split()[1:4])
                 self.sensor_data["memory_used_mb"].append([used_memory, timestamp])
                 if used_memory/total_memory > 0.9:
-                    self.display(7, 2, red)
+                    self.display(5, 6, red)
                 elif used_memory/total_memory > 0.7:
-                    self.display(7, 2, yellow)
+                    self.display(5, 6, yellow)
                 else:
-                    self.display(7, 2, blue)
+                    self.display(5, 6, blue)
 
                 # system health: disk space
                 st = os.statvfs('/')
@@ -351,50 +387,53 @@ class Telemetry:
                 gb_free = round(bytes_avail / 1024 / 1024 / 1024, 1)
                 self.sensor_data["disk_free_gb"].append([gb_free, timestamp])
                 if gb_free < 2:
-                    self.display(6, 7, red)
+                    self.display(4, 6, red)
                 elif gb_free < 10:
-                    self.display(6, 7, yellow)
+                    self.display(4, 6, yellow)
                 else:
-                    self.display(6, 7, blue)
+                    self.display(4, 6, blue)
 
                 # system uptime (linux only!)
                 self.sensor_data["uptime_seconds"].append([time.clock_gettime(time.CLOCK_BOOTTIME), timestamp])
 
                 # battery: check current battery level from pijuice hopefully, change color based on level
                 power_file = self.check_power(power_dir, power_file)
-
-                # version: updated?
+                # TODO
+                # status, charge level, charging
+                self.dislay(7, 3, white)
+                self.dislay(7, 4, white)
+                self.dislay(7, 5, white)
 
             # Take readings from sensors
             t = self.get_temperature()
             self.sensor_data["temperature_c"].append([t, timestamp])
             if t < 5 or t > 70:
-                self.display(1, 0, red)
+                self.display(6, 3, red)
             elif t < 10 or t > 65:
-                self.display(1, 0, yellow)
+                self.display(6, 3, yellow)
             else:
-                self.display(1, 0, blue)
+                self.display(6, 3, blue)
             p = self.get_pressure()
             self.sensor_data["pressure"].append([p, timestamp])
-            self.display(2, 0, blue)
+            self.display(5, 3, blue)
             h = self.get_humidity()
             self.sensor_data["humidity"].append([h, timestamp])
-            self.display(3, 0, blue)
+            self.display(4, 3, blue)
             ax, ay, az = self.get_acceleration()
             self.sensor_data["acceleration_x"].append([ax, timestamp])
             self.sensor_data["acceleration_y"].append([ay, timestamp])
             self.sensor_data["acceleration_z"].append([az, timestamp])
-            self.display(4, 0, blue)
+            self.display(6, 4, blue)
             gx, gy, gz = self.get_gyro()
             self.sensor_data["gyroscope_x"].append([gx, timestamp])
             self.sensor_data["gyroscope_y"].append([gy, timestamp])
             self.sensor_data["gyroscope_z"].append([gz, timestamp])
-            self.display(5, 0, blue)
+            self.display(5, 4, blue)
             cx, cy, cz = self.get_compass()
             self.sensor_data["compass_x"].append([cx, timestamp])
             self.sensor_data["compass_y"].append([cy, timestamp])
             self.sensor_data["compass_z"].append([cz, timestamp])
-            self.display(6, 0, blue)
+            self.display(4, 4, blue)
 
             # Write out data
             if write_cycles == MINUTES_BETWEEN_WRITES:
