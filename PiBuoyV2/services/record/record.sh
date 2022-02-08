@@ -17,5 +17,4 @@ do
       outflac=$dname/${bname:1}
       mv $tmpflac $outflac
   done
-  sleep 10
 done
