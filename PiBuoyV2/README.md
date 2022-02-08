@@ -44,7 +44,7 @@ sudo systemctl disable avahi-daemon.socket
 sudo systemctl disable apt-daily-upgrade.service
 ```
 
-4. Disable tvservice since this is going to be completely headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local before the `exit 0`.
+4. Disable tvservice since this is going to be completely headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local` before the `exit 0`.
 
 5. Install this repo.
 ```
