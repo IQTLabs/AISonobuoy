@@ -58,6 +58,7 @@ services:
       - "WEBHOOK_URL=${WEBHOOK_URL}"
     volumes:
       - "/flash/telemetry:/flash/telemetry"
+      - "/var/run:/var/run"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   watchtower:

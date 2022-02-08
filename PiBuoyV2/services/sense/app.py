@@ -273,8 +273,7 @@ class Telemetry:
             # If the middle button on the joystick is pressed, shutdown the system
             for event in self.sense.stick.get_events():
                 if event.action == "released" and event.direction == "middle":
-                    # TODO
-                    pass
+                    subprocess.run("/shutdown.sh")
 
             # Light up top left pixel for cycle
             self.display(0, 0, blue)
