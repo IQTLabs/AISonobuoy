@@ -322,6 +322,7 @@ class Telemetry:
                 self.display(7, 7, red)
                 if not user_shutdown:
                     self.shutdown_hook("Low battery")
+                    user_shutdown = True
 
             if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
                 cycles = 1
