@@ -43,6 +43,7 @@ class Telemetry:
         self.sensor_dir = None
         self.hostname = None
         self.location = None
+        self.version = None
         self.docker = docker.from_env()
 
 
@@ -400,9 +401,9 @@ class Telemetry:
                 power_file = self.check_power(power_dir, power_file)
                 # TODO
                 # status, charge level, charging
-                self.dislay(7, 3, white)
-                self.dislay(7, 4, white)
-                self.dislay(7, 5, white)
+                self.display(7, 3, white)
+                self.display(7, 4, white)
+                self.display(7, 5, white)
 
             # Take readings from sensors
             t = self.get_temperature()
