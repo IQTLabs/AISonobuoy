@@ -39,9 +39,11 @@ sudo apt-get install git python3-pip screen tmux
 sudo systemctl stop avahi-daemon.service
 sudo systemctl stop avahi-daemon.socket
 sudo systemctl stop apt-daily-upgrade.service
+sudo systemctl stop apt-daily-upgrade.timer
 sudo systemctl disable avahi-daemon.service
 sudo systemctl disable avahi-daemon.socket
 sudo systemctl disable apt-daily-upgrade.service
+sudo systemctl disable apt-daily-upgrade.timer
 ```
 
 4. Disable tvservice since this is going to be completely headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local` before the `exit 0`.
@@ -110,7 +112,7 @@ cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
 ```
 
-16. Update the firmware on the PiJuice to V1.5 (choose 'Firmware' from the menu).
+16. Update the firmware on the PiJuice to V1.5 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
 ```
 docker exec -it pibuoyv2_pijuice_1 pijuice_cli
 ```
