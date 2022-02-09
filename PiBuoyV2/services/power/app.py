@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import shutil
 import socket
 import time
 
@@ -70,6 +71,11 @@ def main():
     hostname = os.getenv("HOSTNAME", socket.gethostname())
     data_dir = '/flash/telemetry/power'
     os.makedirs(data_dir, exist_ok=True)
+
+    # copy files to host that are needed for pijuice
+    shutil.copyfile('/pijuice_config.JSON', '/var/lib/pijuice/pijuice_config.JSON')
+    shutil.copyfile('/shutdown.sh', '/home/pi/shutdown.sh')
+
     data = init_data()
 
     while not os.path.exists('/dev/i2c-1'):
