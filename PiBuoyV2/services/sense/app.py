@@ -153,7 +153,7 @@ class Telemetry:
 
     def check_version(self, timestamp):
         self.sensor_data["version_sense"].append([self.version, timestamp])
-        containers = ["ais", "pijuice", "power", "record", "s3-upload"]
+        containers = ["ais", "power", "record", "s3-upload"]
         for container in containers:
             try:
                 self.sensor_data["version_"+container].append(
@@ -197,7 +197,6 @@ class Telemetry:
                             "watchdog_reset": [],
                             "charging_temperature_fault": [],
                             "version_ais": [],
-                            "version_pijuice": [],
                             "version_power": [],
                             "version_record": [],
                             "version_s3-upload": [],
