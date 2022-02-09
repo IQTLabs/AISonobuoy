@@ -13,7 +13,7 @@ RUN python3 setup.py build
 RUN python3 setup.py install
 WORKDIR /
 RUN python3 -c "from pijuice import PiJuice"
-RUN groupadd pijuice
+RUN groupadd -g 1001 pijuice
 RUN useradd -rm -s /bin/bash -g pijuice -u 1000 pi
 COPY app.py /app.py
 COPY pijuice_config.JSON /pijuice_config.JSON
