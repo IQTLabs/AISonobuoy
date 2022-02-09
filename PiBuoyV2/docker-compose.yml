@@ -20,7 +20,7 @@ services:
       - "/flash/telemetry/power:/flash/telemetry/power"
       - "/var/lib/pijuice:/var/lib/pijuice"
       - "/var/run:/var/run"
-      - "/home/pi:/pi"
+      - "/home/pi:/home/pi"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   record:
