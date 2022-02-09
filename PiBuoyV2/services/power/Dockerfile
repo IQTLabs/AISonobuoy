@@ -16,6 +16,7 @@ RUN python3 -c "from pijuice import PiJuice"
 COPY app.py /app.py
 COPY pijuice_config.JSON /var/lib/pijuice/pijuice_config.JSON
 COPY shutdown.sh /pi/shutdown.sh
+RUN groupadd pijuice
 RUN useradd -rm -s /bin/bash -g pijuice -u 1001 pi
 RUN chown pi:pijuice /pi/shutdown.sh
 ARG VERSION
