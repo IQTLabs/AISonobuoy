@@ -77,7 +77,7 @@ def main():
     shutil.copyfile('/shutdown.sh', '/home/pi/shutdown.sh')
 
     # fix permissions
-    os.system('chown pi:juice /home/pi/shutdown.sh')
+    os.system('chown 1000:1000 /home/pi/shutdown.sh')
     os.system('chmod +x /home/pi/shutdown.sh')
 
     data = init_data()
