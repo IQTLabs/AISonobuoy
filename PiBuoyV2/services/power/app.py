@@ -76,6 +76,10 @@ def main():
     shutil.copyfile('/pijuice_config.JSON', '/var/lib/pijuice/pijuice_config.JSON')
     shutil.copyfile('/shutdown.sh', '/home/pi/shutdown.sh')
 
+    # fix permissions
+    os.system('chown pi:juice /home/pi/shutdown.sh')
+    os.system('chmod +x /home/pi/shutdown.sh')
+
     data = init_data()
 
     while not os.path.exists('/dev/i2c-1'):

@@ -18,7 +18,6 @@ RUN useradd -rm -s /bin/bash -g pijuice -u 1001 pi
 COPY app.py /app.py
 COPY pijuice_config.JSON /pijuice_config.JSON
 COPY shutdown.sh /shutdown.sh
-RUN chown pi:pijuice /shutdown.sh
 ARG VERSION
 ENV VERSION $VERSION
 ENTRYPOINT ["python3", "/app.py"]
