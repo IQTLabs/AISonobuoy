@@ -48,12 +48,6 @@ jobs:
           --push \
           --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} \
           -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} . && \
-        cd ../pijuice && \
-        docker buildx build \
-          --platform linux/arm \
-          --push \
-          --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} \
-          -t iqtlabs/aisonobuoy-pijuice:${{ steps.change_version.outputs.VERSION }} . && \
         cd ../power && \
         docker buildx build \
           --platform linux/arm \
