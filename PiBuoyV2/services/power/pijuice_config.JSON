@@ -1,4 +1,5 @@
-{"system_events": {
+{
+  "system_events": {
     "low_charge": {
       "function": "USER_FUNC1",
       "enabled": true
@@ -6,9 +7,41 @@
     "watchdog_reset": {
       "function": "USER_EVENT",
       "enabled": true
+    },
+    "low_battery_voltage": {
+      "enabled": false,
+      "function": "NO_FUNC"
+    },
+    "no_power": {
+      "enabled": false,
+      "function": "NO_FUNC"
+    },
+    "power": {
+      "enabled": false,
+      "function": "NO_FUNC"
+    },
+    "button_power_off": {
+      "enabled": false,
+      "function": "NO_FUNC"
+    },
+    "forced_power_off": {
+      "enabled": false,
+      "function": "NO_FUNC"
+    },
+    "forced_sys_power_off": {
+      "enabled": false,
+      "function": "NO_FUNC"
+    },
+    "sys_start": {
+      "enabled": false,
+      "function": "NO_FUNC"
+    },
+    "sys_stop": {
+      "enabled": false,
+      "function": "NO_FUNC"
     }
- },
- "user_functions": {
+  },
+  "user_functions": {
     "USER_FUNC8": "",
     "USER_FUNC1": "/home/pi/shutdown.sh",
     "USER_FUNC2": "",
@@ -16,9 +49,16 @@
     "USER_FUNC4": "",
     "USER_FUNC5": "",
     "USER_FUNC6": "",
-    "USER_FUNC7": ""
- },
- "system_task": {
+    "USER_FUNC7": "",
+    "USER_FUNC9": "",
+    "USER_FUNC10": "",
+    "USER_FUNC11": "",
+    "USER_FUNC12": "",
+    "USER_FUNC13": "",
+    "USER_FUNC14": "",
+    "USER_FUNC15": ""
+  },
+  "system_task": {
     "watchdog": {
       "enabled": true,
       "period": "60"
@@ -35,6 +75,10 @@
       "enabled": true,
       "period": "120"
     },
-    "enabled": true
- }
+    "enabled": true,
+    "min_bat_voltage": {
+      "enabled": false,
+      "threshold": 3.3
+    }
+  }
 }
