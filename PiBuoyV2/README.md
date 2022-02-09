@@ -27,7 +27,7 @@ The following are the hardware and software requirements and installation instru
 2. Install required packages.
 ```
 sudo apt-get update
-sudo apt-get install git python3-pip screen tmux
+sudo apt-get install build-essential git python3-pip python3-smbus python3-urwid screen tmux
 ```
 
 3. Disable unneeded services.
@@ -95,22 +95,29 @@ sudo raspi-config
 -> Interface Options -> I2C -> Yes to enable
 ```
 
-13. Restart.
+13. Install PiJuice service.
+```
+git clone https://github.com/PiSupply/PiJuice.git
+cd PiJuice/Software/Install
+sudo dpkg -i ./pijuice-base_1.8_all.deb
+```
+
+14. Restart.
 ```
 sudo reboot
 ```
 
-14. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+15. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
 
-15. Start PiBuoy containers.
+16. Start PiBuoy containers.
 ```
 cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
 ```
 
-16. Update the firmware on the PiJuice to V1.5 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
+17. Update the firmware on the PiJuice to V1.6 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
 ```
-docker exec -it pibuoyv2_pijuice_1 pijuice_cli
+pijuice_cli
 ```
 
 # Verify components are working
@@ -127,7 +134,6 @@ CONTAINER ID   IMAGE                                 COMMAND                  CR
 b76503cfbada   iqtlabs/aisonobuoy-s3-upload:latest   "/prep_and_send.sh "     36 minutes ago   Up 36 minutes              pibuoyv2_s3-upload_1
 492f3adf50a1   iqtlabs/aisonobuoy-sense:latest       "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_sense_1
 0e5a09f23127   iqtlabs/aisonobuoy-record:latest      "/record.sh "            36 minutes ago   Up 6 minutes               pibuoyv2_record_1
-f7795e64e06a   iqtlabs/aisonobuoy-pijuice:latest     "/usr/local/bin/piju…"   36 minutes ago   Up 36 minutes              pibuoyv2_pijuice_1
 da6bd9f59e0e   iqtlabs/aisonobuoy-ais:latest         "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_ais_1
 2bc024492d88   containrrr/watchtower:armhf-latest    "/watchtower"            36 minutes ago   Up 36 minutes   8080/tcp   pibuoyv2_watchtower_1
 802a7c8cab78   iqtlabs/aisonobuoy-power:latest       "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_power_1
