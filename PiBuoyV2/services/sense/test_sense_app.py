@@ -28,7 +28,7 @@ def test_insert_message_data():
     assert card['title'] == 'foo'
     assert card['themeColor'] == 'foo'
     assert card['sections'][0]['activityTitle'] == 'foo'
-    assert card['sections'][0]['activitySubbtitle'] == 'foo'
+    assert card['sections'][0]['activitySubtitle'] == 'foo'
     assert card['sections'][0]['text'] == 'foo'
     assert card['sections'][0]['facts'] == [{'foo':'bar'}]
 
