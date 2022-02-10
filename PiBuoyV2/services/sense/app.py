@@ -412,9 +412,9 @@ class Telemetry:
                 else:
                     self.display(7, 3, white)
                 if 'battery_charge' in self.sensor_data:
-                    if int(self.sensor_data['battery_charge']) > 50:
+                    if int(self.sensor_data['battery_charge'][-1][0]) > 50:
                         self.display(7, 4, blue)
-                    elif int(self.sensor_data['battery_charge']) > 20:
+                    elif int(self.sensor_data['battery_charge'][-1][0]) > 20:
                         self.display(7, 4, yellow)
                     else:
                         self.display(7, 4, red)
