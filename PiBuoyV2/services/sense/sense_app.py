@@ -530,6 +530,7 @@ class Telemetry:
             cycles += 1
 
 
-t = Telemetry()
-t.init_sense()
-t.main()
+if __name__ == '__main__':
+    t = Telemetry()
+    t.init_sense()
+    t.main()
