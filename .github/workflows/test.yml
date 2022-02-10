@@ -18,6 +18,7 @@ jobs:
       run: |
           sudo apt-get update && sudo apt-get install python3-dev && \
               find PiBuoyV2 -type f -name \*requirements.txt -exec pip3 install -r {} \; && \
+              pip3 install codecov && \
               pylint -E $(find PiBuoyV2 -type f -name \*py) && \
               find PiBuoyV2 -type f -name \*py | xargs -n1 pytype && \
               pytest -v -vv -cov-report term-missing --cov=PiBuoyV2 -c .coveragerc && \
