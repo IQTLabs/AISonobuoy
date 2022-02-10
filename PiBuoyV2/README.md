@@ -87,6 +87,8 @@ Add the following lines, save, and quit:
 ```
 # every five minutes
 */5 * * * * /opt/AISonobuoy/PiBuoyV2/scripts/system_health.sh
+# every thirty minutes
+*/30 * * * * systemctl restart pijuice.service
 # every minute check if need to shutdown
 * * * * * /opt/AISonobuoy/PiBuoyV2/scripts/shutdown.sh
 ```
