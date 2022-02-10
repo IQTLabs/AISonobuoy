@@ -154,12 +154,15 @@ class Telemetry:
     def check_version(self, timestamp):
         self.sensor_data["version_sense"].append([self.version, timestamp])
         containers = ["ais", "power", "record", "s3-upload"]
+        healthy = True
         for container in containers:
             try:
                 self.sensor_data["version_"+container].append(
                     [self.get_container_version(self.docker.containers.get("pibuoyv2_"+container+"_1")), timestamp])
             except Exception as e:
                 self.sensor_data["version_"+container].append([str(e), timestamp])
+                healthy = False
+        return healthy
 
 
     def init_sensor_data(self):
@@ -327,9 +330,6 @@ class Telemetry:
                 cycles = 1
                 write_cycles += 1
 
-                # version:
-                self.check_version(timestamp)
-
                 # internet: check if available
                 inet = self.check_internet()
                 self.sensor_data["internet"].append([inet, timestamp])
@@ -338,9 +338,12 @@ class Telemetry:
                 else:
                     self.display(5, 7, red)
 
-                # docker container health
-                # TODO
-                self.display(4, 7, white)
+                # version and docker container health:
+                healthy = self.check_version(timestamp)
+                if healthy:
+                    self.display(4, 7, blue)
+                else:
+                    self.display(4, 7, red)
 
                 # ais: see if new detection since last cycle
                 ais, ais_file, ais_records = self.check_ais(ais_dir, ais_file, ais_records)
@@ -348,7 +351,7 @@ class Telemetry:
                 if ais:
                     self.display(6, 5, blue)
                 else:
-                    self.display(6, 5, yellow)
+                    self.display(6, 5, white)
 
                 # recordings: see if new recording file since last session, or if more bytes have been written
                 hydrophone, hydrophone_file, hydrophone_size = self.check_hydrophone(hydrophone_dir, hydrophone_file, hydrophone_size)
@@ -356,7 +359,7 @@ class Telemetry:
                 if hydrophone:
                     self.display(5, 5, blue)
                 else:
-                    self.display(5, 5, yellow)
+                    self.display(5, 5, white)
 
                 # uploads: see if files are gone ?
                 # TODO
@@ -399,11 +402,31 @@ class Telemetry:
 
                 # battery: check current battery level from pijuice hopefully, change color based on level
                 power_file = self.check_power(power_dir, power_file)
-                # TODO
-                # status, charge level, charging
-                self.display(7, 3, white)
-                self.display(7, 4, white)
-                self.display(7, 5, white)
+                if 'battery_status' in self.sensor_data:
+                    if self.sensor_data['battery_status'][-1][0] == 'NORMAL':
+                        self.display(7, 3, blue)
+                    elif self.sensor_data['battery_status'][-1][0] == 'CHARGING_FROM_IN':
+                        self.display(7, 3, yellow)
+                    else:
+                        self.display(7, 3, red)
+                else:
+                    self.display(7, 3, white)
+                if 'battery_charge' in self.sensor_data:
+                    if int(self.sensor_data['battery_charge']) > 50:
+                        self.display(7, 4, blue)
+                    elif int(self.sensor_data['battery_charge']) > 20:
+                        self.display(7, 4, yellow)
+                    else:
+                        self.display(7, 4, red)
+                else:
+                    self.display(7, 4, white)
+                if 'power_input' in self.sensor_data:
+                    if self.sensor_data['power_input'][-1][0] == 'PRESENT':
+                        self.display(7, 5, blue)
+                    else:
+                        self.display(7, 5, yellow)
+                else:
+                    self.display(7, 5, white)
 
             # Take readings from sensors
             t = self.get_temperature()
