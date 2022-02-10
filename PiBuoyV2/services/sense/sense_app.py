@@ -141,8 +141,10 @@ class Telemetry:
 
     def check_hydrophone(self, hydrophone_dir, hydrophone_file, hydrophone_size):
         files = sorted([f for f in os.listdir(hydrophone_dir) if os.path.isfile(os.path.join(hydrophone_dir, f))])
+        # no files
         if not files:
-            return False, hydrophone_file, 0
+            return False, None, 0
+        # found a new file
         elif os.path.join(hydrophone_dir, files[-1]) != hydrophone_file:
             hydrophone_file = os.path.join(hydrophone_dir, files[-1])
             hydrophone_size = os.path.getsize(hydrophone_file)
