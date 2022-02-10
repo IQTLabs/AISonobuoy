@@ -15,10 +15,10 @@ WORKDIR /
 RUN python3 -c "from pijuice import PiJuice"
 RUN groupadd -g 1001 pijuice
 RUN useradd -rm -s /bin/bash -g pijuice -u 1000 pi
-COPY app.py /app.py
+COPY power_app.py /power_app.py
 COPY pijuice_config.JSON /pijuice_config.JSON
 COPY shutdown.sh /shutdown.sh
 ARG VERSION
 ENV VERSION $VERSION
-ENTRYPOINT ["python3", "/app.py"]
+ENTRYPOINT ["python3", "/power_app.py"]
 CMD [""]
