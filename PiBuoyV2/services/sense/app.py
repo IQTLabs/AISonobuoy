@@ -140,8 +140,27 @@ class Telemetry:
 
 
     def check_hydrophone(self, hydrophone_dir, hydrophone_file, hydrophone_size):
-        # TODO
-        return True, hydrophone_file, hydrophone_size
+        files = sorted([f for f in os.listdir(hydrophone_dir) if os.path.isfile(os.path.join(hydrophone_dir, f))])
+        if not files:
+            return False, hydrophone_file, 0
+        elif os.path.join(hydrophone_dir, files[-1]) != hydrophone_file:
+            hydrophone_file = os.path.join(hydrophone_dir, files[-1])
+            hydrophone_size = os.path.getsize(hydrophone_file)
+            return True, hydrophone_file, hydrophone_size
+        # file already exists, check the size
+        size = os.path.getsize(hydrophone_file)
+        if size > hydrophone_size:
+            hydrophone_size = size
+            return True, hydrophone_file, hydrophone_size
+        return False, hydrophone_file, hydrophone_size
+
+
+    def check_s3(self, s3_dir):
+        files = sorted([f for f in os.listdir(s3_dir) if os.path.isfile(os.path.join(s3_dir, f))])
+        if not files:
+            return False, 0
+        else:
+            return True, len(files)
 
 
     def get_container_version(self, container):
@@ -186,9 +205,7 @@ class Telemetry:
                             "ais_record": [],
                             "audio_record": [],
                             "disk_free_gb": [],
-                            "version": [],
                             "files_to_upload": [],
-                            "data_files": [],
                             "uptime_seconds": [],
                             "battery_charge": [],
                             "battery_voltage": [],
@@ -288,7 +305,6 @@ class Telemetry:
         power_dir = os.path.join(base_dir, 'power')
         power_file = None
         s3_dir = '/flash/s3'
-        s3_files = 0
 
         # Throwaway readings to calibrate
         for i in range(5):
@@ -375,9 +391,13 @@ class Telemetry:
                 else:
                     self.display(5, 5, white)
 
-                # uploads: see if files are gone ?
-                # TODO
-                self.display(4, 5, white)
+                # files to upload to s3
+                s3, s3_files = self.check_s3(s3_dir)
+                self.sensor_data["files_to_upload"].append([s3_files, timestamp])
+                if s3:
+                    self.display(4, 5, blue)
+                else:
+                    self.display(4, 5, white)
 
                 # system health: load
                 load = os.getloadavg()
