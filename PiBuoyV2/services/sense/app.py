@@ -44,6 +44,7 @@ class Telemetry:
         self.hostname = None
         self.location = None
         self.version = None
+        self.alerts = {}
         self.docker = docker.from_env()
 
 
@@ -239,13 +240,22 @@ class Telemetry:
 
 
     def status_hook(self):
+        checks = len(self.alerts)
+        health = 0
+        unhealthy = []
+        for alert in self.alerts:
+            if self.alerts[alert]:
+                unhealthy.append(alert)
+            else:
+                health += 1
+
         data = {}
         data['title'] = os.path.join(self.hostname, self.location)
         data['body_title'] = "Status Update"
-        data['body_subtitle'] = "n / n checks healthy" # TODO replace n / n
-        # TODO if not all checks are healthy
-        #    data['themeColor'] = "d95f02"
-        data['text'] = ""
+        data['body_subtitle'] = f'{health} / {checks} checks healthy'
+        if health < checks:
+            data['themeColor'] = "d95f02"
+        data['text'] = f'Checks that failed: {unhealthy}'
         data['facts'] = self.status_data()
         card = insert_message_data(data)
         status = send_hook(card)
@@ -255,7 +265,6 @@ class Telemetry:
     def status_data(self):
         facts = []
         for key in self.sensor_data.keys():
-            # TODO check specific keys for healthy
             if len(self.sensor_data[key]) > 0:
                 facts.append({"name": key, "value": str(self.sensor_data[key][-1][0])})
         return facts
@@ -302,6 +311,7 @@ class Telemetry:
         while True:
             # TODO: write out data if exception with a try/except
             timestamp = int(time.time()*1000)
+
             # If the middle button on the joystick is pressed, shutdown the system
             for event in self.sense.stick.get_events():
                 if event.action == "released" and event.direction == "middle":
@@ -335,15 +345,19 @@ class Telemetry:
                 self.sensor_data["internet"].append([inet, timestamp])
                 if inet:
                     self.display(5, 7, blue)
+                    self.alerts['internet'] = False
                 else:
                     self.display(5, 7, red)
+                    self.alerts['internet'] = True
 
                 # version and docker container health:
                 healthy = self.check_version(timestamp)
                 if healthy:
                     self.display(4, 7, blue)
+                    self.alerts['healthy'] = False
                 else:
                     self.display(4, 7, red)
+                    self.alerts['healthy'] = True
 
                 # ais: see if new detection since last cycle
                 ais, ais_file, ais_records = self.check_ais(ais_dir, ais_file, ais_records)
@@ -370,20 +384,26 @@ class Telemetry:
                 self.sensor_data["system_load"].append([load[0], timestamp])
                 if load[0] > 2:
                     self.display(6, 6, red)
+                    self.alerts['system_load'] = True
                 elif load[0] > 1:
                     self.display(6, 6, yellow)
+                    self.alerts['system_load'] = False
                 else:
                     self.display(6, 6, blue)
+                    self.alerts['system_load'] = False
 
                 # system health: memory
                 total_memory, used_memory, free_memory = map(int, os.popen('free -t -m').readlines()[1].split()[1:4])
                 self.sensor_data["memory_used_mb"].append([used_memory, timestamp])
                 if used_memory/total_memory > 0.9:
                     self.display(5, 6, red)
+                    self.alerts['memory_used_mb'] = True
                 elif used_memory/total_memory > 0.7:
                     self.display(5, 6, yellow)
+                    self.alerts['memory_used_mb'] = False
                 else:
                     self.display(5, 6, blue)
+                    self.alerts['memory_used_mb'] = False
 
                 # system health: disk space
                 st = os.statvfs('/')
@@ -392,10 +412,13 @@ class Telemetry:
                 self.sensor_data["disk_free_gb"].append([gb_free, timestamp])
                 if gb_free < 2:
                     self.display(4, 6, red)
+                    self.alerts['disk_free_gb'] = True
                 elif gb_free < 10:
                     self.display(4, 6, yellow)
+                    self.alerts['disk_free_gb'] = False
                 else:
                     self.display(4, 6, blue)
+                    self.alerts['disk_free_gb'] = False
 
                 # system uptime (linux only!)
                 self.sensor_data["uptime_seconds"].append([time.clock_gettime(time.CLOCK_BOOTTIME), timestamp])
@@ -405,19 +428,25 @@ class Telemetry:
                 if 'battery_status' in self.sensor_data:
                     if self.sensor_data['battery_status'][-1][0] == 'NORMAL':
                         self.display(7, 3, blue)
+                        self.alerts['battery_status'] = False
                     elif self.sensor_data['battery_status'][-1][0] == 'CHARGING_FROM_IN':
                         self.display(7, 3, yellow)
+                        self.alerts['battery_status'] = False
                     else:
                         self.display(7, 3, red)
+                        self.alerts['battery_status'] = True
                 else:
                     self.display(7, 3, white)
                 if 'battery_charge' in self.sensor_data:
                     if int(self.sensor_data['battery_charge'][-1][0]) > 50:
                         self.display(7, 4, blue)
+                        self.alerts['battery_charge'] = False
                     elif int(self.sensor_data['battery_charge'][-1][0]) > 20:
                         self.display(7, 4, yellow)
+                        self.alerts['battery_charge'] = False
                     else:
                         self.display(7, 4, red)
+                        self.alerts['battery_charge'] = True
                 else:
                     self.display(7, 4, white)
                 if 'power_input' in self.sensor_data:
@@ -433,10 +462,13 @@ class Telemetry:
             self.sensor_data["temperature_c"].append([t, timestamp])
             if t < 5 or t > 70:
                 self.display(6, 3, red)
+                self.alerts['temperature_c'] = True
             elif t < 10 or t > 65:
                 self.display(6, 3, yellow)
+                self.alerts['temperature_c'] = False
             else:
                 self.display(6, 3, blue)
+                self.alerts['temperature_c'] = False
             p = self.get_pressure()
             self.sensor_data["pressure"].append([p, timestamp])
             self.display(5, 3, blue)
