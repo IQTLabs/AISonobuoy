@@ -20,4 +20,6 @@ jobs:
               find PiBuoyV2 -type f -name \*requirements.txt -exec pip3 install -r {} \; && \
               pylint -E $(find PiBuoyV2 -type f -name \*py) && \
               find PiBuoyV2 -type f -name \*py | xargs -n1 pytype && \
-              pytest PiBuoyV2
+              pytest -v -vv -cov-report term-missing --cov=PiBuoyV2 -c .coveragerc && \
+              coverage report && \
+              coverage xml
