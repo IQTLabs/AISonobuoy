@@ -21,6 +21,6 @@ jobs:
               pip3 install codecov pytest-cov pytest && \
               pylint -E $(find PiBuoyV2 -type f -name \*py) && \
               find PiBuoyV2 -type f -name \*py | xargs -n1 pytype && \
-              pytest -v -vv -cov-report term-missing --cov=PiBuoyV2 -c .coveragerc && \
+              pytest -v -vv --cov-report term-missing --cov=PiBuoyV2 -c .coveragerc && \
               coverage report && \
               coverage xml
