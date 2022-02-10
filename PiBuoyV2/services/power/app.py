@@ -90,7 +90,10 @@ def main():
     pj.config.SetBatteryProfile('PJLIPO_12000')
     pj.rtcAlarm.SetWakeupEnabled(False)
     pj.power.SetWakeUpOnCharge(10, True)
-    pj.power.SetWatchdog(60, True)
+    sw = pj.power.SetWatchdog(60, True)
+    print(f'SetWatchdog() returned {sw}')
+    swc = pj.power.GetWatchdog()
+    print(f'GetWatchdog() returned {swc}')
 
     write_cycles = 1
     while True:
