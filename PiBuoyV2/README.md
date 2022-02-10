@@ -46,7 +46,7 @@ sudo systemctl disable apt-daily-upgrade.service
 sudo systemctl disable apt-daily-upgrade.timer
 ```
 
-4. Disable tvservice since this is going to be completely headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local` before the `exit 0`.
+4. Disable tvservice since the system is headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local` before the `exit 0`.
 
 5. Install this repo.
 ```
@@ -93,7 +93,7 @@ Add the following lines, save, and quit:
 * * * * * /opt/AISonobuoy/PiBuoyV2/scripts/shutdown.sh
 ```
 
-11. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that a role that can write to the S3 bucket.
+11. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that have a role that can write to the S3 bucket.
 
 12. Enable I2C in raspi-config.
 ```
@@ -113,17 +113,17 @@ sudo dpkg -i ./pijuice-base_1.8_all.deb
 sudo reboot
 ```
 
-15. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+15. Update the firmware on the PiJuice to V1.6 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
+```
+pijuice_cli
+```
 
-16. Start PiBuoy containers.
+16. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+
+17. Start PiBuoy containers.
 ```
 cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
-```
-
-17. Update the firmware on the PiJuice to V1.6 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
-```
-pijuice_cli
 ```
 
 # Verify components are working
