@@ -445,11 +445,11 @@ class Telemetry:
 
                 # battery: check current battery level from pijuice hopefully, change color based on level
                 power_file = self.check_power(power_dir, power_file)
-                if 'battery_status' in self.sensor_data:
-                    if self.sensor_data['battery_status'][-1] == 'NORMAL':
+                if len(self.sensor_data['battery_status']) > 0:
+                    if self.sensor_data['battery_status'][-1][0] == 'NORMAL':
                         self.display(7, 3, blue)
                         self.alerts['battery_status'] = False
-                    elif self.sensor_data['battery_status'][-1] == 'CHARGING_FROM_IN':
+                    elif self.sensor_data['battery_status'][-1][0] == 'CHARGING_FROM_IN':
                         self.display(7, 3, yellow)
                         self.alerts['battery_status'] = False
                     else:
@@ -457,11 +457,11 @@ class Telemetry:
                         self.alerts['battery_status'] = True
                 else:
                     self.display(7, 3, white)
-                if 'battery_charge' in self.sensor_data:
-                    if int(self.sensor_data['battery_charge'][-1]) > 50:
+                if len(self.sensor_data['battery_charge']) > 0:
+                    if int(self.sensor_data['battery_charge'][-1][0]) > 50:
                         self.display(7, 4, blue)
                         self.alerts['battery_charge'] = False
-                    elif int(self.sensor_data['battery_charge'][-1]) > 20:
+                    elif int(self.sensor_data['battery_charge'][-1][0]) > 20:
                         self.display(7, 4, yellow)
                         self.alerts['battery_charge'] = False
                     else:
@@ -469,8 +469,8 @@ class Telemetry:
                         self.alerts['battery_charge'] = True
                 else:
                     self.display(7, 4, white)
-                if 'power_input' in self.sensor_data:
-                    if self.sensor_data['power_input'][-1] == 'PRESENT':
+                if len(self.sensor_data['power_input']) > 0:
+                    if self.sensor_data['power_input'][-1][0] == 'PRESENT':
                         self.display(7, 5, blue)
                     else:
                         self.display(7, 5, yellow)

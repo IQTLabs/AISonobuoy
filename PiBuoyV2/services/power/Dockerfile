@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y build-essential
 RUN pip3 install smbus urwid
 RUN python3 -c "from smbus import SMBus"
 RUN python3 -c "import urwid"
-RUN git clone https://github.com/PiSupply/PiJuice.git
+RUN git clone --depth=1 https://github.com/PiSupply/PiJuice.git
 WORKDIR /PiJuice/Software/Source
 RUN python3 setup.py build
 RUN python3 setup.py install
