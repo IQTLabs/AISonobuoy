@@ -1,4 +1,4 @@
-from app import Telemetry  # pylint: disable=no-name-in-module
+from sense_app import Telemetry  # pylint: disable=no-name-in-module
 from hooks import get_url, message_card_template, insert_message_data, send_hook
 
 

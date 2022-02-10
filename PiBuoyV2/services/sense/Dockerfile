@@ -9,11 +9,11 @@ RUN python3 setup.py build && python3 setup.py install
 WORKDIR /
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
-COPY app.py /app.py
+COPY sense_app.py /sense_app.py
 COPY hooks.py /hooks.py
 COPY internet_check.sh /internet_check.sh
 COPY shutdown.sh /shutdown.sh
 ARG VERSION
 ENV VERSION $VERSION
-ENTRYPOINT ["python3", "/app.py"]
+ENTRYPOINT ["python3", "/sense_app.py"]
 CMD [""]
