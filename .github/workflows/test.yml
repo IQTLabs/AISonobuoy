@@ -1,6 +1,18 @@
-name: python_test
+name: tests
 on: [push, pull_request]
 jobs:
+  shelltest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: shell_test
+      run: |
+        wget "https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz" && \
+        tar --xz -xvf "shellcheck-stable.linux.x86_64.tar.xz" && \
+        shellcheck() { "shellcheck-stable/shellcheck" "$@"; } && \
+        shellcheck --version && \
+        /bin/bash --version && \
+        for shellscript in $(find PiBuoyV2 -type f -name "*.sh"); do /bin/bash -n "$shellscript" && shellcheck -x "$shellscript"; done
   sleepypidtest:
     runs-on: ubuntu-latest
     steps:
