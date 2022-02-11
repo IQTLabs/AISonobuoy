@@ -108,9 +108,23 @@ class Telemetry:
         return False
 
 
+    def reorder_dots(self, files):
+        last_dot = -1
+        for i, f in enumerate(files):
+            if f.startswith('.'):
+                last_dot = i
+        last_dot += 1
+        files = files[last_dot:] + files[0:last_dot]
+        return files
+
+
     def check_ais(self, ais_dir, ais_file, ais_records):
         # check for new files, in the newest file, check if the number of lines has increased
         files = sorted([f for f in os.listdir(ais_dir) if os.path.isfile(os.path.join(ais_dir, f))])
+
+        # check for dotfiles
+        files = self.reorder_dots(files)
+
         if not files:
             return False, ais_file, ais_records
         elif os.path.join(ais_dir, files[-1]) != ais_file:
@@ -127,6 +141,10 @@ class Telemetry:
 
     def check_power(self, power_dir, power_file):
         files = sorted([f for f in os.listdir(power_dir) if os.path.isfile(os.path.join(power_dir, f))])
+
+        # check for dotfiles
+        files = self.reorder_dots(files)
+
         if not files:
             return power_file
         elif os.path.join(power_dir, files[-1]) != power_file:
@@ -141,6 +159,10 @@ class Telemetry:
 
     def check_hydrophone(self, hydrophone_dir, hydrophone_file, hydrophone_size):
         files = sorted([f for f in os.listdir(hydrophone_dir) if os.path.isfile(os.path.join(hydrophone_dir, f))])
+
+        # check for dotfiles
+        files = self.reorder_dots(files)
+
         # no files
         if not files:
             return False, None, 0
