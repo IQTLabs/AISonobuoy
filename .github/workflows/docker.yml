@@ -25,7 +25,7 @@ jobs:
       run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=VERSION::latest; else echo ::set-output name=VERSION::${{ steps.get_version.outputs.VERSION }}; fi
     - name: Change image tag for main
       id: change_tag
-      run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=IMAGE_TAG::latest; else echo ::set-output name=IMAGE_TAG::stable fi
+      run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=IMAGE_TAG::latest; else echo ::set-output name=IMAGE_TAG::stable; fi
     - name: Set up qemu
       uses: docker/setup-qemu-action@v1
       with:
