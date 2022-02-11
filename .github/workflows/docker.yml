@@ -19,9 +19,13 @@ jobs:
       run: |
         echo "::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)"
         echo "::set-output name=SHA_SHORT::$(git rev-parse --short HEAD)"
-    - name: Change for main
+        echo "::set-output name=IMAGE_TAG::$(echo $GITHUB_REF | cut -d / -f 3)"
+    - name: Change version for main
       id: change_version
-      run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=VERSION::latest; else echo ::set-output name=VERSION::${{ steps.get_version.outputs.VERSION }} -t stable; fi
+      run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=VERSION::latest; else echo ::set-output name=VERSION::${{ steps.get_version.outputs.VERSION }}; fi
+    - name: Change image tag for main
+      id: change_tag
+      run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=IMAGE_TAG::latest; else echo ::set-output name=IMAGE_TAG::stable fi
     - name: Set up qemu
       uses: docker/setup-qemu-action@v1
       with:
@@ -47,29 +51,34 @@ jobs:
           --platform linux/arm \
           --push \
           --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} \
-          -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} . && \
+          -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.VERSION }} \
+          -t iqtlabs/aisonobuoy-ais:${{ steps.change_version.outputs.IMAGE_TAG }} . && \
         cd ../power && \
         docker buildx build \
           --platform linux/arm \
           --push \
           --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} \
-          -t iqtlabs/aisonobuoy-power:${{ steps.change_version.outputs.VERSION }} . && \
+          -t iqtlabs/aisonobuoy-power:${{ steps.change_version.outputs.VERSION }} \
+          -t iqtlabs/aisonobuoy-power:${{ steps.change_version.outputs.IMAGE_TAG }} . && \
         cd ../record && \
         docker buildx build \
           --platform linux/arm \
           --push \
           --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} \
-          -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} . && \
+          -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.VERSION }} \
+          -t iqtlabs/aisonobuoy-record:${{ steps.change_version.outputs.IMAGE_TAG }} . && \
         cd ../s3-upload && \
         docker buildx build \
           --platform linux/arm \
           --push \
           --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} \
-          -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} . && \
+          -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.VERSION }} \
+          -t iqtlabs/aisonobuoy-s3-upload:${{ steps.change_version.outputs.IMAGE_TAG }} . && \
         cd ../sense && \
         docker buildx build \
           --platform linux/arm \
           --push \
           --build-arg VERSION=${{ steps.change_version.outputs.VERSION }}.${{ steps.get_version.outputs.SHA_SHORT }} \
-          -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.VERSION }} .
+          -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.VERSION }} \
+          -t iqtlabs/aisonobuoy-sense:${{ steps.change_version.outputs.IMAGE_TAG }} .
       if: github.repository == 'iqtlabs/aisonobuoy' && github.event_name == 'push'
