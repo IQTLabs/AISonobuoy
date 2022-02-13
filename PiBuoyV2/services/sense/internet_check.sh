@@ -1,8 +1,6 @@
 #!/bin/bash
 
-wget -q --spider http://github.com
-
-if [ $? -eq 0 ]; then
+if wget -q --spider http://github.com; then
     echo "Online"
 else
     echo "Offline"

@@ -296,7 +296,7 @@ class Telemetry:
         data['body_subtitle'] = f'{health} / {checks} checks healthy'
         if health < checks:
             data['themeColor'] = "d95f02"
-        data['text'] = f'Checks that failed: {unhealthy}'
+        data['text'] = f'Checks that alerted: {unhealthy}'
         data['facts'] = self.status_data()
         card = insert_message_data(data)
         status = send_hook(card)
