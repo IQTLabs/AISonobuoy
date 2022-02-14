@@ -12,14 +12,6 @@ from hooks import insert_message_data
 from hooks import send_hook
 
 
-# plus 0.5 second for status per wake and plus time to run loop
-MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
-MINUTES_BETWEEN_WRITES = 15
-CYCLES_BEFORE_STATUS_CHECK = 1/MINUTES_BETWEEN_WAKES
-# if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
-if CYCLES_BEFORE_STATUS_CHECK < 1:
-    CYCLES_BEFORE_STATUS_CHECK = MINUTES_BETWEEN_WAKES
-
 # Raw colors
 red = (255, 0, 0)
 yellow = (255, 255, 0)
@@ -31,6 +23,14 @@ off = (0, 0, 0)
 class Telemetry:
 
     def __init__(self, base_dir='/flash/telemetry'):
+        # plus 0.5 second for status per wake and plus time to run loop
+        self.MINUTES_BETWEEN_WAKES = 0.1  # roughly every 5 seconds (not 6 because of the above considerations)
+        self.MINUTES_BETWEEN_WRITES = 15
+        self.CYCLES_BEFORE_STATUS_CHECK = 1/self.MINUTES_BETWEEN_WAKES
+        # if waking up less than once a minute, just set the status check to the same amount of time as the wake cycle
+        if self.CYCLES_BEFORE_STATUS_CHECK < 1:
+            self.CYCLES_BEFORE_STATUS_CHECK = self.MINUTES_BETWEEN_WAKES
+
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
         self.location = os.getenv("LOCATION", "unknown")
         self.version = os.getenv("VERSION", "")
@@ -129,7 +129,12 @@ class Telemetry:
 
     @staticmethod
     def check_internet():
-        output = subprocess.check_output("/internet_check.sh")
+        try:
+            output = subprocess.check_output("/internet_check.sh")
+        except Exception as e:
+            print(f'Failed to check internet because: {e}')
+            output = b'Failed'
+
         if b'Online' in output:
             return True
         return False
@@ -507,7 +512,7 @@ class Telemetry:
                     self.shutdown_hook("Low battery")
                     user_shutdown = True
 
-            if cycles == CYCLES_BEFORE_STATUS_CHECK or MINUTES_BETWEEN_WAKES > 1:
+            if cycles == self.CYCLES_BEFORE_STATUS_CHECK or self.MINUTES_BETWEEN_WAKES > 1:
                 self.run_checks(timestamp)
                 cycles = 1
                 write_cycles += 1
@@ -516,7 +521,7 @@ class Telemetry:
             self.read_sensors(timestamp)
 
             # Write out data
-            if write_cycles == MINUTES_BETWEEN_WRITES:
+            if write_cycles == self.MINUTES_BETWEEN_WRITES:
                 write_timestamp = int(time.time())
                 self.write_sensor_data(write_timestamp)
                 self.init_sensor_data()
@@ -529,7 +534,7 @@ class Telemetry:
             self.sense.set_pixels([off]*64)
 
             # Sleep between cycles
-            time.sleep(60*MINUTES_BETWEEN_WAKES)
+            time.sleep(60*self.MINUTES_BETWEEN_WAKES)
 
             cycles += 1
 
