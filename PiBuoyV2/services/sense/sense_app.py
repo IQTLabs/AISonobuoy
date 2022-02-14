@@ -133,7 +133,7 @@ class Telemetry:
             output = subprocess.check_output("/internet_check.sh")
         except Exception as e:
             print(f'Failed to check internet because: {e}')
-            output = 'Failed'
+            output = b'Failed'
 
         if b'Online' in output:
             return True
