@@ -38,36 +38,36 @@ off = (0, 0, 0)
 class Telemetry:
 
     def __init__(self):
+        self.hostname = os.getenv("HOSTNAME", socket.gethostname())
+        self.location = os.getenv("LOCATION", "unknown")
+        self.version = os.getenv("VERSION", "")
+        base_dir = '/flash/telemetry'
+        self.sensor_dir = os.path.join(base_dir, 'sensors')
+        self.ais_dir = os.path.join(base_dir, 'ais')
+        self.hydrophone_dir = os.path.join(base_dir, 'hydrophone')
+        self.power_dir = os.path.join(base_dir, 'power')
+        self.s3_dir = '/flash/s3'
         self.sense = None
         self.sensor_data = None
-        self.sensor_dir = None
-        self.hostname = None
-        self.location = None
-        self.version = None
         self.alerts = {}
         self.docker = docker.from_env()
-
 
     def init_sense(self):
         self.sense = SenseHat()
         self.sense.clear()
         self.sense.low_light = True
 
-
     def get_temperature(self):
         # rounded to one decimal place
         return round(self.sense.get_temperature(), 1)
-
 
     def get_humidity(self):
         # rounded to one decimal place
         return round(self.sense.get_humidity(), 1)
 
-
     def get_pressure(self):
         # rounded to one decimal place
         return round(self.sense.get_pressure(), 1)
-
 
     def get_acceleration(self):
         acceleration = self.sense.get_accelerometer_raw()
@@ -77,7 +77,6 @@ class Telemetry:
         z = round(acceleration['z'], 2)
         return x, y, z
 
-
     def get_gyro(self):
         gyro = self.sense.get_gyroscope_raw()
         # rounded to two decimal places
@@ -85,7 +84,6 @@ class Telemetry:
         y = round(gyro['y'], 2)
         z = round(gyro['z'], 2)
         return x, y, z
-
 
     def get_compass(self):
         compass = self.sense.get_compass_raw()
@@ -95,10 +93,8 @@ class Telemetry:
         z = round(compass['z'], 2)
         return x, y, z
 
-
     def display(self, x, y, color):
         self.sense.set_pixel(x, y, color)
-
 
     @staticmethod
     def check_internet():
@@ -106,7 +102,6 @@ class Telemetry:
         if b'Online' in output:
             return True
         return False
-
 
     def reorder_dots(self, files):
         last_dot = -1
@@ -117,18 +112,17 @@ class Telemetry:
         files = files[last_dot:] + files[0:last_dot]
         return files
 
-
-    def check_ais(self, ais_dir, ais_file, ais_records):
+    def check_ais(self, ais_file, ais_records):
         # check for new files, in the newest file, check if the number of lines has increased
-        files = sorted([f for f in os.listdir(ais_dir) if os.path.isfile(os.path.join(ais_dir, f))])
+        files = sorted([f for f in os.listdir(self.ais_dir) if os.path.isfile(os.path.join(self.ais_dir, f))])
 
         # check for dotfiles
         files = self.reorder_dots(files)
 
         if not files:
             return False, ais_file, ais_records
-        elif os.path.join(ais_dir, files[-1]) != ais_file:
-            ais_file = os.path.join(ais_dir, files[-1])
+        elif os.path.join(self.ais_dir, files[-1]) != ais_file:
+            ais_file = os.path.join(self.ais_dir, files[-1])
             ais_records = sum(1 for line in open(ais_file))
             return True, ais_file, ais_records
         # file already exists, check if there's new records
@@ -138,17 +132,16 @@ class Telemetry:
             return True, ais_file, ais_records
         return False, ais_file, ais_records
 
-
-    def check_power(self, power_dir, power_file):
-        files = sorted([f for f in os.listdir(power_dir) if os.path.isfile(os.path.join(power_dir, f))])
+    def check_power(self, power_file):
+        files = sorted([f for f in os.listdir(self.power_dir) if os.path.isfile(os.path.join(self.power_dir, f))])
 
         # check for dotfiles
         files = self.reorder_dots(files)
 
         if not files:
             return power_file
-        elif os.path.join(power_dir, files[-1]) != power_file:
-            power_file = os.path.join(power_dir, files[-1])
+        elif os.path.join(self.power_dir, files[-1]) != power_file:
+            power_file = os.path.join(self.power_dir, files[-1])
         with open(power_file, 'r') as f:
             for line in f:
                 record = json.loads(line.strip())
@@ -156,9 +149,8 @@ class Telemetry:
                     self.sensor_data[record['target']].append(record['datapoints'][-1])
         return power_file
 
-
-    def check_hydrophone(self, hydrophone_dir, hydrophone_file, hydrophone_size):
-        files = sorted([f for f in os.listdir(hydrophone_dir) if os.path.isfile(os.path.join(hydrophone_dir, f))])
+    def check_hydrophone(self, hydrophone_file, hydrophone_size):
+        files = sorted([f for f in os.listdir(self.hydrophone_dir) if os.path.isfile(os.path.join(self.hydrophone_dir, f))])
 
         # check for dotfiles
         files = self.reorder_dots(files)
@@ -167,8 +159,8 @@ class Telemetry:
         if not files:
             return False, None, 0
         # found a new file
-        elif os.path.join(hydrophone_dir, files[-1]) != hydrophone_file:
-            hydrophone_file = os.path.join(hydrophone_dir, files[-1])
+        elif os.path.join(self.hydrophone_dir, files[-1]) != hydrophone_file:
+            hydrophone_file = os.path.join(self.hydrophone_dir, files[-1])
             hydrophone_size = os.path.getsize(hydrophone_file)
             return True, hydrophone_file, hydrophone_size
         # file already exists, check the size
@@ -178,14 +170,12 @@ class Telemetry:
             return True, hydrophone_file, hydrophone_size
         return False, hydrophone_file, hydrophone_size
 
-
-    def check_s3(self, s3_dir):
-        files = sorted([f for f in os.listdir(s3_dir) if os.path.isfile(os.path.join(s3_dir, f))])
+    def check_s3(self):
+        files = sorted([f for f in os.listdir(self.s3_dir) if os.path.isfile(os.path.join(self.s3_dir, f))])
         if not files:
             return False, 0
         else:
             return True, len(files)
-
 
     def get_container_version(self, container):
         env_vars = container.attrs['Config']['Env']
@@ -193,7 +183,6 @@ class Telemetry:
             if env_var.startswith("VERSION="):
                 return env_var.split("=")[-1]
         return ""
-
 
     def check_version(self, timestamp):
         self.sensor_data["version_sense"].append([self.version, timestamp])
@@ -207,7 +196,6 @@ class Telemetry:
                 self.sensor_data["version_"+container].append([str(e), timestamp])
                 healthy = False
         return healthy
-
 
     def init_sensor_data(self):
         self.sensor_data = {"temperature_c": [],
@@ -248,13 +236,11 @@ class Telemetry:
                             "version_sense": [],
                            }
 
-
     def rename_dotfiles(self):
         for dotfile in glob.glob(os.path.join(self.sensor_dir, '.*')):
             basename = os.path.basename(dotfile)
             non_dotfile = os.path.join(self.sensor_dir, basename[1:])
             os.rename(dotfile, non_dotfile)
-
 
     def write_sensor_data(self, timestamp):
         tmp_filename = f'{self.sensor_dir}/.{self.hostname}-{timestamp}-sensehat.json'
@@ -265,7 +251,6 @@ class Telemetry:
         self.rename_dotfiles()
         status = self.status_hook()
         print(f'Status update response: {status}')
-
 
     def shutdown_hook(self, subtitle):
         data = {}
@@ -278,7 +263,6 @@ class Telemetry:
         card = insert_message_data(data)
         status = send_hook(card)
         return status
-
 
     def status_hook(self):
         checks = len(self.alerts)
@@ -302,7 +286,6 @@ class Telemetry:
         status = send_hook(card)
         return status
 
-
     def status_data(self):
         facts = []
         for key in self.sensor_data.keys():
@@ -310,25 +293,15 @@ class Telemetry:
                 facts.append({"name": key, "value": str(self.sensor_data[key][-1][0])})
         return facts
 
-
     def main(self):
-        self.hostname = os.getenv("HOSTNAME", socket.gethostname())
-        self.location = os.getenv("LOCATION", "unknown")
-        self.version = os.getenv("VERSION", "")
-        base_dir = '/flash/telemetry'
-        self.sensor_dir = os.path.join(base_dir, 'sensors')
         os.makedirs(self.sensor_dir, exist_ok=True)
         self.init_sensor_data()
 
-        ais_dir = os.path.join(base_dir, 'ais')
         ais_file = None
         ais_records = 0
-        hydrophone_dir = os.path.join(base_dir, 'hydrophone')
         hydrophone_file = None
         hydrophone_size = 0
-        power_dir = os.path.join(base_dir, 'power')
         power_file = None
-        s3_dir = '/flash/s3'
 
         # Throwaway readings to calibrate
         for i in range(5):
@@ -400,7 +373,7 @@ class Telemetry:
                     self.alerts['healthy'] = True
 
                 # ais: see if new detection since last cycle
-                ais, ais_file, ais_records = self.check_ais(ais_dir, ais_file, ais_records)
+                ais, ais_file, ais_records = self.check_ais(ais_file, ais_records)
                 self.sensor_data["ais_record"].append([ais, timestamp])
                 if ais:
                     self.display(6, 5, blue)
@@ -408,7 +381,7 @@ class Telemetry:
                     self.display(6, 5, white)
 
                 # recordings: see if new recording file since last session, or if more bytes have been written
-                hydrophone, hydrophone_file, hydrophone_size = self.check_hydrophone(hydrophone_dir, hydrophone_file, hydrophone_size)
+                hydrophone, hydrophone_file, hydrophone_size = self.check_hydrophone(hydrophone_file, hydrophone_size)
                 self.sensor_data["audio_record"].append([hydrophone, timestamp])
                 if hydrophone:
                     self.display(5, 5, blue)
@@ -416,7 +389,7 @@ class Telemetry:
                     self.display(5, 5, white)
 
                 # files to upload to s3
-                s3, s3_files = self.check_s3(s3_dir)
+                s3, s3_files = self.check_s3()
                 self.sensor_data["files_to_upload"].append([s3_files, timestamp])
                 if s3:
                     self.display(4, 5, blue)
@@ -468,7 +441,7 @@ class Telemetry:
                 self.sensor_data["uptime_seconds"].append([time.clock_gettime(time.CLOCK_BOOTTIME), timestamp])
 
                 # battery: check current battery level from pijuice hopefully, change color based on level
-                power_file = self.check_power(power_dir, power_file)
+                power_file = self.check_power(power_file)
                 if len(self.sensor_data['battery_status']) > 0:
                     if self.sensor_data['battery_status'][-1][0] == 'NORMAL':
                         self.display(7, 3, blue)
