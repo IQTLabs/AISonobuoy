@@ -129,7 +129,12 @@ class Telemetry:
 
     @staticmethod
     def check_internet():
-        output = subprocess.check_output("/internet_check.sh")
+        try:
+            output = subprocess.check_output("/internet_check.sh")
+        except Exception as e:
+            print(f'Failed to check internet because: {e}')
+            output = 'Failed'
+
         if b'Online' in output:
             return True
         return False
