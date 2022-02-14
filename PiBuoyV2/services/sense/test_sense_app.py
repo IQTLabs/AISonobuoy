@@ -40,7 +40,7 @@ def test_telemetry():
             pass
 
 
-    t = Telemetry()
+    t = Telemetry('.')
     t.sense = MockSense()
     t.main(False)
 

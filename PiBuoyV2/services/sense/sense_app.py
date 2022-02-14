@@ -30,11 +30,10 @@ off = (0, 0, 0)
 
 class Telemetry:
 
-    def __init__(self):
+    def __init__(self, base_dir='/flash/telemetry'):
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
         self.location = os.getenv("LOCATION", "unknown")
         self.version = os.getenv("VERSION", "")
-        base_dir = '/flash/telemetry'
         self.sensor_dir = os.path.join(base_dir, 'sensors')
         self.ais_dir = os.path.join(base_dir, 'ais')
         self.hydrophone_dir = os.path.join(base_dir, 'hydrophone')
