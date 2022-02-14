@@ -71,6 +71,6 @@ class AIS:
                 print("AIS application stopped!")
 
 
-if __name__ == '__init__':
+if __name__ == '__main__':
     a = AIS()
     a.main()
