@@ -111,6 +111,6 @@ class Power:
             time.sleep(60)  # 1 minute between checks
 
 
-if __namme__ == '__main__':
+if __name__ == '__main__':
     pw = Power()
     pw.main()
