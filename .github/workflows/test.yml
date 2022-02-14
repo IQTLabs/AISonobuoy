@@ -13,20 +13,16 @@ jobs:
         shellcheck --version && \
         /bin/bash --version && \
         for shellscript in $(find PiBuoyV2 -type f -name "*.sh"); do /bin/bash -n "$shellscript" && shellcheck -x "$shellscript"; done
-  sleepypidtest:
+  unittests:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: test
+    - name: sleepypid_test
       run: |
           sudo apt-get update && sudo apt-get install -f python3-dev && \
           pip3 install -r ./PiBuoy/sleepypid/requirements.txt && \
           ./PiBuoy/sleepypid/test_sleepypid.py
-  pibuoy2py:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: test
+    - name: services_test
       run: |
           sudo apt-get update && sudo apt-get install python3-dev libjpeg62-dev procps zlib1g-dev build-essential curl i2c-tools && \
               python3 -m pip install -U pip && \
@@ -42,3 +38,6 @@ jobs:
               pytest -v -vv --cov-report term-missing --ignore=PiBuoy --cov=PiBuoyV2 -c .coveragerc && \
               coverage report && \
               coverage xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2.1.0
+      if: github.repository == 'iqtlabs/aisonobuoy'
