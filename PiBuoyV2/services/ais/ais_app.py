@@ -8,60 +8,69 @@ import serial
 import socket
 import time
 
-SERIAL_PORT = "/dev/serial0"
-running = True
 
-print("AIS application started!")
-aisc = serial.Serial(SERIAL_PORT, baudrate=38400, timeout=1)
+class AIS:
+
+    def __init__(self):
+        self.hostname = os.getenv("HOSTNAME", socket.gethostname())
+        self.data_dir = '/flash/telemetry/ais'
+
+    @staticmethod
+    def getAIS(aisc, results):
+        data = aisc.readline()
+        if data:
+            try:
+                msg = decode_raw(data)
+                timestamp = int(time.time())
+                for key in msg.keys():
+                    if key in ['status', 'maneuver', 'epfd', 'shiptype', 'aid_type', 'station_type', 'ship_type', 'txrx', 'interval']:
+                        msg[key] = msg[key].name
+                msg['timestamp'] = timestamp
+                print(f'{msg}')
+                results.append(msg)
+            except Exception as e:
+                print(f'Bad formatted data: {data}')
+        return results
+
+    def rename_dotfiles(self):
+        for dotfile in glob.glob(os.path.join(self.data_dir, '.*')):
+            basename = os.path.basename(dotfile)
+            non_dotfile = os.path.join(self.data_dir, basename[1:])
+            os.rename(dotfile, non_dotfile)
+
+    def main(self):
+        SERIAL_PORT = "/dev/serial0"
+        running = True
+
+        print("AIS application started!")
+        aisc = serial.Serial(SERIAL_PORT, baudrate=38400, timeout=1)
+
+        os.makedirs(self.data_dir, exist_ok=True)
+        start_time = int(time.time())
+        records = []
+        while running:
+            try:
+                tmp_filename = f'{self.data_dir}/.{self.hostname}-{start_time}-ais.json'
+                # check if 15 minutes have elapsed
+                if int(time.time()) >= (start_time + 900):
+                    self.rename_dotfiles()
+                    start_time = int(time.time())
+                if len(records) > 0:
+                    with open(tmp_filename, 'a') as f:
+                        for record in records:
+                            try:
+                                f.write(f'{json.dumps(record)}\n')
+                            except Exception as e:
+                                f.write('{"error":"'+str(record)+'"}\n')
+                    records = []
+                records = self.getAIS(aisc, records)
+                time.sleep(1)
+            except KeyboardInterrupt:
+                running = False
+                aisc.close()
+                print("AIS application stopped!")
 
 
-def getAIS(aisc, results):
-    data = aisc.readline()
-    if data:
-        try:
-            msg = decode_raw(data)
-            timestamp = int(time.time())
-            for key in msg.keys():
-                if key in ['status', 'maneuver', 'epfd', 'shiptype', 'aid_type', 'station_type', 'ship_type', 'txrx', 'interval']:
-                    msg[key] = msg[key].name
-            msg['timestamp'] = timestamp
-            print(f'{msg}')
-            results.append(msg)
-        except Exception as e:
-            print(f'Bad formatted data: {data}')
-    return results
-
-
-def rename_dotfiles(flashdir):
-    for dotfile in glob.glob(os.path.join(flashdir, '.*')):
-        basename = os.path.basename(dotfile)
-        non_dotfile = os.path.join(flashdir, basename[1:])
-        os.rename(dotfile, non_dotfile)
-
-
-start_time = int(time.time())
-records = []
-while running:
-    hostname = os.getenv("HOSTNAME", socket.gethostname())
-    f_dir = f'/flash/telemetry/ais'
-    os.makedirs(f_dir, exist_ok=True)
-    try:
-        tmp_filename = f'{f_dir}/.{hostname}-{start_time}-ais.json'
-        # check if 15 minutes have elapsed
-        if int(time.time()) >= (start_time + 900):
-            rename_dotfiles(f_dir)
-            start_time = int(time.time())
-        if len(records) > 0:
-            with open(tmp_filename, 'a') as f:
-                for record in records:
-                    try:
-                        f.write(f'{json.dumps(record)}\n')
-                    except Exception as e:
-                        f.write('{"error":"'+str(record)+'"}\n')
-            records = []
-        records = getAIS(aisc, records)
-        time.sleep(1)
-    except KeyboardInterrupt:
-        running = False
-        aisc.close()
-        print("AIS application stopped!")
+if __name__ == '__init__':
+    a = AIS()
+    a.main()
