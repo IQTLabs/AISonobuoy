@@ -1,3 +1,5 @@
+import os
+
 from sense_app import Telemetry  # pylint: disable=no-name-in-module
 from hooks import get_url, message_card_template, insert_message_data, send_hook
 
@@ -51,6 +53,11 @@ def test_telemetry():
     t.sense = MockSense()
     t.MINUTES_BETWEEN_WAKES = 1.1
     t.MINUTES_BETWEEN_WRITES = 2
+    os.makedirs(t.ais_dir, exist_ok=True)
+    os.makedirs(t.hydrophone_dir, exist_ok=True)
+    os.makedirs(t.power_dir, exist_ok=True)
+    t.s3_dir = './flash/s3'
+    os.makedirs(t.s3_dir, exist_ok=True)
     t.main(False)
 
 
