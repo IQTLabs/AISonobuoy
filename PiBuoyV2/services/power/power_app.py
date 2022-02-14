@@ -5,8 +5,6 @@ import shutil
 import socket
 import time
 
-import pijuice  # pylint: disable=import-error # pytype: disable=import-error
-
 
 class Power:
 
@@ -74,6 +72,8 @@ class Power:
 
 
     def main(self):
+        import pijuice  # pylint: disable=import-error # pytype: disable=import-error
+
         os.makedirs(self.data_dir, exist_ok=True)
 
         # copy files to host that are needed for pijuice
