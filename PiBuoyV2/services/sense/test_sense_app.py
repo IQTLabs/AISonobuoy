@@ -4,10 +4,17 @@ from hooks import get_url, message_card_template, insert_message_data, send_hook
 
 def test_telemetry():
 
+    class MockEvent:
+
+        def __init__(self):
+            self.action = 'released'
+            self.direction = 'middle'
+
+
     class MockStick:
 
         def get_events(self):
-            return [{'action': 'released', 'direction': 'middle'}]
+            return [MockEvent()]
 
 
     class MockSense:
