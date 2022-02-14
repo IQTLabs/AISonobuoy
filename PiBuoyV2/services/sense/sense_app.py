@@ -30,11 +30,10 @@ off = (0, 0, 0)
 
 class Telemetry:
 
-    def __init__(self):
+    def __init__(self, base_dir='/flash/telemetry'):
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
         self.location = os.getenv("LOCATION", "unknown")
         self.version = os.getenv("VERSION", "")
-        base_dir = '/flash/telemetry'
         self.sensor_dir = os.path.join(base_dir, 'sensors')
         self.ais_dir = os.path.join(base_dir, 'ais')
         self.hydrophone_dir = os.path.join(base_dir, 'hydrophone')
@@ -452,7 +451,7 @@ class Telemetry:
         else:
             self.display(7, 5, white)
 
-    def main(self):
+    def main(self, run_forever):
         os.makedirs(self.sensor_dir, exist_ok=True)
         self.init_sensor_data()
 
@@ -474,7 +473,10 @@ class Telemetry:
         cycles = 1
         write_cycles = 1
         user_shutdown = False
-        while True:
+        running = True
+        while running:
+            running = run_forever
+
             # TODO: write out data if exception with a try/except
             timestamp = int(time.time()*1000)
 
@@ -483,7 +485,10 @@ class Telemetry:
                 if event.action == "released" and event.direction == "middle":
                     user_shutdown = True
                     self.shutdown_hook("User initiated")
-                    subprocess.run("/shutdown.sh")
+                    try:
+                        subprocess.run("/shutdown.sh")
+                    except Exception as e:
+                        print(f'Failed to shutdown because: {e}')
 
             # Check if a shutdown has been signaled
             signal_contents = ""
@@ -532,4 +537,4 @@ class Telemetry:
 if __name__ == '__main__':
     t = Telemetry()
     t.init_sense()
-    t.main()
+    t.main(True)
