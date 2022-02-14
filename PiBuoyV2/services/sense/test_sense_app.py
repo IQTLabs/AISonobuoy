@@ -3,7 +3,46 @@ from hooks import get_url, message_card_template, insert_message_data, send_hook
 
 
 def test_telemetry():
+
+    class MockStick:
+
+        def get_events(self):
+            return [{'action': 'released', 'direction': 'middle'}]
+
+
+    class MockSense:
+
+        def __init__(self):
+            self.stick = MockStick()
+
+        def get_temperature(self):
+            return 10
+
+        def get_humidity(self):
+            return 10
+
+        def get_pressure(self):
+            return 10
+
+        def get_accelerometer_raw(self):
+            return {'x': 10, 'y': 10, 'z': 10}
+
+        def get_gyroscope_raw(self):
+            return {'x': 10, 'y': 10, 'z': 10}
+
+        def get_compass_raw(self):
+            return {'x': 10, 'y': 10, 'z': 10}
+
+        def set_pixel(self, x, y, color)
+            pass
+
+        def set_pixels(self, matrix):
+            pass
+
+
     t = Telemetry()
+    t.sense = MockSense()
+    t.main(False)
 
 
 def test_get_url():

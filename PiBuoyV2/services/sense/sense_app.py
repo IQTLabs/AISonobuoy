@@ -452,7 +452,7 @@ class Telemetry:
         else:
             self.display(7, 5, white)
 
-    def main(self):
+    def main(self, run_forever):
         os.makedirs(self.sensor_dir, exist_ok=True)
         self.init_sensor_data()
 
@@ -474,7 +474,10 @@ class Telemetry:
         cycles = 1
         write_cycles = 1
         user_shutdown = False
-        while True:
+        running = True
+        while running:
+            running = run_forever
+
             # TODO: write out data if exception with a try/except
             timestamp = int(time.time()*1000)
 
@@ -532,4 +535,4 @@ class Telemetry:
 if __name__ == '__main__':
     t = Telemetry()
     t.init_sense()
-    t.main()
+    t.main(True)
