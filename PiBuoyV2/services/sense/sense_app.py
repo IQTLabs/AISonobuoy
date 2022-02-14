@@ -485,7 +485,10 @@ class Telemetry:
                 if event.action == "released" and event.direction == "middle":
                     user_shutdown = True
                     self.shutdown_hook("User initiated")
-                    subprocess.run("/shutdown.sh")
+                    try:
+                        subprocess.run("/shutdown.sh")
+                    except Exception as e:
+                        print(f'Failed to shutdown because: {e}')
 
             # Check if a shutdown has been signaled
             signal_contents = ""
