@@ -49,7 +49,15 @@ def test_telemetry():
 
     t = Telemetry('.')
     t.sense = MockSense()
+    t.MINUTES_BETWEEN_WAKES = 1.1
+    t.MINUTES_BETWEEN_WRITES = 2
     t.main(False)
+
+
+def test_reorder_dots():
+    files = ['.asdf', '.qwer', 'foo', 'bar']
+    files = Telemetry().reorder_dots(files)
+    assert files == ['foo', 'bar', '.asdf', '.qwer']
 
 
 def test_get_url():
