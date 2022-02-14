@@ -33,7 +33,7 @@ def test_telemetry():
         def get_compass_raw(self):
             return {'x': 10, 'y': 10, 'z': 10}
 
-        def set_pixel(self, x, y, color)
+        def set_pixel(self, x, y, color):
             pass
 
         def set_pixels(self, matrix):
