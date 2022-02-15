@@ -231,11 +231,11 @@ class Telemetry:
         healthy = True
         for container in containers:
             try:
-                container = self.docker.containers.get("pibuoyv2_"+container+"_1")
-                if container.status != 'running':
+                cnt = self.docker.containers.get("pibuoyv2_"+container+"_1")
+                if cnt.status != 'running':
                     healthy = False
                 self.sensor_data["version_"+container].append(
-                    [self.get_container_version(container), timestamp])
+                    [self.get_container_version(cnt), timestamp])
             except Exception as e:
                 self.sensor_data["version_"+container].append([str(e), timestamp])
                 healthy = False
