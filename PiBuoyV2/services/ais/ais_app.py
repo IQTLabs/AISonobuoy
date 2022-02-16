@@ -11,9 +11,10 @@ import time
 
 class AIS:
 
-    def __init__(self):
+    def __init__(self, data_dir='/flash/telemetry/ais', serial_impl=serial.Serial):
         self.hostname = os.getenv("HOSTNAME", socket.gethostname())
-        self.data_dir = '/flash/telemetry/ais'
+        self.data_dir = data_dir
+        self.serial_impl = serial_impl
 
     @staticmethod
     def getAIS(aisc, results):
@@ -43,7 +44,7 @@ class AIS:
         running = True
 
         print("AIS application started!")
-        aisc = serial.Serial(SERIAL_PORT, baudrate=38400, timeout=1)
+        aisc = self.serial_impl(SERIAL_PORT, baudrate=38400, timeout=1)
 
         os.makedirs(self.data_dir, exist_ok=True)
         start_time = int(time.time())
