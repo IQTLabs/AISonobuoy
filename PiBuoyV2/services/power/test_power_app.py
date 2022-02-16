@@ -153,7 +153,7 @@ def test_get_data():
 
 def test_main():
     with tempfile.TemporaryDirectory() as tmpdir:
-        pw = Power(root_dir=tmpdir, time_sec=time_sec)
+        pw = Power(root_dir=tmpdir, time_sec=time_sec, uid=os.getuid(), gid=os.getgid())
         for test_dir in ('dev/i2c-1', 'var/lib/pijuice', 'home/pi'):
             os.makedirs(os.path.join(tmpdir, test_dir), exist_ok=True)
         for test_file in ('pijuice_config.JSON', 'shutdown.sh'):
