@@ -73,5 +73,5 @@ class AIS:
 
 
 if __name__ == '__main__':
-    a = AIS(serial.Serial)
+    a = AIS()
     a.main()
