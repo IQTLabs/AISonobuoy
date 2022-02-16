@@ -43,19 +43,23 @@ class Power:
         return pijuice_data
 
 
-    def get_data(self, pj, data):
+    def data2ms(self, data):
+        return data["data"] / 1e3
+
+
+    def get_data(self, pj, data, time_sec=time.time):
+        timestamp = int(time_sec() * 1e3)
         try:
-            timestamp = int(time.time()*1000)
             status = pj.status.GetStatus()["data"]
             data["battery_charge"].append([pj.status.GetChargeLevel()["data"], timestamp])
-            data["battery_voltage"].append([pj.status.GetBatteryVoltage()["data"] / 1000, timestamp])
-            data["battery_current"].append([pj.status.GetBatteryCurrent()["data"] / 1000, timestamp])
+            data["battery_voltage"].append([self.data2ms(pj.status.GetBatteryVoltage()), timestamp])
+            data["battery_current"].append([self.data2ms(pj.status.GetBatteryCurrent()), timestamp])
             data["battery_temperature"].append([pj.status.GetBatteryTemperature()["data"], timestamp])
             data["battery_status"].append([status["battery"], timestamp])
             data["power_input"].append([status["powerInput"], timestamp])
             data["power_input_5v"].append([status["powerInput5vIo"], timestamp])
-            data["io_voltage"].append([pj.status.GetIoVoltage()["data"] / 1000, timestamp])
-            data["io_current"].append([pj.status.GetIoCurrent()["data"] / 1000, timestamp])
+            data["io_voltage"].append([self.data2ms(pj.status.GetIoVoltage()), timestamp])
+            data["io_current"].append([self.data2ms(pj.status.GetIoCurrent()), timestamp])
             faults = pj.status.GetFaultStatus()["data"]
             if "watchdog_reset" in faults:
                 data["watchdog_reset"].append([faults["watchdog_reset"], timestamp])
