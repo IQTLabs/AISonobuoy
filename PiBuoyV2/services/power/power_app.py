@@ -14,12 +14,12 @@ class Power:
         self.root_dir = root_dir
         self.data_dir = self.root_path(data_dir)
         if time_sec is None:
-            time_sec = self.time_sec
+            time_sec = self._time_sec
         self.time_sec = time_sec
         self.uid = int(uid)
         self.gid = int(gid)
 
-    def time_sec(self):
+    def _time_sec(self):
         return time.time()
 
     def rename_dotfiles(self):
