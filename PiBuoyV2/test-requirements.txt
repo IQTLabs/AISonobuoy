@@ -1,3 +1,3 @@
-pytype==2022.2.8
+pytype==2022.2.17
 pylint==2.12.2
 pytest==7.0.1
