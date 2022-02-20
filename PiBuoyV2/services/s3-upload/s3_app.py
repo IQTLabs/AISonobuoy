@@ -6,8 +6,9 @@ import os
 import platform
 from pathlib import Path
 
+import schedule
 
-START_SLEEP = 3600
+
 S3_BUCKET = 's3://aisonobuoy-pibuoy-v2/compressed/'
 FLASH_DIR = '/flash'
 TELEMETRY_DIR = os.path.join(FLASH_DIR, 'telemetry')
@@ -56,24 +57,30 @@ def tar_dir(filedir, tarfile, xz=False):
     return False
 
 
+def job(hostname):
+    timestamp = int(time.time())
+    if not os.path.exists(S3_DIR):
+        os.mkdir(S3_DIR)
+
+    for telemetry, xz in TELEMETRY_TYPES:
+        filedir = os.path.join(TELEMETRY_DIR, telemetry)
+        if not os.path.exists(filedir):
+            os.mkdir(filedir)
+        tarfile = f'{S3_DIR}/{telemetry}-{hostname}-{timestamp}.tar'
+        if xz:
+            tarfile = tarfile + '.xz'
+        print(f'processing {filedir}, tar {tarfile}')
+        tar_dir(filedir, tarfile, xz=xz)
+    s3_copy(S3_DIR)
+    return
+
+
 def main():
     hostname = os.getenv("HOSTNAME", platform.node())
+    schedule.every().day.at("13:00").do(job, hostname)
     while True:
-        time.sleep(START_SLEEP)
-        timestamp = int(time.time())
-        if not os.path.exists(S3_DIR):
-            os.mkdir(S3_DIR)
-
-        for telemetry, xz in TELEMETRY_TYPES:
-            filedir = os.path.join(TELEMETRY_DIR, telemetry)
-            if not os.path.exists(filedir):
-                os.mkdir(filedir)
-            tarfile = f'{S3_DIR}/{telemetry}-{hostname}-{timestamp}.tar'
-            if xz:
-                tarfile = tarfile + '.xz'
-            print(f'processing {filedir}, tar {tarfile}')
-            tar_dir(filedir, tarfile, xz=xz)
-        s3_copy(S3_DIR)
+        schedule.run_pending()
+        time.sleep(60)
 
 
 if __name__ == '__main__':

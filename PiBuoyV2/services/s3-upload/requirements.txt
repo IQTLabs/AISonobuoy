@@ -1,1 +1,2 @@
 awscli==1.22.58
+schedule==1.1.0
