@@ -50,7 +50,7 @@ def insert_message_data(data):
 
 def send_hook(card):
     try:
-        r = httpx.post(get_url(), json=card)
+        r = httpx.post(get_url(), json=card, timeout=5.0)
         return r.status_code
     except Exception as e:
         return f'Failed because: {e}, on card: {card}'
