@@ -1,23 +1,43 @@
-name: python_test
+name: tests
 on: [push, pull_request]
 jobs:
-  sleepypidtest:
+  shelltest:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: test
+    - name: shell_test
+      run: |
+        wget "https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz" && \
+        tar --xz -xvf "shellcheck-stable.linux.x86_64.tar.xz" && \
+        shellcheck() { "shellcheck-stable/shellcheck" "$@"; } && \
+        shellcheck --version && \
+        /bin/bash --version && \
+        for shellscript in $(find PiBuoyV2 -type f -name "*.sh"); do /bin/bash -n "$shellscript" && shellcheck -x "$shellscript"; done
+  unittests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: sleepypid_test
       run: |
           sudo apt-get update && sudo apt-get install -f python3-dev && \
           pip3 install -r ./PiBuoy/sleepypid/requirements.txt && \
           ./PiBuoy/sleepypid/test_sleepypid.py
-  pibuoy2py:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: test
+    - name: services_test
       run: |
-          sudo apt-get update && sudo apt-get install python3-dev && \
+          sudo apt-get update && sudo apt-get install python3-dev libjpeg62-dev procps zlib1g-dev build-essential curl i2c-tools && \
+              python3 -m pip install -U pip && \
+              git clone https://github.com/RPi-Distro/RTIMULib.git -b V7.2.1 && \
+              cd RTIMULib/Linux/python && python3 setup.py build && sudo python3 setup.py install && cd ../../.. && \
               find PiBuoyV2 -type f -name \*requirements.txt -exec pip3 install -r {} \; && \
+              pip3 install codecov pytest-cov pytest smbus urwid && \
+              curl -L https://github.com/pisupply/pijuice/tarball/V1.8 | tar -xz && \
+              cd PiSupply-PiJuice-bc61c0f/Software/Source && \
+              python3 setup.py build && sudo python3 setup.py install && cd ../../.. && \
               pylint -E $(find PiBuoyV2 -type f -name \*py) && \
               find PiBuoyV2 -type f -name \*py | xargs -n1 pytype && \
-              pytest PiBuoyV2
+              pytest -v -vv --cov-report term-missing --ignore=PiBuoy --cov=PiBuoyV2 -c .coveragerc && \
+              coverage report && \
+              coverage xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2.1.0
+      if: github.repository == 'iqtlabs/aisonobuoy'

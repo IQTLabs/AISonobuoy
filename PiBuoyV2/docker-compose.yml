@@ -10,12 +10,6 @@ services:
       - "/flash/telemetry/ais:/flash/telemetry/ais"
     devices:
       - "/dev/serial0:/dev/serial0"
-  pijuice:
-    image: iqtlabs/aisonobuoy-pijuice:stable
-    restart: always
-    network_mode: "none"
-    devices:
-      - "/dev/i2c-1:/dev/i2c-1"
   power:
     image: iqtlabs/aisonobuoy-power:stable
     restart: always
@@ -24,6 +18,9 @@ services:
       - "HOSTNAME=${HOSTNAME}"
     volumes:
       - "/flash/telemetry/power:/flash/telemetry/power"
+      - "/var/lib/pijuice:/var/lib/pijuice"
+      - "/var/run:/var/run"
+      - "/home/pi:/home/pi"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   record:
@@ -55,7 +52,9 @@ services:
       - "LOCATION=${LOCATION}"
       - "WEBHOOK_URL=${WEBHOOK_URL}"
     volumes:
-      - "/flash/telemetry:/flash/telemetry"
+      - "/flash:/flash"
+      - "/var/run:/var/run"
+      - "/var/run/docker.sock:/var/run/docker.sock"
     devices:
       - "/dev/i2c-1:/dev/i2c-1"
   watchtower:

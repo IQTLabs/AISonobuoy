@@ -4,10 +4,10 @@ import os
 import subprocess
 import tempfile
 import unittest
-from prep_and_send import tar_dir, s3_copy
+from s3_app import tar_dir, s3_copy
 
 
-class prepsendtest(unittest.TestCase):
+class apptest(unittest.TestCase):
 
     def test_s3_copy(self):
         with tempfile.TemporaryDirectory() as tmpdir:

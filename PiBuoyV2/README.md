@@ -1,3 +1,5 @@
+![cad-image](media/cad-image.jpg)
+
 The following are the hardware and software requirements and installation instructions for the Raspberry Pi Zero buoy version.
 
 # Hardware Requirements
@@ -10,6 +12,8 @@ The following are the hardware and software requirements and installation instru
 - pHAT Stack
 - 12000mAh PiJuice Battery
 - H2A Hydrophone
+- Seahorse 56 Micro Case
+- [3D Printed Chasis](stl-files)
 
 # Hardware configuration installation
 
@@ -27,18 +31,22 @@ The following are the hardware and software requirements and installation instru
 2. Install required packages.
 ```
 sudo apt-get update
-sudo apt-get install git python3-pip screen tmux
+sudo apt-get install build-essential git python3-pip python3-smbus python3-urwid screen tmux
 ```
 
 3. Disable unneeded services.
 ```
 sudo systemctl stop avahi-daemon.service
 sudo systemctl stop avahi-daemon.socket
+sudo systemctl stop apt-daily-upgrade.service
+sudo systemctl stop apt-daily-upgrade.timer
 sudo systemctl disable avahi-daemon.service
 sudo systemctl disable avahi-daemon.socket
+sudo systemctl disable apt-daily-upgrade.service
+sudo systemctl disable apt-daily-upgrade.timer
 ```
 
-4. Disable tvservice since this is going to be completely headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local before the `exit 0`.
+4. Disable tvservice since the system is headless by adding `/usr/bin/tvservice -o` to `/etc/rc.local` before the `exit 0`.
 
 5. Install this repo.
 ```
@@ -79,9 +87,13 @@ Add the following lines, save, and quit:
 ```
 # every five minutes
 */5 * * * * /opt/AISonobuoy/PiBuoyV2/scripts/system_health.sh
+# every thirty minutes
+*/30 * * * * systemctl restart pijuice.service
+# every minute check if need to shutdown
+* * * * * /opt/AISonobuoy/PiBuoyV2/scripts/shutdown.sh
 ```
 
-11. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that a role that can write to the S3 bucket.
+11. Add [AWS credentials](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) so you have ~/.aws/credentials and ~/.aws/config that have a role that can write to the S3 bucket.
 
 12. Enable I2C in raspi-config.
 ```
@@ -89,14 +101,26 @@ sudo raspi-config
 -> Interface Options -> I2C -> Yes to enable
 ```
 
-13. Restart.
+13. Install PiJuice service.
+```
+git clone https://github.com/PiSupply/PiJuice.git
+cd PiJuice/Software/Install
+sudo dpkg -i ./pijuice-base_1.8_all.deb
+```
+
+14. Restart.
 ```
 sudo reboot
 ```
 
-14. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+15. Update the firmware on the PiJuice to V1.6 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
+```
+pijuice_cli
+```
 
-15. Start PiBuoy containers.
+16. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+
+17. Start PiBuoy containers.
 ```
 cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
@@ -116,7 +140,6 @@ CONTAINER ID   IMAGE                                 COMMAND                  CR
 b76503cfbada   iqtlabs/aisonobuoy-s3-upload:latest   "/prep_and_send.sh "     36 minutes ago   Up 36 minutes              pibuoyv2_s3-upload_1
 492f3adf50a1   iqtlabs/aisonobuoy-sense:latest       "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_sense_1
 0e5a09f23127   iqtlabs/aisonobuoy-record:latest      "/record.sh "            36 minutes ago   Up 6 minutes               pibuoyv2_record_1
-f7795e64e06a   iqtlabs/aisonobuoy-pijuice:latest     "/usr/local/bin/piju…"   36 minutes ago   Up 36 minutes              pibuoyv2_pijuice_1
 da6bd9f59e0e   iqtlabs/aisonobuoy-ais:latest         "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_ais_1
 2bc024492d88   containrrr/watchtower:armhf-latest    "/watchtower"            36 minutes ago   Up 36 minutes   8080/tcp   pibuoyv2_watchtower_1
 802a7c8cab78   iqtlabs/aisonobuoy-power:latest       "python3 /app.py "       36 minutes ago   Up 36 minutes              pibuoyv2_power_1

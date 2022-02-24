@@ -1,20 +1,20 @@
 #!/usr/bin/python3
 
-from datetime import datetime
 import subprocess
 import time
 import os
 import platform
 from pathlib import Path
 
+import schedule
 
-START_SLEEP = 3600
+
 S3_BUCKET = 's3://aisonobuoy-pibuoy-v2/compressed/'
 FLASH_DIR = '/flash'
 TELEMETRY_DIR = os.path.join(FLASH_DIR, 'telemetry')
 S3_DIR = os.path.join(FLASH_DIR, 's3')
 TELEMETRY_TYPES = [
-    ('system', True), ('power', True), ('ais', True), ('hydrophone', False)]
+    ('system', True), ('sensors', True), ('power', True), ('ais', True), ('hydrophone', False)]
 
 
 def run_cmd(args, env=None):
@@ -57,11 +57,8 @@ def tar_dir(filedir, tarfile, xz=False):
     return False
 
 
-def main():
-    time.sleep(START_SLEEP)
-    hostname = platform.node()
-    now = datetime.now()
-    timestamp = now.strftime('%s%f')
+def job(hostname):
+    timestamp = int(time.time())
     if not os.path.exists(S3_DIR):
         os.mkdir(S3_DIR)
 
@@ -75,6 +72,16 @@ def main():
         print(f'processing {filedir}, tar {tarfile}')
         tar_dir(filedir, tarfile, xz=xz)
     s3_copy(S3_DIR)
+    return
+
+
+def main():
+    hostname = os.getenv("HOSTNAME", platform.node())
+    # time is in UTC because it's a container
+    schedule.every().day.at("18:00").do(job, hostname)
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
 
 
 if __name__ == '__main__':
