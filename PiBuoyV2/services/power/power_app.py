@@ -20,7 +20,7 @@ class Power:
         self.gid = int(gid)
 
     def _time_sec(self):
-        return time.time()
+        return int(time.time())
 
     def rename_dotfiles(self):
         for dotfile in glob.glob(os.path.join(self.data_dir, '.*')):
@@ -59,7 +59,7 @@ class Power:
 
 
     def get_data(self, pj, data):
-        timestamp = int(self.time_sec() * 1e3)
+        timestamp = self.time_sec() * 1e3
         try:
             status = pj.status.GetStatus()["data"]
             data["battery_charge"].append([pj.status.GetChargeLevel()["data"], timestamp])
