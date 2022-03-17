@@ -1,5 +1,7 @@
+
 from datetime import datetime
 import math
+import os
 from pathlib import Path
 
 from lxml import etree
@@ -18,12 +20,8 @@ F_INV = 298.257223563
 DELTA_T_MAX = 4
 
 # Data and clip directories
-DATA_HOME = Path(
-    "/Users/raymondleclair/odrive/Google-Drive-RAL-Springbok/3-Shared/IQT/7-AI-Sonobuoy/Data"
-)
-CLIP_HOME = Path(
-    "Clips"
-)
+DATA_HOME = Path(os.path.expanduser("~")) / "Data" / "AISonobuoy"
+CLIP_HOME = Path("Clips")
 
 
 def parse_source_gpx_file(inp_filename):
