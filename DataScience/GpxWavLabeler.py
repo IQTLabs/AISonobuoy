@@ -29,14 +29,14 @@ def parse_source_gpx_file(inp_filename):
 
     <gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Suunto app" version="1.1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
       <metadata>
-        <name>suuntoapp-Motorsports-2022-02-22T18-09-01Z</name>
+        <name></name>
         <desc/>
         <author>
-          <name>Charlie</name>
+          <name></name>
         </author>
       </metadata>
       <trk>
-        <name>suuntoapp-Motorsports-2022-02-22T18-09-01Z</name>
+        <name></name>
         <trkseg>
           <trkpt lat="12.345678" lon="-23.456789">
             <ele>-3.4</ele>
