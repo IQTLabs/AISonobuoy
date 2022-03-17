@@ -189,7 +189,7 @@ def compute_source_metrics(gpx):
     vld_varphi = _varphi[vld_idx]
     vld_h = _h[vld_idx]
     vld_t = _t[vld_idx]
-    
+
     # Compute geocentric east, north, and zenith unit vectors at an
     # origin corresponding to the mean longitude and latitude, and the
     # corresponding orthogonal transformation matrix from geocentric
@@ -413,7 +413,9 @@ def slice_source_audio_by_cluster(
                 # Identify valid time sets in which succusive times
                 # and no more than the specified delta time
                 dub_t = vld_t[(pos_plt_idx | neg_plt_idx) & dot_plt_idx & spd_plt_idx]
-                dub_t_sets = np.split(dub_t, np.where(np.diff(dub_t) > DELTA_T_MAX)[0] + 1)
+                dub_t_sets = np.split(
+                    dub_t, np.where(np.diff(dub_t) > DELTA_T_MAX)[0] + 1
+                )
 
                 # Export the first clip having at least two valid
                 # times
@@ -429,11 +431,14 @@ def slice_source_audio_by_cluster(
                             wav_filename += "-lesser"
                         wav_filename += "{:+.1f}.wav"
                         clip.export(
-                            CLIP_HOME / wav_filename.format(
+                            CLIP_HOME
+                            / wav_filename.format(
                                 heading_centers[pos_lbl_idx][0],
                                 heading_centers[neg_lbl_idx][0],
                                 speed_centers[spd_lbl_idx][0],
-                                ), format="wav")
+                            ),
+                            format="wav",
+                        )
                         break
 
                 # Optionally plot the track and color points
