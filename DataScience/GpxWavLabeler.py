@@ -1,7 +1,6 @@
-
+from argparse import ArgumentParser
 from datetime import datetime
 import math
-import os
 from pathlib import Path
 
 from lxml import etree
@@ -16,15 +15,8 @@ from sklearn.cluster import KMeans
 R_OPLUS = 6378137  # [m]
 F_INV = 298.257223563
 
-# Clip parameters
-DELTA_T_MAX = 4
 
-# Data and clip directories
-DATA_HOME = Path(os.path.expanduser("~")) / "Data" / "AISonobuoy"
-CLIP_HOME = Path("Clips")
-
-
-def parse_source_gpx_file(inp_filename):
+def parse_source_gpx_file(inp_path):
     """Parse a GPX file having the following structure:
 
     <gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Suunto app" version="1.1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
@@ -53,8 +45,8 @@ def parse_source_gpx_file(inp_filename):
 
     Parameters
     ----------
-    inp_filename : str
-        Filename of the GPX file to parse
+    inp_path : pathlib.Path()
+        Path of the GPX file to parse
 
     Returns
     -------
@@ -65,7 +57,6 @@ def parse_source_gpx_file(inp_filename):
     https://en.wikipedia.org/wiki/GPS_Exchange_Format
     """
     # Parse input file
-    inp_path = DATA_HOME / inp_filename
     parser = etree.XMLParser(remove_blank_text=True)
     tree = etree.parse(inp_path, parser)
 
@@ -78,7 +69,6 @@ def parse_source_gpx_file(inp_filename):
     gpx = {}
     gpx["metadata"] = {}
     gpx["trks"] = []
-    start_time = None
     for trk_element in root.iter("{http://www.topografix.com/GPX/1/1}trk"):
 
         # Collect track segments
@@ -127,12 +117,12 @@ def parse_source_gpx_file(inp_filename):
     return gpx
 
 
-def get_source_wav_file(inp_filename):
+def get_source_wav_file(inp_path):
     """Get source audio from a WAV file.
     Parameters
     ----------
-    inp_filename : str
-        Filename of the WAV file to open
+    inp_path : pathlib.Path()
+        Path of the WAV file to open
 
     Returns
     -------
@@ -142,7 +132,6 @@ def get_source_wav_file(inp_filename):
     See also:
     https://github.com/jiaaro/pydub
     """
-    inp_path = DATA_HOME / inp_filename
     audio = AudioSegment.from_wav(inp_path)
     return audio
 
@@ -336,7 +325,16 @@ def kmeans_cluster_source_metrics(
 
 
 def slice_source_audio_by_cluster(
-    audio, vld_t, r_s_o, heading_dot, heading_kmeans, speed_kmeans, do_plot=True
+    audio,
+    vld_t,
+    r_s_o,
+    heading_dot,
+    heading_kmeans,
+    speed_kmeans,
+    delta_t_max,
+    n_clips_max,
+    clip_home,
+    do_plot=True,
 ):
     """Slice source audio by cluster. Optionally plot source track and
     label the intersection of the heading and speed clusters.
@@ -355,6 +353,13 @@ def slice_source_audio_by_cluster(
         Fitted estimator for heading
     speed_kmeans : sklearn.cluster.KMeans
         Fitted estimator for speed
+    delta_t_max : float
+        the maximum time delta between positions used to define a
+        contiguous audio sample [s]
+    n_clips_max : int
+        the maximum number of clips exported in each segment
+    clip_home : pathlib.Path()
+        Home directory for clips
 
     Returns
     -------
@@ -371,7 +376,6 @@ def slice_source_audio_by_cluster(
     speed_n_clusters = len(speed_centers)
 
     # Consider each positive heading cluster center
-    vld_t_idx = np.array(range(vld_t.shape[0]))
     for pos_hdg_idx in range(heading_n_clusters // 2):
 
         # Identify the corresponding negative heading cluster center,
@@ -414,32 +418,37 @@ def slice_source_audio_by_cluster(
                 # and no more than the specified delta time
                 dub_t = vld_t[(pos_plt_idx | neg_plt_idx) & dot_plt_idx & spd_plt_idx]
                 dub_t_sets = np.split(
-                    dub_t, np.where(np.diff(dub_t) > DELTA_T_MAX)[0] + 1
+                    dub_t, np.where(np.diff(dub_t) > delta_t_max)[0] + 1
                 )
 
-                # Export the first clip having at least two valid
-                # times
+                # Export the specified number of clips having at least
+                # two valid times
+                n_clips = 0
                 for dub_t_set in dub_t_sets:
                     if dub_t_set.shape[0] > 2:
+                        n_clips += 1
                         start_t = int(dub_t_set[0] * 1000)
                         stop_t = int(dub_t_set[-1] * 1000)
                         clip = audio[start_t:stop_t]
-                        wav_filename = "clip{:+.1f}{:+.1f}"
+                        wav_filename = "clip-{:d}-{:d}-{:+.1f}{:+.1f}"
                         if isgreater:
                             wav_filename += "-greater"
                         else:
                             wav_filename += "-lesser"
                         wav_filename += "{:+.1f}.wav"
                         clip.export(
-                            CLIP_HOME
+                            clip_home
                             / wav_filename.format(
+                                start_t,
+                                stop_t,
                                 heading_centers[pos_lbl_idx][0],
                                 heading_centers[neg_lbl_idx][0],
                                 speed_centers[spd_lbl_idx][0],
                             ),
                             format="wav",
                         )
-                        break
+                        if n_clips > n_clips_max:
+                            break
 
                 # Optionally plot the track and color points
                 # corresponding to the current heading and speed
@@ -479,26 +488,86 @@ def slice_source_audio_by_cluster(
 """
 if __name__ == "__main__":
 
-    gpx_filename = "suuntoapp-Motorsports-2022-02-22T18-09-01Z-track.gpx"
-    wav_filename = "Unit-01.WAV"
+    parser = ArgumentParser(description="Use GPX data to slice a WAV file")
+    parser.add_argument(
+        "-D",
+        "--data-home",
+        default=str(Path("~").expanduser() / "Data" / "AISonobuoy"),
+        help="the directory containing GPX and WAV files",
+    )
+    parser.add_argument(
+        "-g",
+        "--gpx-filename",
+        default="suuntoapp-Motorsports-2022-02-22T18-09-01Z-track.gpx",
+        help="the GPX filename to parse",
+    )
+    parser.add_argument(
+        "-w",
+        "--wav-filename",
+        default="Unit-01.WAV",
+        help="the WAV filename to open",
+    )
+    parser.add_argument(
+        "-d",
+        "--heading-n-clusters",
+        type=int,
+        default=10,
+        help="the number of heading cluster means",
+    )
+    parser.add_argument(
+        "-s",
+        "--speed-n-clusters",
+        type=int,
+        default=4,
+        help="the maximum time delta between positions used to define a contiguous audio sample [s]",
+    )
+    parser.add_argument(
+        "-t",
+        "--delta-t-max",
+        type=float,
+        default=4.0,
+        help="the maximum time delta between positions used to define a contiguous audio sample [s]",
+    )
+    parser.add_argument(
+        "-n",
+        "--n-clips-max",
+        type=int,
+        default=3,
+        help="the maximum number of clips exported in each segment",
+    )
+    parser.add_argument(
+        "-C",
+        "--clip-home",
+        default=str(Path("Clips")),
+        help="the directory containing audio clip files",
+    )
+    args = parser.parse_args()
 
-    gpx = parse_source_gpx_file(gpx_filename)
-    audio = get_source_wav_file(wav_filename)
+    gpx_path = Path(args.data_home) / args.gpx_filename
+    wav_path = Path(args.data_home) / args.wav_filename
+
+    gpx = parse_source_gpx_file(gpx_path)
+    audio = get_source_wav_file(wav_path)
 
     vld_t, heading, heading_dot, speed, r_s_o, v_s_o = compute_source_metrics(gpx)
 
     plot_source_metrics(heading, heading_dot, speed, r_s_o)
 
-    heading_n_clusters = 10
-    speed_n_clusters = 4
-
     heading_kmeans, speed_kmeans = kmeans_cluster_source_metrics(
         heading,
-        heading_n_clusters,
+        args.heading_n_clusters,
         speed,
-        speed_n_clusters,
+        args.speed_n_clusters,
     )
 
     slice_source_audio_by_cluster(
-        audio, vld_t, r_s_o, heading_dot, heading_kmeans, speed_kmeans
+        audio,
+        vld_t,
+        r_s_o,
+        heading_dot,
+        heading_kmeans,
+        speed_kmeans,
+        args.delta_t_max,
+        args.n_clips_max,
+        Path(args.clip_home),
     )
