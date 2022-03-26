@@ -529,6 +529,13 @@ if __name__ == "__main__":
         help="the maximum time delta between positions used to define a contiguous audio sample [s]",
     )
     parser.add_argument(
+        "-t",
+        "--delta-t-max",
+        type=float,
+        default=4.0,
+        help="the maximum time delta between positions used to define a contiguous audio sample [s]",
+    )
+    parser.add_argument(
         "-n",
         "--n-clips-max",
         type=int,
