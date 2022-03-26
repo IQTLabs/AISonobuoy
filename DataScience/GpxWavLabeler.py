@@ -545,7 +545,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-C",
         "--clip-home",
-        default=str(Path("Clips")),
+        default=str(Path("~").expanduser() / "Datasets" / "AISonobuoy"),
         help="the directory containing audio clip files",
     )
     args = parser.parse_args()
