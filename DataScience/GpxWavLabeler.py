@@ -360,10 +360,12 @@ def plot_source_metrics(
 def kmeans_cluster_source_metrics(
     heading,
     heading_n_clusters,
+    distance,
+    distance_n_clusters,
     speed,
     speed_n_clusters,
 ):
-    """Compute k-means clusters of heading, and speed.
+    """Compute k-means clusters of heading, distance, and speed.
 
     Parameters
     ----------
@@ -371,6 +373,10 @@ def kmeans_cluster_source_metrics(
         Source heading, zero at north, clockwise positive
     heading_n_clusters : int
         Number of heading clusters
+    distance : numpy.ndarray
+        Source distance from the hydrophone [m]
+    distance_n_clusters : int
+        Number of distance clusters
     speed : numpy.ndarray
         Source speed [m/s]
     speed_n_clusters : int
@@ -380,6 +386,8 @@ def kmeans_cluster_source_metrics(
     -------
     heading_kmeans : sklearn.cluster.KMeans
         Fitted estimator for heading
+    distance_kmeans : sklearn.cluster.KMeans
+        Fitted estimator for distance
     speed_kmeans : sklearn.cluster.KMeans
         Fitted estimator for speed
     """
@@ -387,27 +395,34 @@ def kmeans_cluster_source_metrics(
     heading_kmeans = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
         90 - heading.reshape(-1, 1)
     )
+    distance_kmeans = KMeans(n_clusters=distance_n_clusters, random_state=0).fit(
+        distance.reshape(-1, 1)
+    )
     speed_kmeans = KMeans(n_clusters=speed_n_clusters, random_state=0).fit(
         speed.reshape(-1, 1)
     )
-    return heading_kmeans, speed_kmeans
+    return heading_kmeans, distance_kmeans, speed_kmeans
 
 
 def slice_source_audio_by_cluster(
     hydrophone,
     audio,
     vld_t,
-    r_s_o,
     heading_dot,
+    distance,
+    r_s_h,
     heading_kmeans,
+    distance_kmeans,
     speed_kmeans,
     delta_t_max,
     n_clips_max,
     clip_home,
     do_plot=True,
 ):
-    """Slice source audio by cluster. Optionally plot source track and
-    label the intersection of the heading and speed clusters.
+    """Slice source audio by heading, heading first derivative,
+    distance, and speed clusters. Optionally plot source track and
+    label the intersection of the heading, heading first derivative,
+    distance, and speed clusters.
 
     Parameters
     ----------
@@ -417,12 +432,14 @@ def slice_source_audio_by_cluster(
         The audio segment
     vld_t : numpy.ndarray
         Time from start of track [s]
-    r_s_o : numpy.ndarray
+    r_s_h : numpy.ndarray
         Source topocentric (east, north, zenith) position [m]
     heading_dot : numpy.ndarray
         Source heading first derivative
     heading_kmeans : sklearn.cluster.KMeans
         Fitted estimator for heading
+    distance_kmeans : sklearn.cluster.KMeans
+        Fitted estimator for distance
     speed_kmeans : sklearn.cluster.KMeans
         Fitted estimator for speed
     delta_t_max : float
@@ -444,6 +461,9 @@ def slice_source_audio_by_cluster(
 
     if np.sum(heading_centers > 0) != np.sum(heading_centers < 0):
         raise Exception("Number of positive and negative heading centers must be equal")
+
+    distance_centers = distance_kmeans.cluster_centers_
+    distance_n_clusters = len(distance_centers)
 
     speed_centers = speed_kmeans.cluster_centers_
     speed_n_clusters = len(speed_centers)
@@ -483,88 +503,98 @@ def slice_source_audio_by_cluster(
             else:
                 dot_plt_idx = np.abs(heading_dot) < 1.0
 
-            # Consider each speed cluster center
-            for spd_lbl_idx in range(speed_n_clusters):
+            # Consider each distance cluster center
+            for dis_lbl_idx in range(distance_n_clusters):
 
-                # Identify the speed values corresponding to the speed
-                # cluster center
-                spd_plt_idx = speed_kmeans.labels_ == spd_lbl_idx
+                # Identify the distance values corresponding to the
+                # distance cluster center
+                dis_plt_idx = distance_kmeans.labels_ == dis_lbl_idx
 
-                # Identify valid time sets in which succusive times
-                # and no more than the specified delta time
-                dub_t = vld_t[(pos_plt_idx | neg_plt_idx) & dot_plt_idx & spd_plt_idx]
-                dub_t_sets = np.split(
-                    dub_t, np.where(np.diff(dub_t) > delta_t_max)[0] + 1
-                )
+                # Consider each speed cluster center
+                for spd_lbl_idx in range(speed_n_clusters):
 
-                # Export the specified number of clips having at least
-                # two valid times
-                n_clips = 0
-                for dub_t_set in dub_t_sets:
-                    if dub_t_set.shape[0] > 2:
-                        dub_start_t = int(dub_t_set[0] * 1000)
-                        dub_stop_t = int(dub_t_set[-1] * 1000)
-                        if dub_stop_t < hyd_start_t or hyd_stop_t < dub_start_t:
-                            continue
-                        else:
-                            start_t = max(hyd_start_t, dub_start_t)
-                            stop_t = min(hyd_stop_t, dub_stop_t)
-                        n_clips += 1
-                        clip = audio[start_t:stop_t]
-                        wav_filename = "{:s}-{:d}-{:d}{:+.1f}{:+.1f}"
+                    # Identify the speed values corresponding to the
+                    # speed cluster center
+                    spd_plt_idx = speed_kmeans.labels_ == spd_lbl_idx
+
+                    # Identify valid time sets in which succusive times
+                    # and no more than the specified delta time
+                    dub_t = vld_t[(pos_plt_idx | neg_plt_idx) & dot_plt_idx & spd_plt_idx & dis_plt_idx]
+                    dub_t_sets = np.split(
+                        dub_t, np.where(np.diff(dub_t) > delta_t_max)[0] + 1
+                    )
+
+                    # Export the specified number of clips having at least
+                    # two valid times
+                    n_clips = 0
+                    for dub_t_set in dub_t_sets:
+                        if dub_t_set.shape[0] > 2:
+                            dub_start_t = int(dub_t_set[0] * 1000)
+                            dub_stop_t = int(dub_t_set[-1] * 1000)
+                            if dub_stop_t < hyd_start_t or hyd_stop_t < dub_start_t:
+                                continue
+                            else:
+                                start_t = max(hyd_start_t, dub_start_t)
+                                stop_t = min(hyd_stop_t, dub_stop_t)
+                            n_clips += 1
+                            clip = audio[start_t:stop_t]
+                            wav_filename = "{:s}-{:d}-{:d}{:+.1f}{:+.1f}"
+                            if isgreater:
+                                wav_filename += "-greater"
+                            else:
+                                wav_filename += "-lesser"
+                            wav_filename += "-{:.1f}-{:.1f}.wav"
+                            clip.export(
+                                clip_home
+                                / wav_filename.format(
+                                    hyd_name,
+                                    start_t,
+                                    stop_t,
+                                    heading_centers[pos_lbl_idx][0],
+                                    heading_centers[neg_lbl_idx][0],
+                                    distance_centers[dis_lbl_idx][0],
+                                    speed_centers[spd_lbl_idx][0],
+                                ),
+                                format="wav",
+                            )
+                            if n_clips > n_clips_max:
+                                break
+
+                    # Optionally plot the track and color points
+                    # corresponding to the current heading, heading
+                    # first derivative, distance, and speed cluster
+                    # centers
+                    if do_plot:
+                        fig, axs = plt.subplots()
+                        axs.plot(r_s_h[0, :], r_s_h[1, :])
+                        axs.plot(
+                            r_s_h[0, pos_plt_idx & dot_plt_idx & spd_plt_idx],
+                            r_s_h[1, pos_plt_idx & dot_plt_idx & spd_plt_idx],
+                            ".",
+                        )
+                        axs.plot(
+                            r_s_h[0, neg_plt_idx & dot_plt_idx & spd_plt_idx],
+                            r_s_h[1, neg_plt_idx & dot_plt_idx & spd_plt_idx],
+                            ".",
+                        )
+                        title = "{:s}\nhdgs = {:.1f}, {:.1f} deg"
                         if isgreater:
-                            wav_filename += "-greater"
+                            title += ", hdg_dot > 1"
                         else:
-                            wav_filename += "-lesser"
-                        wav_filename += "{:+.1f}.wav"
-                        clip.export(
-                            clip_home
-                            / wav_filename.format(
+                            title += ", hdg_dot < 1"
+                        title += ", dis = {:.1f} m, spd = {:.1f} m/s"
+                        axs.set_title(
+                            title.format(
                                 hyd_name,
-                                start_t,
-                                stop_t,
                                 heading_centers[pos_lbl_idx][0],
                                 heading_centers[neg_lbl_idx][0],
+                                distance_centers[dis_lbl_idx][0],
                                 speed_centers[spd_lbl_idx][0],
-                            ),
-                            format="wav",
+                            )
                         )
-                        if n_clips > n_clips_max:
-                            break
-
-                # Optionally plot the track and color points
-                # corresponding to the current heading and speed
-                # cluster centers
-                if do_plot:
-                    fig, axs = plt.subplots()
-                    axs.plot(r_s_o[0, :], r_s_o[1, :])
-                    axs.plot(
-                        r_s_o[0, pos_plt_idx & dot_plt_idx & spd_plt_idx],
-                        r_s_o[1, pos_plt_idx & dot_plt_idx & spd_plt_idx],
-                        ".",
-                    )
-                    axs.plot(
-                        r_s_o[0, neg_plt_idx & dot_plt_idx & spd_plt_idx],
-                        r_s_o[1, neg_plt_idx & dot_plt_idx & spd_plt_idx],
-                        ".",
-                    )
-                    title = "{:s}\nheadings = {:.1f}, {:.1f} deg"
-                    if isgreater:
-                        title += ", heading_dot > 1"
-                    else:
-                        title += ", heading_dot < 1"
-                    title += ", speed = {:.1f} m/s"
-                    axs.set_title(
-                        title.format(
-                            hyd_name,
-                            heading_centers[pos_lbl_idx][0],
-                            heading_centers[neg_lbl_idx][0],
-                            speed_centers[spd_lbl_idx][0],
-                        )
-                    )
-                    axs.set_xlabel("east [m]")
-                    axs.set_ylabel("north [m]")
-                    plt.show()
+                        axs.set_xlabel("east [m]")
+                        axs.set_ylabel("north [m]")
+                        plt.show()
 
 
 """Demonstrate GpxWavLabeler module.
@@ -677,9 +707,11 @@ if __name__ == "__main__":
             hydrophone,
             audio,
             vld_t,
-            r_s_o,
             heading_dot,
+            distance,
+            r_s_h,
             heading_kmeans,
+            distance_kmeans,
             speed_kmeans,
             args.delta_t_max,
             args.n_clips_max,
