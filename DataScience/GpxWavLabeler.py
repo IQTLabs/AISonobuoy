@@ -137,7 +137,7 @@ def parse_source_gpx_file(inp_path):
     return gpx
 
 
-def get_source_wav_file(inp_path):
+def get_hydrophone_wav_file(inp_path):
     """Get source audio from a WAV file.
     Parameters
     ----------
@@ -521,10 +521,9 @@ def slice_source_audio_by_cluster(
                     plt.show()
 
 
-"""Demonstrate GpxLabeler.
+"""Demonstrate GpxWavLabeler module.
 """
 if __name__ == "__main__":
-
     parser = ArgumentParser(description="Use GPX data to slice a WAV file")
     parser.add_argument(
         "-D",
