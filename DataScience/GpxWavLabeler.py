@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from datetime import datetime
 import json
+import logging
 import math
 from pathlib import Path
 
@@ -15,6 +16,19 @@ from sklearn.cluster import KMeans
 # WGS84 parameters
 R_OPLUS = 6378137  # [m]
 F_INV = 298.257223563
+
+# Logging configuration
+root = logging.getLogger()
+if not root.handlers:
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+
+logger = logging.getLogger("GpxWavLabeler")
+logger.setLevel(logging.INFO)
 
 
 def load_collection_json_file(inp_path):
@@ -31,6 +45,7 @@ def load_collection_json_file(inp_path):
         The collection configuration
 
     """
+    logger.info(f"Loading {inp_path}")
     with open(inp_path, "r") as f:
         collection = json.load(f)
     return collection
@@ -76,6 +91,7 @@ def parse_source_gpx_file(inp_path):
     See also:
     https://en.wikipedia.org/wiki/GPS_Exchange_Format
     """
+    logger.info(f"Parsing {inp_path}")
     # Parse input file
     parser = etree.XMLParser(remove_blank_text=True)
     tree = etree.parse(inp_path, parser)
@@ -152,6 +168,7 @@ def get_hydrophone_wav_file(inp_path):
     See also:
     https://github.com/jiaaro/pydub
     """
+    logger.info(f"Getting {inp_path}")
     audio = AudioSegment.from_wav(inp_path)
     return audio
 
@@ -186,6 +203,9 @@ def compute_source_metrics(source, gpx):
     See:
     Montenbruck O., Gill E.; Satellite Orbits; Springer, Berlin (2001); pp. 37 and 38.
     """
+    logger.info(
+        f"Computing source {source['name']} metrics for hydrophone {Path(hydrophone['name'].lower()).stem}"
+    )
     # Assign longitude, latitude, elevation, and time from start of
     # track
     # TODO: Check single track and track segment assumption
@@ -198,6 +218,7 @@ def compute_source_metrics(source, gpx):
     vld_idx = np.logical_and(
         np.logical_and(source["start_t"] < _t, _t < source["stop_t"]), _h != -R_OPLUS
     )
+    logger.info(f"Found {np.sum(vld_idx)} valid values out of all {_t.shape[0]} values")
     vld_lambda = _lambda[vld_idx]
     vld_varphi = _varphi[vld_idx]
     vld_h = _h[vld_idx]
@@ -284,6 +305,9 @@ def plot_source_metrics(heading, heading_dot, speed, r_s_o):
     -------
     None
     """
+    logger.info(
+        f"Plotting source {source['name']} metrics for hydrophone {Path(hydrophone['name'].lower()).stem}"
+    )
     fig, axs = plt.subplots()
     axs.plot(r_s_o[0, :], r_s_o[1, :])
     axs.set_title("Track")
@@ -339,6 +363,7 @@ def kmeans_cluster_source_metrics(
     speed_kmeans : sklearn.cluster.KMeans
         Fitted estimator for speed
     """
+    logger.info(f"Computing k-means clusters of heading, distance, and speed")
     heading_kmeans = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
         90 - heading.reshape(-1, 1)
     )
@@ -392,6 +417,7 @@ def slice_source_audio_by_cluster(
     -------
     None
     """
+    logger.info(f"Slicing source audio by heading, heading first derivative, distance, and speed clusters")
     # Assign cluster centers and ensure heading clusters pair
     heading_centers = heading_kmeans.cluster_centers_
     heading_n_clusters = len(heading_centers)
