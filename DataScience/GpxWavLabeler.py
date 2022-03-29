@@ -427,7 +427,7 @@ def slice_source_audio_by_cluster(
     Parameters
     ----------
     hydrophone : dict
-        The hydorphone configuration
+        The hydrophone configuration
     audio : pydub.audio_segment.AudioSegment
         The audio segment
     vld_t : numpy.ndarray
@@ -517,7 +517,7 @@ def slice_source_audio_by_cluster(
                     # speed cluster center
                     spd_plt_idx = speed_kmeans.labels_ == spd_lbl_idx
 
-                    # Identify valid time sets in which succusive times
+                    # Identify valid time sets in which successive times
                     # and no more than the specified delta time
                     dub_t = vld_t[(pos_plt_idx | neg_plt_idx) & dot_plt_idx & spd_plt_idx & dis_plt_idx]
                     dub_t_sets = np.split(
