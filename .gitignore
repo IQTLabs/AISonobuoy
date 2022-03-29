@@ -5,3 +5,5 @@ __pycache__
 *.gpx
 *-checkpoint.ipynb
 .idea
+.dir-locals.el
+.requirements.txt
