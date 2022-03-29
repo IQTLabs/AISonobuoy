@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from datetime import datetime
+import json
 import math
 from pathlib import Path
 
@@ -14,6 +15,25 @@ from sklearn.cluster import KMeans
 # WGS84 parameters
 R_OPLUS = 6378137  # [m]
 F_INV = 298.257223563
+
+
+def load_collection_json_file(inp_path):
+    """Load collection JSON file.
+
+    Parameters
+    ----------
+    inp_path : pathlib.Path()
+        Path of the JSON file to load
+
+    Returns
+    -------
+    collection : dict
+        The collection configuration
+
+    """
+    with open(inp_path, "r") as f:
+        collection = json.load(f)
+    return collection
 
 
 def parse_source_gpx_file(inp_path):
@@ -136,13 +156,15 @@ def get_source_wav_file(inp_path):
     return audio
 
 
-def compute_source_metrics(gpx):
+def compute_source_metrics(source, gpx):
     """Compute the topocentric position and velocity of the source
     relative to the origin, and corresponding heading, heading first
     derivative, and speed.
 
     Parameters
     ----------
+    source : dict
+        The source configuration
     gpx : dict
         Track, track segments, and track points
 
@@ -173,7 +195,9 @@ def compute_source_metrics(gpx):
     _t = np.array(gpx["trks"][0]["trksegs"][0]["time"])  # time from start of track [s]
 
     # Ignore points at which the elevation was not recorded
-    vld_idx = _h != -R_OPLUS
+    vld_idx = np.logical_and(
+        np.logical_and(source["start_t"] < _t, _t < source["stop_t"]), _h != -R_OPLUS
+    )
     vld_lambda = _lambda[vld_idx]
     vld_varphi = _varphi[vld_idx]
     vld_h = _h[vld_idx]
@@ -325,6 +349,7 @@ def kmeans_cluster_source_metrics(
 
 
 def slice_source_audio_by_cluster(
+    hydrophone,
     audio,
     vld_t,
     r_s_o,
@@ -341,6 +366,8 @@ def slice_source_audio_by_cluster(
 
     Parameters
     ----------
+    hydrophone : dict
+        The hydorphone configuration
     audio : pydub.audio_segment.AudioSegment
         The audio segment
     vld_t : numpy.ndarray
@@ -376,6 +403,9 @@ def slice_source_audio_by_cluster(
     speed_n_clusters = len(speed_centers)
 
     # Consider each positive heading cluster center
+    hyd_name = Path(hydrophone["name"].lower()).stem
+    hyd_start_t = hydrophone["start_t"] * 1000
+    hyd_stop_t = hydrophone["stop_t"] * 1000
     for pos_hdg_idx in range(heading_n_clusters // 2):
 
         # Identify the corresponding negative heading cluster center,
@@ -426,11 +456,16 @@ def slice_source_audio_by_cluster(
                 n_clips = 0
                 for dub_t_set in dub_t_sets:
                     if dub_t_set.shape[0] > 2:
+                        dub_start_t = int(dub_t_set[0] * 1000)
+                        dub_stop_t = int(dub_t_set[-1] * 1000)
+                        if dub_stop_t < hyd_start_t or hyd_stop_t < dub_start_t:
+                            continue
+                        else:
+                            start_t = max(hyd_start_t, dub_start_t)
+                            stop_t = min(hyd_stop_t, dub_stop_t)
                         n_clips += 1
-                        start_t = int(dub_t_set[0] * 1000)
-                        stop_t = int(dub_t_set[-1] * 1000)
                         clip = audio[start_t:stop_t]
-                        wav_filename = "clip-{:d}-{:d}-{:+.1f}{:+.1f}"
+                        wav_filename = "{:s}-{:d}-{:d}{:+.1f}{:+.1f}"
                         if isgreater:
                             wav_filename += "-greater"
                         else:
@@ -439,6 +474,7 @@ def slice_source_audio_by_cluster(
                         clip.export(
                             clip_home
                             / wav_filename.format(
+                                hyd_name,
                                 start_t,
                                 stop_t,
                                 heading_centers[pos_lbl_idx][0],
@@ -466,7 +502,7 @@ def slice_source_audio_by_cluster(
                         r_s_o[1, neg_plt_idx & dot_plt_idx & spd_plt_idx],
                         ".",
                     )
-                    title = "headings = {:.1f}, {:.1f} deg"
+                    title = "{:s}\nheadings = {:.1f}, {:.1f} deg"
                     if isgreater:
                         title += ", heading_dot > 1"
                     else:
@@ -474,6 +510,7 @@ def slice_source_audio_by_cluster(
                     title += ", speed = {:.1f} m/s"
                     axs.set_title(
                         title.format(
+                            hyd_name,
                             heading_centers[pos_lbl_idx][0],
                             heading_centers[neg_lbl_idx][0],
                             speed_centers[spd_lbl_idx][0],
@@ -496,6 +533,12 @@ if __name__ == "__main__":
         help="the directory containing GPX and WAV files",
     )
     parser.add_argument(
+        "-c",
+        "--json-filename",
+        default="cape-exercises-2022-02-22T18-09-01Z-collection.json",
+        help="the JSON filename to load",
+    )
+    parser.add_argument(
         "-g",
         "--gpx-filename",
         default="suuntoapp-Motorsports-2022-02-22T18-09-01Z-track.gpx",
@@ -504,7 +547,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-w",
         "--wav-filename",
-        default="Unit-01.WAV",
+        default=None,
         help="the WAV filename to open",
     )
     parser.add_argument(
@@ -529,13 +572,6 @@ if __name__ == "__main__":
         help="the maximum time delta between positions used to define a contiguous audio sample [s]",
     )
     parser.add_argument(
-        "-t",
-        "--delta-t-max",
-        type=float,
-        default=4.0,
-        help="the maximum time delta between positions used to define a contiguous audio sample [s]",
-    )
-    parser.add_argument(
         "-n",
         "--n-clips-max",
         type=int,
@@ -550,16 +586,18 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    json_path = Path(args.data_home) / args.json_filename
+    collection = load_collection_json_file(json_path)
+
     gpx_path = Path(args.data_home) / args.gpx_filename
-    wav_path = Path(args.data_home) / args.wav_filename
-
     gpx = parse_source_gpx_file(gpx_path)
-    audio = get_source_wav_file(wav_path)
 
-    vld_t, heading, heading_dot, speed, r_s_o, v_s_o = compute_source_metrics(gpx)
+    source = collection["sources"][0]
+    vld_t, heading, heading_dot, speed, r_s_o, v_s_o = compute_source_metrics(
+        source, gpx
+    )
 
     plot_source_metrics(heading, heading_dot, speed, r_s_o)
-
     heading_kmeans, speed_kmeans = kmeans_cluster_source_metrics(
         heading,
         args.heading_n_clusters,
@@ -567,14 +605,23 @@ if __name__ == "__main__":
         args.speed_n_clusters,
     )
 
-    slice_source_audio_by_cluster(
-        audio,
-        vld_t,
-        r_s_o,
-        heading_dot,
-        heading_kmeans,
-        speed_kmeans,
-        args.delta_t_max,
-        args.n_clips_max,
-        Path(args.clip_home),
-    )
+    if args.wav_filename is None:
+        wav_filenames = [d["name"] for d in collection["hydrophones"]]
+    else:
+        wav_filenames = [args.wav_filename]
+    for wav_filename in wav_filenames:
+        hydrophone = next(d for d in collection["hydrophones"] if d["name"] == wav_filename)
+        wav_path = Path(args.data_home) / wav_filename
+        audio = get_hydrophone_wav_file(wav_path)
+        slice_source_audio_by_cluster(
+            hydrophone,
+            audio,
+            vld_t,
+            r_s_o,
+            heading_dot,
+            heading_kmeans,
+            speed_kmeans,
+            args.delta_t_max,
+            args.n_clips_max,
+            Path(args.clip_home),
+        )
