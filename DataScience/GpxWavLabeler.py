@@ -205,7 +205,7 @@ def compute_source_metrics(source, gpx, hydrophone):
         Source topocentric (east, north, zenith) velocity [m/s]
 
     See:
-    Montenbruck O., Gill E.; Satellite Orbits; Springer, Berlin (2001); pp. 37 and 38.
+    Montenbruck O., Gill E.; Satellite Orbits; Springer, Berlin (2001); pp. 37 and 188.
     """
     logger.info(
         f"Computing source {source['name']} metrics for hydrophone {Path(hydrophone['name'].lower()).stem}"
