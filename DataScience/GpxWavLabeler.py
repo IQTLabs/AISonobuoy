@@ -626,6 +626,176 @@ def slice_source_audio_by_cluster(
                         plt.show()
 
 
+def slice_source_audio_by_condition(
+    hydrophone,
+    audio,
+    vld_t,
+    r_s_h,
+    distance,
+    distance_limits,
+    heading,
+    heading_limits,
+    heading_dot,
+    heading_dot_limits,
+    speed,
+    speed_limits,
+    delta_t_max,
+    n_clips_max,
+    clip_home,
+    do_plot=True,
+):
+    """Slice source audio by heading, heading first derivative,
+    distance, and speed limits. Optionally plot source track and
+    label the intersection of the heading, heading first derivative,
+    distance, and speed clusters.
+
+    Parameters
+    ----------
+    hydrophone : dict
+        The hydrophone configuration
+    audio : pydub.audio_segment.AudioSegment
+        The audio segment
+    vld_t : numpy.ndarray
+        Time from start of track [s]
+    r_s_h : numpy.ndarray
+        Source topocentric (east, north, zenith) position [m]
+    distance : numpy.ndarray
+        Source distance from hydrophone [m]
+    distance_limits : [float]
+        Distance limits
+    heading : numpy.ndarray
+        Source heading, zero at north, clockwise positive
+    heading_limits : [float]
+        Heading limits
+    heading_dot : numpy.ndarray
+        Source heading first derivative
+    heading_dot_limits : [float]
+        Heading first derivative limits
+    speed : numpy.ndarray
+        Source speed [m/s]
+    speed_limits : [float]
+        Speed limits
+    delta_t_max : float
+        the maximum time delta between positions used to define a
+        contiguous audio sample [s]
+    n_clips_max : int
+        the maximum number of clips exported in each segment
+    clip_home : pathlib.Path()
+        Home directory for clips
+
+    Returns
+    -------
+    None
+    """
+    logger.info(
+        f"Slicing source audio by heading, heading first derivative, distance, and speed limits"
+    )
+    # Identify hydrophone attributes
+    hyd_name = Path(hydrophone["name"].lower()).stem
+    hyd_start_t = hydrophone["start_t"] * 1000
+    hyd_stop_t = hydrophone["stop_t"] * 1000
+
+    # Identify the distance values corresponding to the distance
+    # limits
+    dis_plt_idx = np.logical_and(
+        distance_limits[0] < distance, distance < distance_limits[1]
+    )
+
+    # Identify the heading values corresponding to the heading limits
+    hdg_plt_idx = np.logical_or(
+        np.logical_and(heading_limits[0] < heading, heading < heading_limits[1]),
+        np.logical_and(heading_limits[2] < heading, heading < heading_limits[3]),
+    )
+
+    # Identify the heading first derivative values corresponding to
+    # the heading first derivative limits
+    dot_plt_idx = np.logical_and(
+        heading_dot_limits[0] < heading_dot, heading_dot < heading_dot_limits[1]
+    )
+
+    # Identify the speed values corresponding to the speed limits
+    spd_plt_idx = np.logical_and(speed_limits[0] < speed, speed < speed_limits[1])
+
+    # Identify valid time sets in which successive times and no more
+    # than the specified delta time
+    dub_t = vld_t[hdg_plt_idx & dot_plt_idx & spd_plt_idx & dis_plt_idx]
+    dub_t_sets = np.split(dub_t, np.where(np.diff(dub_t) > delta_t_max)[0] + 1)
+
+    # Export the specified number of clips having at least two valid
+    # times
+    n_clips = 0
+    for dub_t_set in dub_t_sets:
+        if dub_t_set.shape[0] > 2:
+            dub_start_t = int(dub_t_set[0] * 1000)
+            dub_stop_t = int(dub_t_set[-1] * 1000)
+            if dub_stop_t < hyd_start_t or hyd_stop_t < dub_start_t:
+                continue
+            else:
+                start_t = max(hyd_start_t, dub_start_t)
+                stop_t = min(hyd_stop_t, dub_stop_t)
+            n_clips += 1
+            clip = audio[start_t:stop_t]
+            wav_filename = "{:s}-{:d}-{:d}-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}-and-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}.wav"
+            clip.export(
+                clip_home
+                / wav_filename.format(
+                    hyd_name,
+                    start_t,
+                    stop_t,
+                    distance_limits[0],
+                    distance_limits[1],
+                    heading_limits[0],
+                    heading_limits[1],
+                    heading_limits[2],
+                    heading_limits[3],
+                    heading_dot_limits[0],
+                    heading_dot_limits[1],
+                    speed_limits[0],
+                    speed_limits[1],
+                ),
+                format="wav",
+            )
+            if n_clips > n_clips_max:
+                break
+
+    # Optionally plot the track and color points corresponding to the
+    # current heading, heading first derivative, distance, and speed
+    # cluster centers
+    if do_plot:
+        fig, axs = plt.subplots()
+        axs.plot(r_s_h[0, :], r_s_h[1, :])
+        axs.plot(
+            r_s_h[0, dis_plt_idx & hdg_plt_idx & dot_plt_idx & spd_plt_idx],
+            r_s_h[1, dis_plt_idx & hdg_plt_idx & dot_plt_idx & spd_plt_idx],
+            ".",
+        )
+        axs.axhline(color="gray", linestyle="dotted")
+        axs.axvline(color="gray", linestyle="dotted")
+        title = "{:s}\n"
+        title += "dis = {:.1f} to {:.1f} m"
+        title += ", hdg = {:.1f} to {:.1f} and {:.1f} to {:.1f} deg"
+        title += ", hdg dot = {:.1f} to {:.1f} deg/s"
+        title += ", spd = {:.1f} to {:.1f} m/s"
+        axs.set_title(
+            title.format(
+                hyd_name,
+                distance_limits[0],
+                distance_limits[1],
+                heading_limits[0],
+                heading_limits[1],
+                heading_limits[2],
+                heading_limits[3],
+                heading_dot_limits[0],
+                heading_dot_limits[1],
+                speed_limits[0],
+                speed_limits[1],
+                )
+        )
+        axs.set_xlabel("east [m]")
+        axs.set_ylabel("north [m]")
+        plt.show()
+
+
 """Demonstrate GpxWavLabeler module.
 """
 if __name__ == "__main__":
