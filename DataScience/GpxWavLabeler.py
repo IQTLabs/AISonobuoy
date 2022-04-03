@@ -191,12 +191,12 @@ def compute_source_metrics(source, gpx, hydrophone):
     -------
     vld_t : numpy.ndarray
         Time from start of track [s]
+    distance : numpy.ndarray
+        Source distance from hydrophone [m]
     heading : numpy.ndarray
         Source heading, zero at north, clockwise positive
     heading_dot : numpy.ndarray
         Source heading first derivative
-    distance : numpy.ndarray
-        Source distance from hydrophone [m]
     speed : numpy.ndarray
         Source speed [m/s]
     r_s_h : numpy.ndarray
@@ -283,19 +283,20 @@ def compute_source_metrics(source, gpx, hydrophone):
     # TODO: Use instantaneous orthogonal transformation matrix?
     r_s_h = np.matmul(E, R_s_h)
     v_s_h = np.gradient(r_s_h, vld_t, axis=1)
+    distance = np.sqrt(np.sum(np.square(r_s_h), axis=0))
     heading = 90 - np.degrees(np.arctan2(v_s_h[1, :], v_s_h[0, :]))
     heading_dot = (
         pd.DataFrame(np.gradient(heading, vld_t)).ewm(span=3).mean().to_numpy()
     ).flatten()
-    distance = np.sqrt(np.sum(np.square(r_s_h), axis=0))
     speed = np.sqrt(np.sum(np.square(v_s_h), axis=0))
-    return vld_t, heading, heading_dot, distance, speed, r_s_h, v_s_h
+    return vld_t, distance, heading, heading_dot, speed, r_s_h, v_s_h
 
 
 def plot_source_metrics(
     source, hydrophone, heading, heading_dot, distance, speed, r_s_h
 ):
-    """Plot source track, and histograms of source heading, distance, and speed.
+    """Plot source track, and histograms of source distance, heading,
+    heading first derivative, and speed.
 
     Parameters
     ----------
@@ -331,6 +332,13 @@ def plot_source_metrics(
     plt.show()
 
     fig, axs = plt.subplots()
+    axs.hist(distance, bins=100)
+    axs.set_title("Distance")
+    axs.set_xlabel("distance [m]")
+    axs.set_ylabel("counts")
+    plt.show()
+
+    fig, axs = plt.subplots()
     axs.hist(90 - heading, bins=180)
     axs.set_title("Headings")
     axs.set_xlabel("heading [deg]")
@@ -345,13 +353,6 @@ def plot_source_metrics(
     plt.show()
 
     fig, axs = plt.subplots()
-    axs.hist(distance, bins=100)
-    axs.set_title("Distance")
-    axs.set_xlabel("distance [m]")
-    axs.set_ylabel("counts")
-    plt.show()
-
-    fig, axs = plt.subplots()
     axs.hist(speed, bins=100)
     axs.set_title("Speed")
     axs.set_xlabel("speed [m/s]")
@@ -360,25 +361,33 @@ def plot_source_metrics(
 
 
 def kmeans_cluster_source_metrics(
-    heading,
-    heading_n_clusters,
     distance,
     distance_n_clusters,
+    heading,
+    heading_n_clusters,
+    heading_dot,
+    heading_dot_n_clusters,
     speed,
     speed_n_clusters,
 ):
-    """Compute k-means clusters of heading, distance, and speed.
+    """Compute k-means clusters of distance, heading, heading first
+    derivtive, and speed.
 
     Parameters
     ----------
-    heading : numpy.ndarray
-        Source heading, zero at north, clockwise positive
-    heading_n_clusters : int
-        Number of heading clusters
     distance : numpy.ndarray
         Source distance from the hydrophone [m]
     distance_n_clusters : int
         Number of distance clusters
+    heading : numpy.ndarray
+        Source heading, zero at north, clockwise positive [deg]
+    heading_n_clusters : int
+        Number of heading clusters
+    heading_dot : numpy.ndarray
+        Source heading first derivative, zero at north, clockwise
+        positive [deg/s]
+    heading_dot_n_clusters : int
+        Number of heading dot clusters
     speed : numpy.ndarray
         Source speed [m/s]
     speed_n_clusters : int
@@ -386,35 +395,39 @@ def kmeans_cluster_source_metrics(
 
     Returns
     -------
-    heading_kmeans : sklearn.cluster.KMeans
-        Fitted estimator for heading
     distance_kmeans : sklearn.cluster.KMeans
         Fitted estimator for distance
+    heading_kmeans : sklearn.cluster.KMeans
+        Fitted estimator for heading
+    heading_dot_kmeans : sklearn.cluster.KMeans
+        Fitted estimator for heading first derivative
     speed_kmeans : sklearn.cluster.KMeans
         Fitted estimator for speed
     """
     logger.info(f"Computing k-means clusters of heading, distance, and speed")
-    heading_kmeans = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
-        90 - heading.reshape(-1, 1)
-    )
     distance_kmeans = KMeans(n_clusters=distance_n_clusters, random_state=0).fit(
         distance.reshape(-1, 1)
     )
+    heading_kmeans = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
+        90 - heading.reshape(-1, 1)
+    )
+    heading_dot_kmeans = KMeans(
+        n_clusters=heading_dot_n_clusters, random_state=0
+    ).fit(heading_dot.reshape(-1, 1))
     speed_kmeans = KMeans(n_clusters=speed_n_clusters, random_state=0).fit(
         speed.reshape(-1, 1)
     )
-    return heading_kmeans, distance_kmeans, speed_kmeans
+    return distance_kmeans, heading_kmeans, heading_dot_kmeans, speed_kmeans
 
 
 def slice_source_audio_by_cluster(
     hydrophone,
     audio,
     vld_t,
-    heading_dot,
-    distance,
     r_s_h,
-    heading_kmeans,
     distance_kmeans,
+    heading_kmeans,
+    heading_dot_kmeans,
     speed_kmeans,
     delta_t_max,
     n_clips_max,
@@ -436,12 +449,12 @@ def slice_source_audio_by_cluster(
         Time from start of track [s]
     r_s_h : numpy.ndarray
         Source topocentric (east, north, zenith) position [m]
-    heading_dot : numpy.ndarray
-        Source heading first derivative
-    heading_kmeans : sklearn.cluster.KMeans
-        Fitted estimator for heading
     distance_kmeans : sklearn.cluster.KMeans
         Fitted estimator for distance
+    heading_kmeans : sklearn.cluster.KMeans
+        Fitted estimator for heading
+    heading_dot_kmeans : sklearn.cluster.KMeans
+        Fitted estimator for heading first derivative
     speed_kmeans : sklearn.cluster.KMeans
         Fitted estimator for speed
     delta_t_max : float
@@ -456,61 +469,68 @@ def slice_source_audio_by_cluster(
     -------
     None
     """
-    logger.info(f"Slicing source audio by heading, heading first derivative, distance, and speed clusters")
+    logger.info(
+        f"Slicing source audio by heading, heading first derivative, distance, and speed clusters"
+    )
     # Assign cluster centers and ensure heading clusters pair
+    distance_centers = distance_kmeans.cluster_centers_
+    distance_n_clusters = len(distance_centers)
+
     heading_centers = heading_kmeans.cluster_centers_
     heading_n_clusters = len(heading_centers)
 
     if np.sum(heading_centers > 0) != np.sum(heading_centers < 0):
         raise Exception("Number of positive and negative heading centers must be equal")
 
-    distance_centers = distance_kmeans.cluster_centers_
-    distance_n_clusters = len(distance_centers)
+    heading_dot_centers = heading_dot_kmeans.cluster_centers_
+    heading_dot_n_clusters = len(heading_dot_centers)
 
     speed_centers = speed_kmeans.cluster_centers_
     speed_n_clusters = len(speed_centers)
 
-    # Consider each positive heading cluster center
+    # Identify hydrophone attributes
     hyd_name = Path(hydrophone["name"].lower()).stem
     hyd_start_t = hydrophone["start_t"] * 1000
     hyd_stop_t = hydrophone["stop_t"] * 1000
-    for pos_hdg_idx in range(heading_n_clusters // 2):
 
-        # Identify the corresponding negative heading cluster center,
-        # that is, 180 degrees from the positive heading cluster
-        # center
-        neg_hdg_idx = np.argmin(
-            np.abs(
-                heading_centers[heading_centers > 0][pos_hdg_idx]
-                - heading_centers[heading_centers < 0]
-                - 180
+    # Consider each distance cluster center
+    for dis_lbl_idx in range(distance_n_clusters):
+
+        # Identify the distance values corresponding to the distance
+        # cluster center
+        dis_plt_idx = distance_kmeans.labels_ == dis_lbl_idx
+
+        # Consider each positive heading cluster center
+        for pos_hdg_idx in range(heading_n_clusters // 2):
+
+            # Identify the corresponding negative heading cluster center,
+            # that is, 180 degrees from the positive heading cluster
+            # center
+            neg_hdg_idx = np.argmin(
+                np.abs(
+                    heading_centers[heading_centers > 0][pos_hdg_idx]
+                    - heading_centers[heading_centers < 0]
+                    - 180
+                )
             )
-        )
 
-        # Identify the heading values corresponding to the positive
-        # and negative heading cluster centers
-        pos_lbl_idx = np.argwhere(
-            heading_centers == heading_centers[heading_centers > 0][pos_hdg_idx]
-        )[0, 0]
-        neg_lbl_idx = np.argwhere(
-            heading_centers == heading_centers[heading_centers < 0][neg_hdg_idx]
-        )[0, 0]
-        pos_plt_idx = heading_kmeans.labels_ == pos_lbl_idx
-        neg_plt_idx = heading_kmeans.labels_ == neg_lbl_idx
+            # Identify the heading values corresponding to the positive
+            # and negative heading cluster centers
+            pos_lbl_idx = np.argwhere(
+                heading_centers == heading_centers[heading_centers > 0][pos_hdg_idx]
+            )[0, 0]
+            neg_lbl_idx = np.argwhere(
+                heading_centers == heading_centers[heading_centers < 0][neg_hdg_idx]
+            )[0, 0]
+            pos_plt_idx = heading_kmeans.labels_ == pos_lbl_idx
+            neg_plt_idx = heading_kmeans.labels_ == neg_lbl_idx
 
-        # Consider a binary division of heading first derivative
-        for isgreater in [True, False]:
-            if isgreater:
-                dot_plt_idx = np.abs(heading_dot) > 1.0
-            else:
-                dot_plt_idx = np.abs(heading_dot) < 1.0
+            # Consider each heading first derivative cluster center
+            for dot_lbl_idx in range(heading_dot_n_clusters):
 
-            # Consider each distance cluster center
-            for dis_lbl_idx in range(distance_n_clusters):
-
-                # Identify the distance values corresponding to the
-                # distance cluster center
-                dis_plt_idx = distance_kmeans.labels_ == dis_lbl_idx
+                # Identify the heading first derivative values corresponding to
+                # the heading first derivative cluster center
+                dot_plt_idx = heading_dot_kmeans.labels_ == dot_lbl_idx
 
                 # Consider each speed cluster center
                 for spd_lbl_idx in range(speed_n_clusters):
@@ -519,15 +539,20 @@ def slice_source_audio_by_cluster(
                     # speed cluster center
                     spd_plt_idx = speed_kmeans.labels_ == spd_lbl_idx
 
-                    # Identify valid time sets in which successive times
-                    # and no more than the specified delta time
-                    dub_t = vld_t[(pos_plt_idx | neg_plt_idx) & dot_plt_idx & spd_plt_idx & dis_plt_idx]
+                    # Identify valid time sets in which successive
+                    # times and no more than the specified delta time
+                    dub_t = vld_t[
+                        (pos_plt_idx | neg_plt_idx)
+                        & dot_plt_idx
+                        & spd_plt_idx
+                        & dis_plt_idx
+                    ]
                     dub_t_sets = np.split(
                         dub_t, np.where(np.diff(dub_t) > delta_t_max)[0] + 1
                     )
 
-                    # Export the specified number of clips having at least
-                    # two valid times
+                    # Export the specified number of clips having at
+                    # least two valid times
                     n_clips = 0
                     for dub_t_set in dub_t_sets:
                         if dub_t_set.shape[0] > 2:
@@ -540,21 +565,21 @@ def slice_source_audio_by_cluster(
                                 stop_t = min(hyd_stop_t, dub_stop_t)
                             n_clips += 1
                             clip = audio[start_t:stop_t]
-                            wav_filename = "{:s}-{:d}-{:d}{:+.1f}{:+.1f}"
-                            if isgreater:
-                                wav_filename += "-greater"
-                            else:
-                                wav_filename += "-lesser"
-                            wav_filename += "-{:.1f}-{:.1f}.wav"
+                            wav_filename = "{:s}-{:d}-{:d}{:+.1f}{:+.1f}{:+.1f}{:+.1f}{:+.1f}.wav"
                             clip.export(
                                 clip_home
                                 / wav_filename.format(
                                     hyd_name,
                                     start_t,
                                     stop_t,
+
+                                    distance_centers[dis_lbl_idx][0],
+
                                     heading_centers[pos_lbl_idx][0],
                                     heading_centers[neg_lbl_idx][0],
-                                    distance_centers[dis_lbl_idx][0],
+
+                                    heading_dot_centers[dot_lbl_idx][0],
+
                                     speed_centers[spd_lbl_idx][0],
                                 ),
                                 format="wav",
@@ -581,18 +606,18 @@ def slice_source_audio_by_cluster(
                         )
                         axs.axhline(color="gray", linestyle="dotted")
                         axs.axvline(color="gray", linestyle="dotted")
-                        title = "{:s}\nhdgs = {:.1f}, {:.1f} deg"
-                        if isgreater:
-                            title += ", hdg_dot > 1"
-                        else:
-                            title += ", hdg_dot < 1"
-                        title += ", dis = {:.1f} m, spd = {:.1f} m/s"
+                        title = "{:s}\n"
+                        title += "dis = {:.1f} m"
+                        title += ", hdgs = {:.1f}, {:.1f} deg"
+                        title += ", hdg dot = {:.1f} deg/s"
+                        title += ", spd = {:.1f} m/s"
                         axs.set_title(
                             title.format(
                                 hyd_name,
+                                distance_centers[dis_lbl_idx][0],
                                 heading_centers[pos_lbl_idx][0],
                                 heading_centers[neg_lbl_idx][0],
-                                distance_centers[dis_lbl_idx][0],
+                                heading_dot_centers[dot_lbl_idx][0],
                                 speed_centers[spd_lbl_idx][0],
                             )
                         )
@@ -630,16 +655,22 @@ if __name__ == "__main__":
         help="the WAV filename to open",
     )
     parser.add_argument(
+        "--distance-n-clusters",
+        type=int,
+        default=3,
+        help="the number of distance cluster means",
+    )
+    parser.add_argument(
         "--heading-n-clusters",
         type=int,
         default=10,
         help="the number of heading cluster means",
     )
     parser.add_argument(
-        "--distance-n-clusters",
+        "--heading-dot-n-clusters",
         type=int,
-        default=3,
-        help="the number of distance cluster means",
+        default=2,
+        help="the number of heading first derivative cluster means",
     )
     parser.add_argument(
         "--speed-n-clusters",
@@ -688,21 +719,30 @@ if __name__ == "__main__":
 
         (
             vld_t,
+            distance,
             heading,
             heading_dot,
-            distance,
             speed,
             r_s_h,
             v_s_h,
         ) = compute_source_metrics(source, gpx, hydrophone)
 
-        plot_source_metrics(source, hydrophone, heading, heading_dot, distance, speed, r_s_h)
+        plot_source_metrics(
+            source, hydrophone, heading, heading_dot, distance, speed, r_s_h
+        )
 
-        heading_kmeans, distance_kmeans, speed_kmeans = kmeans_cluster_source_metrics(
-            heading,
-            args.heading_n_clusters,
+        (
+            distance_kmeans,
+            heading_kmeans,
+            heading_dot_kmeans,
+            speed_kmeans,
+        ) = kmeans_cluster_source_metrics(
             distance,
             args.distance_n_clusters,
+            heading,
+            args.heading_n_clusters,
+            heading_dot,
+            args.heading_dot_n_clusters,
             speed,
             args.speed_n_clusters,
         )
@@ -711,11 +751,10 @@ if __name__ == "__main__":
             hydrophone,
             audio,
             vld_t,
-            heading_dot,
-            distance,
             r_s_h,
-            heading_kmeans,
             distance_kmeans,
+            heading_kmeans,
+            heading_dot_kmeans,
             speed_kmeans,
             args.delta_t_max,
             args.n_clips_max,
