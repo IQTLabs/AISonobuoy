@@ -31,8 +31,8 @@ logger = logging.getLogger("GpxWavLabeler")
 logger.setLevel(logging.INFO)
 
 
-def load_collection_json_file(inp_path):
-    """Load collection JSON file.
+def load_json_file(inp_path):
+    """Load a JSON file.
 
     Parameters
     ----------
@@ -41,14 +41,14 @@ def load_collection_json_file(inp_path):
 
     Returns
     -------
-    collection : dict
-        The collection configuration
+    collection : object
+        The object loaded
 
     """
     logger.info(f"Loading {inp_path}")
     with open(inp_path, "r") as f:
-        collection = json.load(f)
-    return collection
+        data = json.load(f)
+    return data
 
 
 def parse_source_gpx_file(inp_path):
@@ -411,9 +411,9 @@ def kmeans_cluster_source_metrics(
     heading_kmeans = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
         90 - heading.reshape(-1, 1)
     )
-    heading_dot_kmeans = KMeans(
-        n_clusters=heading_dot_n_clusters, random_state=0
-    ).fit(heading_dot.reshape(-1, 1))
+    heading_dot_kmeans = KMeans(n_clusters=heading_dot_n_clusters, random_state=0).fit(
+        heading_dot.reshape(-1, 1)
+    )
     speed_kmeans = KMeans(n_clusters=speed_n_clusters, random_state=0).fit(
         speed.reshape(-1, 1)
     )
@@ -472,6 +472,11 @@ def slice_source_audio_by_cluster(
     logger.info(
         f"Slicing source audio by heading, heading first derivative, distance, and speed clusters"
     )
+    # Identify hydrophone attributes
+    hyd_name = Path(hydrophone["name"].lower()).stem
+    hyd_start_t = hydrophone["start_t"] * 1000
+    hyd_stop_t = hydrophone["stop_t"] * 1000
+
     # Assign cluster centers and ensure heading clusters pair
     distance_centers = distance_kmeans.cluster_centers_
     distance_n_clusters = len(distance_centers)
@@ -487,11 +492,6 @@ def slice_source_audio_by_cluster(
 
     speed_centers = speed_kmeans.cluster_centers_
     speed_n_clusters = len(speed_centers)
-
-    # Identify hydrophone attributes
-    hyd_name = Path(hydrophone["name"].lower()).stem
-    hyd_start_t = hydrophone["start_t"] * 1000
-    hyd_stop_t = hydrophone["stop_t"] * 1000
 
     # Consider each distance cluster center
     for dis_lbl_idx in range(distance_n_clusters):
@@ -565,21 +565,19 @@ def slice_source_audio_by_cluster(
                                 stop_t = min(hyd_stop_t, dub_stop_t)
                             n_clips += 1
                             clip = audio[start_t:stop_t]
-                            wav_filename = "{:s}-{:d}-{:d}{:+.1f}{:+.1f}{:+.1f}{:+.1f}{:+.1f}.wav"
+                            wav_filename = (
+                                "{:s}-{:d}-{:d}{:+.1f}{:+.1f}{:+.1f}{:+.1f}{:+.1f}.wav"
+                            )
                             clip.export(
                                 clip_home
                                 / wav_filename.format(
                                     hyd_name,
                                     start_t,
                                     stop_t,
-
                                     distance_centers[dis_lbl_idx][0],
-
                                     heading_centers[pos_lbl_idx][0],
                                     heading_centers[neg_lbl_idx][0],
-
                                     heading_dot_centers[dot_lbl_idx][0],
-
                                     speed_centers[spd_lbl_idx][0],
                                 ),
                                 format="wav",
@@ -595,13 +593,21 @@ def slice_source_audio_by_cluster(
                         fig, axs = plt.subplots()
                         axs.plot(r_s_h[0, :], r_s_h[1, :])
                         axs.plot(
-                            r_s_h[0, pos_plt_idx & dot_plt_idx & spd_plt_idx],
-                            r_s_h[1, pos_plt_idx & dot_plt_idx & spd_plt_idx],
+                            r_s_h[
+                                0, dis_plt_idx & pos_plt_idx & dot_plt_idx & spd_plt_idx
+                            ],
+                            r_s_h[
+                                1, dis_plt_idx & pos_plt_idx & dot_plt_idx & spd_plt_idx
+                            ],
                             ".",
                         )
                         axs.plot(
-                            r_s_h[0, neg_plt_idx & dot_plt_idx & spd_plt_idx],
-                            r_s_h[1, neg_plt_idx & dot_plt_idx & spd_plt_idx],
+                            r_s_h[
+                                0, dis_plt_idx & neg_plt_idx & dot_plt_idx & spd_plt_idx
+                            ],
+                            r_s_h[
+                                1, dis_plt_idx & neg_plt_idx & dot_plt_idx & spd_plt_idx
+                            ],
                             ".",
                         )
                         axs.axhline(color="gray", linestyle="dotted")
@@ -808,57 +814,15 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-c",
-        "--json-filename",
+        "--collection-filename",
         default="cape-exercises-2022-02-22T18-09-01Z-collection.json",
-        help="the JSON filename to load",
+        help="the collection JSON filename to load",
     )
     parser.add_argument(
-        "-g",
-        "--gpx-filename",
-        default="suuntoapp-Motorsports-2022-02-22T18-09-01Z-track.gpx",
-        help="the GPX filename to parse",
-    )
-    parser.add_argument(
-        "-w",
-        "--wav-filename",
-        default=None,
-        help="the WAV filename to open",
-    )
-    parser.add_argument(
-        "--distance-n-clusters",
-        type=int,
-        default=3,
-        help="the number of distance cluster means",
-    )
-    parser.add_argument(
-        "--heading-n-clusters",
-        type=int,
-        default=10,
-        help="the number of heading cluster means",
-    )
-    parser.add_argument(
-        "--heading-dot-n-clusters",
-        type=int,
-        default=2,
-        help="the number of heading first derivative cluster means",
-    )
-    parser.add_argument(
-        "--speed-n-clusters",
-        type=int,
-        default=4,
-        help="the number of speed cluster means",
-    )
-    parser.add_argument(
-        "--delta-t-max",
-        type=float,
-        default=4.0,
-        help="the maximum time delta between positions used to define a contiguous audio sample [s]",
-    )
-    parser.add_argument(
-        "--n-clips-max",
-        type=int,
-        default=3,
-        help="the maximum number of clips exported in each segment",
+        "-s",
+        "--sampling-filename",
+        default=__file__.replace(".py", ".json"),
+        help="the sampling JSON file to process",
     )
     parser.add_argument(
         "-C",
@@ -868,65 +832,88 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    json_path = Path(args.data_home) / args.json_filename
-    collection = load_collection_json_file(json_path)
+    # Load file describing the collection
+    collection_path = Path(args.data_home) / args.collection_filename
+    collection = load_json_file(collection_path)
 
-    gpx_path = Path(args.data_home) / args.gpx_filename
-    gpx = parse_source_gpx_file(gpx_path)
+    # Load file describing sampling cases
+    sampling_path = Path(args.data_home) / args.sampling_filename
+    sampling = load_json_file(sampling_path)
 
-    if args.wav_filename is None:
-        wav_filenames = [d["name"] for d in collection["hydrophones"]]
-    else:
-        wav_filenames = [args.wav_filename]
-    for wav_filename in wav_filenames:
-        wav_path = Path(args.data_home) / wav_filename
-        audio = get_hydrophone_wav_file(wav_path)
+    # Consider each course
+    for source in collection["sources"]:
+        gpx_path = Path(args.data_home) / source["name"]
+        gpx = parse_source_gpx_file(gpx_path)
 
-        source = collection["sources"][0]
-        hydrophone = next(
-            d for d in collection["hydrophones"] if d["name"] == wav_filename
-        )
+        # Consider each hydrophone
+        for hydrophone in collection["hydrophones"]:
+            wav_path = Path(args.data_home) / hydrophone["name"]
+            audio = get_hydrophone_wav_file(wav_path)
 
-        (
-            vld_t,
-            distance,
-            heading,
-            heading_dot,
-            speed,
-            r_s_h,
-            v_s_h,
-        ) = compute_source_metrics(source, gpx, hydrophone)
+            # Compute and plot source metrics for the current hydrophone
+            (
+                vld_t,
+                distance,
+                heading,
+                heading_dot,
+                speed,
+                r_s_h,
+                v_s_h,
+            ) = compute_source_metrics(source, gpx, hydrophone)
+            plot_source_metrics(
+                source, hydrophone, heading, heading_dot, distance, speed, r_s_h
+            )
 
-        plot_source_metrics(
-            source, hydrophone, heading, heading_dot, distance, speed, r_s_h
-        )
-
-        (
-            distance_kmeans,
-            heading_kmeans,
-            heading_dot_kmeans,
-            speed_kmeans,
-        ) = kmeans_cluster_source_metrics(
-            distance,
-            args.distance_n_clusters,
-            heading,
-            args.heading_n_clusters,
-            heading_dot,
-            args.heading_dot_n_clusters,
-            speed,
-            args.speed_n_clusters,
-        )
-
-        slice_source_audio_by_cluster(
-            hydrophone,
-            audio,
-            vld_t,
-            r_s_h,
-            distance_kmeans,
-            heading_kmeans,
-            heading_dot_kmeans,
-            speed_kmeans,
-            args.delta_t_max,
-            args.n_clips_max,
-            Path(args.clip_home),
-        )
+            # Consider each sampling case
+            for case in sampling:
+                clip_home = Path(args.clip_home) / case["output_dir"]
+                if not clip_home.exists():
+                    clip_home.mkdir(parents=True)
+                method = case["method"]
+                if method["type"] == "k-means":
+                    (
+                        distance_kmeans,
+                        heading_kmeans,
+                        heading_dot_kmeans,
+                        speed_kmeans,
+                    ) = kmeans_cluster_source_metrics(
+                        distance,
+                        method["distance_n_clusters"],
+                        heading,
+                        method["heading_n_clusters"],
+                        heading_dot,
+                        method["heading_dot_n_clusters"],
+                        speed,
+                        method["speed_n_clusters"],
+                    )
+                    slice_source_audio_by_cluster(
+                        hydrophone,
+                        audio,
+                        vld_t,
+                        r_s_h,
+                        distance_kmeans,
+                        heading_kmeans,
+                        heading_dot_kmeans,
+                        speed_kmeans,
+                        case["delta_t_max"],
+                        case["n_clips_max"],
+                        clip_home,
+                    )
+                elif method["type"] == "conditionals":
+                    slice_source_audio_by_condition(
+                        hydrophone,
+                        audio,
+                        vld_t,
+                        r_s_h,
+                        distance,
+                        method["distance_limits"],
+                        heading,
+                        method["heading_limits"],
+                        heading_dot,
+                        method["heading_dot_limits"],
+                        speed,
+                        method["speed_limits"],
+                        case["delta_t_max"],
+                        case["n_clips_max"],
+                        clip_home,
+                    )
