@@ -323,6 +323,8 @@ def plot_source_metrics(
     )
     fig, axs = plt.subplots()
     axs.plot(r_s_h[0, :], r_s_h[1, :])
+    axs.axhline(color="gray", linestyle="dotted")
+    axs.axvline(color="gray", linestyle="dotted")
     axs.set_title("Track")
     axs.set_xlabel("east [m]")
     axs.set_ylabel("north [m]")
@@ -577,6 +579,8 @@ def slice_source_audio_by_cluster(
                             r_s_h[1, neg_plt_idx & dot_plt_idx & spd_plt_idx],
                             ".",
                         )
+                        axs.axhline(color="gray", linestyle="dotted")
+                        axs.axvline(color="gray", linestyle="dotted")
                         title = "{:s}\nhdgs = {:.1f}, {:.1f} deg"
                         if isgreater:
                             title += ", hdg_dot > 1"
