@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from pydub import AudioSegment
 from sklearn.cluster import KMeans
+from sklearn_extra.cluster import KMedoids
 
 
 # WGS84 parameters
@@ -361,7 +362,7 @@ def plot_source_metrics(
     plt.show()
 
 
-def kmeans_cluster_source_metrics(
+def cluster_source_metrics(
     distance,
     distance_n_clusters,
     heading,
@@ -371,8 +372,8 @@ def kmeans_cluster_source_metrics(
     speed,
     speed_n_clusters,
 ):
-    """Compute k-means clusters of distance, heading, heading first
-    derivtive, and speed.
+    """Compute clusters of distance, heading, heading first derivative,
+    and speed.
 
     Parameters
     ----------
@@ -396,29 +397,29 @@ def kmeans_cluster_source_metrics(
 
     Returns
     -------
-    distance_kmeans : sklearn.cluster.KMeans
+    distance_clusters : sklearn.cluster.KMeans
         Fitted estimator for distance
-    heading_kmeans : sklearn.cluster.KMeans
+    heading_clusters : sklearn.cluster.KMeans
         Fitted estimator for heading
-    heading_dot_kmeans : sklearn.cluster.KMeans
+    heading_dot_clusters : sklearn_extra.cluster.KMedoids
         Fitted estimator for heading first derivative
-    speed_kmeans : sklearn.cluster.KMeans
+    speed_clusters : sklearn.cluster.KMeans
         Fitted estimator for speed
     """
-    logger.info(f"Computing k-means clusters of heading, distance, and speed")
-    distance_kmeans = KMeans(n_clusters=distance_n_clusters, random_state=0).fit(
+    logger.info(f"Computing clusters of heading, distance, and speed")
+    distance_clusters = KMeans(n_clusters=distance_n_clusters, random_state=0).fit(
         distance.reshape(-1, 1)
     )
-    heading_kmeans = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
+    heading_clusters = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
         90 - heading.reshape(-1, 1)
     )
-    heading_dot_kmeans = KMeans(n_clusters=heading_dot_n_clusters, random_state=0).fit(
-        heading_dot.reshape(-1, 1)
-    )
-    speed_kmeans = KMeans(n_clusters=speed_n_clusters, random_state=0).fit(
+    heading_dot_clusters = KMedoids(
+        n_clusters=heading_dot_n_clusters, random_state=0
+    ).fit(heading_dot.reshape(-1, 1))
+    speed_clusters = KMeans(n_clusters=speed_n_clusters, random_state=0).fit(
         speed.reshape(-1, 1)
     )
-    return distance_kmeans, heading_kmeans, heading_dot_kmeans, speed_kmeans
+    return distance_clusters, heading_clusters, heading_dot_clusters, speed_clusters
 
 
 def slice_source_audio_by_cluster(
@@ -426,10 +427,10 @@ def slice_source_audio_by_cluster(
     audio,
     vld_t,
     r_s_h,
-    distance_kmeans,
-    heading_kmeans,
-    heading_dot_kmeans,
-    speed_kmeans,
+    distance_clusters,
+    heading_clusters,
+    heading_dot_clusters,
+    speed_clusters,
     delta_t_max,
     n_clips_max,
     clip_home,
@@ -450,13 +451,13 @@ def slice_source_audio_by_cluster(
         Time from start of track [s]
     r_s_h : numpy.ndarray
         Source topocentric (east, north, zenith) position [m]
-    distance_kmeans : sklearn.cluster.KMeans
+    distance_clusters : sklearn.cluster.KMeans
         Fitted estimator for distance
-    heading_kmeans : sklearn.cluster.KMeans
+    heading_clusters : sklearn.cluster.KMeans
         Fitted estimator for heading
-    heading_dot_kmeans : sklearn.cluster.KMeans
+    heading_dot_clusters : sklearn_extra.cluster.KMedoids
         Fitted estimator for heading first derivative
-    speed_kmeans : sklearn.cluster.KMeans
+    speed_clusters : sklearn.cluster.KMeans
         Fitted estimator for speed
     delta_t_max : float
         the maximum time delta between positions used to define a
@@ -479,19 +480,19 @@ def slice_source_audio_by_cluster(
     hyd_stop_t = hydrophone["stop_t"] * 1000
 
     # Assign cluster centers and ensure heading clusters pair
-    distance_centers = distance_kmeans.cluster_centers_
+    distance_centers = distance_clusters.cluster_centers_
     distance_n_clusters = len(distance_centers)
 
-    heading_centers = heading_kmeans.cluster_centers_
+    heading_centers = heading_clusters.cluster_centers_
     heading_n_clusters = len(heading_centers)
 
     if np.sum(heading_centers > 0) != np.sum(heading_centers < 0):
         raise Exception("Number of positive and negative heading centers must be equal")
 
-    heading_dot_centers = heading_dot_kmeans.cluster_centers_
+    heading_dot_centers = heading_dot_clusters.cluster_centers_
     heading_dot_n_clusters = len(heading_dot_centers)
 
-    speed_centers = speed_kmeans.cluster_centers_
+    speed_centers = speed_clusters.cluster_centers_
     speed_n_clusters = len(speed_centers)
 
     # Consider each distance cluster center
@@ -499,7 +500,7 @@ def slice_source_audio_by_cluster(
 
         # Identify the distance values corresponding to the distance
         # cluster center
-        dis_plt_idx = distance_kmeans.labels_ == dis_lbl_idx
+        dis_plt_idx = distance_clusters.labels_ == dis_lbl_idx
 
         # Consider each positive heading cluster center
         for pos_hdg_idx in range(heading_n_clusters // 2):
@@ -523,22 +524,22 @@ def slice_source_audio_by_cluster(
             neg_lbl_idx = np.argwhere(
                 heading_centers == heading_centers[heading_centers < 0][neg_hdg_idx]
             )[0, 0]
-            pos_plt_idx = heading_kmeans.labels_ == pos_lbl_idx
-            neg_plt_idx = heading_kmeans.labels_ == neg_lbl_idx
+            pos_plt_idx = heading_clusters.labels_ == pos_lbl_idx
+            neg_plt_idx = heading_clusters.labels_ == neg_lbl_idx
 
             # Consider each heading first derivative cluster center
             for dot_lbl_idx in range(heading_dot_n_clusters):
 
                 # Identify the heading first derivative values corresponding to
                 # the heading first derivative cluster center
-                dot_plt_idx = heading_dot_kmeans.labels_ == dot_lbl_idx
+                dot_plt_idx = heading_dot_clusters.labels_ == dot_lbl_idx
 
                 # Consider each speed cluster center
                 for spd_lbl_idx in range(speed_n_clusters):
 
                     # Identify the speed values corresponding to the
                     # speed cluster center
-                    spd_plt_idx = speed_kmeans.labels_ == spd_lbl_idx
+                    spd_plt_idx = speed_clusters.labels_ == spd_lbl_idx
 
                     # Identify valid time sets in which successive
                     # times and no more than the specified delta time
@@ -873,13 +874,13 @@ if __name__ == "__main__":
                 if not clip_home.exists():
                     clip_home.mkdir(parents=True)
                 method = case["method"]
-                if method["type"] == "k-means":
+                if method["type"] == "clusters":
                     (
-                        distance_kmeans,
-                        heading_kmeans,
-                        heading_dot_kmeans,
-                        speed_kmeans,
-                    ) = kmeans_cluster_source_metrics(
+                        distance_clusters,
+                        heading_clusters,
+                        heading_dot_clusters,
+                        speed_clusters,
+                    ) = cluster_source_metrics(
                         distance,
                         method["distance_n_clusters"],
                         heading,
@@ -894,10 +895,10 @@ if __name__ == "__main__":
                         audio,
                         vld_t,
                         r_s_h,
-                        distance_kmeans,
-                        heading_kmeans,
-                        heading_dot_kmeans,
-                        speed_kmeans,
+                        distance_clusters,
+                        heading_clusters,
+                        heading_dot_clusters,
+                        speed_clusters,
                         case["delta_t_max"],
                         case["n_clips_max"],
                         clip_home,
