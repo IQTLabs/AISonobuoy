@@ -287,7 +287,7 @@ def compute_source_metrics(source, gpx, hydrophone):
     v_s_h = np.gradient(r_s_h, vld_t, axis=1)
     distance = np.sqrt(np.sum(np.square(r_s_h), axis=0))
     heading = 90 - np.degrees(np.arctan2(v_s_h[1, :], v_s_h[0, :]))
-    heading_dot = (
+    heading_dot = np.abs(
         pd.DataFrame(np.gradient(heading, vld_t)).ewm(span=3).mean().to_numpy()
     ).flatten()
     speed = np.sqrt(np.sum(np.square(v_s_h), axis=0))
