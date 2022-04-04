@@ -727,7 +727,7 @@ def slice_source_audio_by_condition(
 
     # Identify valid time sets in which successive times and no more
     # than the specified delta time
-    dub_t = vld_t[hdg_plt_idx & dot_plt_idx & spd_plt_idx & dis_plt_idx]
+    dub_t = vld_t[dis_plt_idx & hdg_plt_idx & dot_plt_idx & spd_plt_idx]
     dub_t_sets = np.split(dub_t, np.where(np.diff(dub_t) > delta_t_max)[0] + 1)
 
     # Export the specified number of clips having at least two valid
