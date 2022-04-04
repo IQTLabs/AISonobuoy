@@ -7,3 +7,4 @@ __pycache__
 .idea
 .dir-locals.el
 .requirements.txt
+.tern-port
