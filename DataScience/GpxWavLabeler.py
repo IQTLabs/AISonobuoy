@@ -4,6 +4,7 @@ import json
 import logging
 import math
 from pathlib import Path
+import time
 
 from lxml import etree
 from matplotlib import pyplot as plt
@@ -630,6 +631,7 @@ def slice_source_audio_by_cluster(
                         axs.set_xlabel("east [m]")
                         axs.set_ylabel("north [m]")
                         plt.show()
+                        time.sleep(1)
 
 
 def slice_source_audio_by_condition(
@@ -795,11 +797,12 @@ def slice_source_audio_by_condition(
                 heading_dot_limits[1],
                 speed_limits[0],
                 speed_limits[1],
-                )
+            )
         )
         axs.set_xlabel("east [m]")
         axs.set_ylabel("north [m]")
         plt.show()
+        time.sleep(1)
 
 
 """Demonstrate GpxWavLabeler module.
