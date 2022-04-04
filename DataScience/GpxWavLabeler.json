@@ -2,7 +2,7 @@
     {
         "name": "default",
         "method": {
-            "type": "k-means",
+            "type": "clusters",
             "distance_n_clusters": 3,
             "heading_n_clusters": 10,
             "heading_dot_n_clusters": 2,
