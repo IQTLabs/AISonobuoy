@@ -814,7 +814,7 @@ if __name__ == "__main__":
         "-D",
         "--data-home",
         default=str(Path("~").expanduser() / "Data" / "AISonobuoy"),
-        help="the directory containing GPX and WAV files",
+        help="the directory containing all GPX, WAV, and JSON files",
     )
     parser.add_argument(
         "-c",
@@ -832,7 +832,7 @@ if __name__ == "__main__":
         "-C",
         "--clip-home",
         default=str(Path("~").expanduser() / "Datasets" / "AISonobuoy"),
-        help="the directory containing audio clip files",
+        help="the directory containing clip WAV files",
     )
     args = parser.parse_args()
 
