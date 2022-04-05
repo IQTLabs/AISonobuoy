@@ -816,17 +816,27 @@ if __name__ == "__main__":
         default=str(Path("~").expanduser() / "Data" / "AISonobuoy"),
         help="the directory containing all GPX, WAV, and JSON files",
     )
+    # Note that paths in the collection file are relative to the data
+    # home directory
     parser.add_argument(
         "-c",
         "--collection-filename",
-        default="cape-exercises-2022-02-22T18-09-01Z-collection.json",
-        help="the collection JSON filename to load",
+        default="cape-exercises-2022-02-22-collection.json",
+        help="the path of the collection JSON file to load",
     )
     parser.add_argument(
         "-s",
-        "--sampling-filename",
-        default=__file__.replace(".py", ".json"),
-        help="the sampling JSON file to process",
+        "--sampling-filepath",
+        default=str(
+            Path(__file__).parent / "data" / "cape-exercises-2022-02-22-sampling.json"
+        ),
+        help="the path of the sampling JSON file to process",
+    )
+    parser.add_argument(
+        "-p",
+        "--do-plot",
+        action="store_true",
+        help="do pllot track with identified clips",
     )
     parser.add_argument(
         "-C",
@@ -841,8 +851,7 @@ if __name__ == "__main__":
     collection = load_json_file(collection_path)
 
     # Load file describing sampling cases
-    sampling_path = Path(args.data_home) / args.sampling_filename
-    sampling = load_json_file(sampling_path)
+    sampling = load_json_file(args.sampling_filepath)
 
     # Consider each course
     for source in collection["sources"]:
@@ -902,6 +911,7 @@ if __name__ == "__main__":
                         case["delta_t_max"],
                         case["n_clips_max"],
                         clip_home,
+                        do_plot=args.do_plot,
                     )
                 elif method["type"] == "conditionals":
                     slice_source_audio_by_condition(
@@ -920,4 +930,5 @@ if __name__ == "__main__":
                         case["delta_t_max"],
                         case["n_clips_max"],
                         clip_home,
+                        do_plot=args.do_plot,
                     )

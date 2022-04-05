@@ -1,0 +1,43 @@
+{
+    "sources": [
+        {
+            "name": "suuntoapp-Motorsports-2022-02-22T18-09-01Z-track.gpx",
+            "start_t": 0,
+            "stop_t": 8889.0
+        }
+    ],
+    "hydrophones": [
+        {
+            "name": "Unit-01.WAV",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0,
+            "start_t": 1200,
+            "stop_t": 9748
+        },
+        {
+            "name": "Unit-02.WAV",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0,
+            "start_t": 90,
+            "stop_t": 9669
+        },
+        {
+            "name": "Unit-03.WAV",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0,
+            "start_t": 25,
+            "stop_t": 9667
+        },
+        {
+            "name": "Unit-04.WAV",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0,
+            "start_t": 495,
+            "stop_t": 9923
+        }
+    ]
+}
