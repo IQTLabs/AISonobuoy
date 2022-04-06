@@ -1,5 +1,6 @@
 .DS_Store
 __pycache__
+*~
 *.swp
 *.swo
 *.gpx
@@ -7,3 +8,4 @@ __pycache__
 .idea
 .dir-locals.el
 .requirements.txt
+.tern-port

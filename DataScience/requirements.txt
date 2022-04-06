@@ -5,3 +5,4 @@ numpy==1.22.3
 pandas==1.4.1
 pydub==0.25.1
 scikit-learn==1.0.2
+scikit-learn-extra==0.2.0
