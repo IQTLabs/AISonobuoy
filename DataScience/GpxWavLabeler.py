@@ -471,7 +471,7 @@ def slice_source_audio_by_cluster(
     n_clips_max : int
         the maximum number of clips exported in each segment
     clip_home : pathlib.Path()
-        Home directory for clips
+        Home directory for clip files
 
     Returns
     -------
@@ -703,7 +703,7 @@ def slice_source_audio_by_condition(
     n_clips_max : int
         the maximum number of clips exported in each segment
     clip_home : pathlib.Path()
-        Home directory for clips
+        Home directory for clip files
 
     Returns
     -------
