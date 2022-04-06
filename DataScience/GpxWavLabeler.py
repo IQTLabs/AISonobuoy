@@ -821,14 +821,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "-c",
         "--collection-filename",
-        default="cape-exercises-2022-02-22-collection.json",
+        default="collection.json",
         help="the path of the collection JSON file to load",
     )
     parser.add_argument(
         "-s",
         "--sampling-filepath",
         default=str(
-            Path(__file__).parent / "data" / "cape-exercises-2022-02-22-sampling.json"
+            Path(__file__).parent / "data" / "sampling.json"
         ),
         help="the path of the sampling JSON file to process",
     )
