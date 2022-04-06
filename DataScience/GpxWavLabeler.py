@@ -865,9 +865,15 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-p",
-        "--do-plot",
+        "--do-plot-clips",
         action="store_true",
-        help="do pllot track with identified clips",
+        help="do plot track with identified clips",
+    )
+    parser.add_argument(
+        "-P",
+        "--do-plot-metrics",
+        action="store_true",
+        help="do plot track with computed metrics",
     )
     parser.add_argument(
         "-C",
@@ -925,9 +931,10 @@ if __name__ == "__main__":
                 r_s_h,
                 v_s_h,
             ) = compute_source_metrics(source, gpx, hydrophone)
-            plot_source_metrics(
-                source, hydrophone, heading, heading_dot, distance, speed, r_s_h
-            )
+            if args.do_plot_metrics:
+                plot_source_metrics(
+                    source, hydrophone, heading, heading_dot, distance, speed, r_s_h
+                )
 
             # Consider each sampling case
             for case in sampling:
@@ -965,7 +972,7 @@ if __name__ == "__main__":
                         case["delta_t_max"],
                         case["n_clips_max"],
                         clip_home,
-                        do_plot=args.do_plot,
+                        do_plot=args.do_plot_clips,
                     )
                 elif method["type"] == "conditionals":
                     slice_source_audio_by_condition(
@@ -986,5 +993,5 @@ if __name__ == "__main__":
                         case["delta_t_max"],
                         case["n_clips_max"],
                         clip_home,
-                        do_plot=args.do_plot,
+                        do_plot=args.do_plot_clips,
                     )
