@@ -425,6 +425,8 @@ def cluster_source_metrics(
 def slice_source_audio_by_cluster(
     hydrophone,
     audio,
+    hyd_max_start_t,
+    hyd_min_stop_t,
     vld_t,
     r_s_h,
     distance_clusters,
@@ -447,6 +449,10 @@ def slice_source_audio_by_cluster(
         The hydrophone configuration
     audio : pydub.audio_segment.AudioSegment
         The audio segment
+    hyd_max_start_t : int
+       Maximum start_t of all hydrophones [ms]
+    hyd_min_stop_t : int
+       Minimum stop_t of all hydrophones [ms]
     vld_t : numpy.ndarray
         Time from start of track [s]
     r_s_h : numpy.ndarray
@@ -476,8 +482,6 @@ def slice_source_audio_by_cluster(
     )
     # Identify hydrophone attributes
     hyd_name = Path(hydrophone["name"].lower()).stem
-    hyd_start_t = hydrophone["start_t"] * 1000
-    hyd_stop_t = hydrophone["stop_t"] * 1000
 
     # Assign cluster centers and ensure heading clusters pair
     distance_centers = distance_clusters.cluster_centers_
@@ -560,11 +564,14 @@ def slice_source_audio_by_cluster(
                         if dub_t_set.shape[0] > 2:
                             dub_start_t = int(dub_t_set[0] * 1000)
                             dub_stop_t = int(dub_t_set[-1] * 1000)
-                            if dub_stop_t < hyd_start_t or hyd_stop_t < dub_start_t:
+                            if (
+                                dub_stop_t < hyd_max_start_t
+                                or hyd_min_stop_t < dub_start_t
+                            ):
                                 continue
                             else:
-                                start_t = max(hyd_start_t, dub_start_t)
-                                stop_t = min(hyd_stop_t, dub_stop_t)
+                                start_t = max(hyd_max_start_t, dub_start_t)
+                                stop_t = min(hyd_min_stop_t, dub_stop_t)
                             n_clips += 1
                             clip = audio[start_t:stop_t]
                             wav_filename = (
@@ -638,6 +645,8 @@ def slice_source_audio_by_cluster(
 def slice_source_audio_by_condition(
     hydrophone,
     audio,
+    hyd_max_start_t,
+    hyd_min_stop_t,
     vld_t,
     r_s_h,
     distance,
@@ -664,6 +673,10 @@ def slice_source_audio_by_condition(
         The hydrophone configuration
     audio : pydub.audio_segment.AudioSegment
         The audio segment
+    hyd_max_start_t : int
+       Maximum start_t of all hydrophones [ms]
+    hyd_min_stop_t : int
+       Minimum stop_t of all hydrophones [ms]
     vld_t : numpy.ndarray
         Time from start of track [s]
     r_s_h : numpy.ndarray
@@ -701,8 +714,6 @@ def slice_source_audio_by_condition(
     )
     # Identify hydrophone attributes
     hyd_name = Path(hydrophone["name"].lower()).stem
-    hyd_start_t = hydrophone["start_t"] * 1000
-    hyd_stop_t = hydrophone["stop_t"] * 1000
 
     # Identify the distance values corresponding to the distance
     # limits
@@ -737,11 +748,11 @@ def slice_source_audio_by_condition(
         if dub_t_set.shape[0] > 2:
             dub_start_t = int(dub_t_set[0] * 1000)
             dub_stop_t = int(dub_t_set[-1] * 1000)
-            if dub_stop_t < hyd_start_t or hyd_stop_t < dub_start_t:
+            if dub_stop_t < hyd_max_start_t or hyd_min_stop_t < dub_start_t:
                 continue
             else:
-                start_t = max(hyd_start_t, dub_start_t)
-                stop_t = min(hyd_stop_t, dub_stop_t)
+                start_t = max(hyd_max_start_t, dub_start_t)
+                stop_t = min(hyd_min_stop_t, dub_stop_t)
             n_clips += 1
             clip = audio[start_t:stop_t]
             wav_filename = "{:s}-{:d}-{:d}-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}-and-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}.wav"
@@ -850,6 +861,18 @@ if __name__ == "__main__":
     collection_path = Path(args.data_home) / args.collection_filename
     collection = load_json_file(collection_path)
 
+    # Identify the interval during which any source emitted
+    src_min_start_t = min([h["start_t"] for h in collection["sources"]]) * 1000  # [ms]
+    src_max_stop_t = max([h["stop_t"] for h in collection["sources"]]) * 1000  # [ms]
+
+    # Identify the interval during which all hydrophone collected
+    hyd_max_start_t = (
+        max([h["start_t"] for h in collection["hydrophones"]]) * 1000
+    )  # [ms]
+    hyd_min_stop_t = (
+        min([h["stop_t"] for h in collection["hydrophones"]]) * 1000
+    )  # [ms]
+
     # Load file describing sampling cases
     sampling = load_json_file(args.sampling_filepath)
 
@@ -902,6 +925,8 @@ if __name__ == "__main__":
                     slice_source_audio_by_cluster(
                         hydrophone,
                         audio,
+                        hyd_max_start_t,
+                        hyd_min_stop_t,
                         vld_t,
                         r_s_h,
                         distance_clusters,
@@ -917,6 +942,8 @@ if __name__ == "__main__":
                     slice_source_audio_by_condition(
                         hydrophone,
                         audio,
+                        hyd_max_start_t,
+                        hyd_min_stop_t,
                         vld_t,
                         r_s_h,
                         distance,
