@@ -835,7 +835,7 @@ def export_audio_interval(audio, start_t, stop_t, clip_filepath):
     -------
     None
     """
-    clip = audio[start_t * 1000 : stop_t * 1000]
+    clip = audio[start_t:stop_t]
     clip.export(clip_filepath, format="wav")
 
 
