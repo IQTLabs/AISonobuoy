@@ -817,6 +817,28 @@ def slice_source_audio_by_condition(
         time.sleep(1)
 
 
+def export_audio_interval(audio, start_t, stop_t, clip_filepath):
+    """Export a clip from an audio segment.
+
+    Parameters
+    ----------
+    audio : pydub.audio_segment.AudioSegment
+        The audio segment
+    start_t : int
+        Start time of clip to export [ms]
+    start_t : int
+        Start time of clip to export [ms]
+    clip_filepath : pathlib.Path()
+        Path of the clip file to export
+
+    Returns
+    -------
+    None
+    """
+    clip = audio[start_t * 1000 : stop_t * 1000]
+    clip.export(clip_filepath, format="wav")
+
+
 """Demonstrate GpxWavLabeler module.
 """
 if __name__ == "__main__":
@@ -885,6 +907,15 @@ if __name__ == "__main__":
         for hydrophone in collection["hydrophones"]:
             wav_path = Path(args.data_home) / hydrophone["name"]
             audio = get_hydrophone_wav_file(wav_path)
+
+            # Export audio with no source present, if it exists
+            if src_max_stop_t < hyd_min_stop_t:
+                export_audio_interval(
+                    audio,
+                    src_max_stop_t,
+                    hyd_min_stop_t,
+                    args.clip_home / f"hydrophone['name'].lower()-no-source.wav",
+                )
 
             # Compute and plot source metrics for the current hydrophone
             (
