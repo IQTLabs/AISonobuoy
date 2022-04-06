@@ -918,7 +918,8 @@ if __name__ == "__main__":
                     audio,
                     src_max_stop_t,
                     hyd_min_stop_t,
-                    args.clip_home / f"hydrophone['name'].lower()-no-source.wav",
+                    Path(args.clip_home)
+                    / f"{Path(hydrophone['name'].lower()).stem}-no-source.wav",
                 )
 
             # Compute and plot source metrics for the current hydrophone
