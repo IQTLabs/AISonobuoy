@@ -860,9 +860,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s",
         "--sampling-filepath",
-        default=str(
-            Path(__file__).parent / "data" / "sampling.json"
-        ),
+        default=str(Path(__file__).parent / "data" / "sampling.json"),
         help="the path of the sampling JSON file to process",
     )
     parser.add_argument(
