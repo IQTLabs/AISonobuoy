@@ -1,0 +1,9 @@
+boto3
+jupyterlab
+lxml
+matplotlib
+numpy
+pandas
+pydub
+scikit-learn
+scikit-learn-extra
