@@ -16,7 +16,7 @@ if not root.handlers:
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
-logger = logging.getLogger("AisManager")
+logger = logging.getLogger("AisWavLabeler")
 logger.setLevel(logging.INFO)
 
 
@@ -36,6 +36,10 @@ def download_object(download_path, bucket, s3_object):
     -------
     etag : str
         The ETag of the AWS S3 object
+
+    Note that AWS S3 objects contain an ETag which is either an MD5
+    sum of the file, or an MD5 sum of the concatenated MD5 sums of
+    chunks of the file followed by a hypen and the number of chunks.
 
     See:
     https://zihao.me/post/calculating-etag-for-aws-s3-objects/
@@ -101,10 +105,10 @@ def download_objects(download_path, bucket, prefix=None):
                     logger.error("ETag does not check")
 
 
-"""Provide a command-line interface for the AisManager module.
+"""Provide a command-line interface for the AisWavLabeler module.
 """
 if __name__ == "__main__":
-    parser = ArgumentParser(description="Download or process AIS data files")
+    parser = ArgumentParser(description="Use AIS data to slice a WAV file")
     parser.add_argument(
         "-b",
         "--bucket",
