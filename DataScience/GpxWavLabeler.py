@@ -839,7 +839,7 @@ def export_audio_interval(audio, start_t, stop_t, clip_filepath):
     clip.export(clip_filepath, format="wav")
 
 
-"""Demonstrate GpxWavLabeler module.
+"""Provide a command-line interface for the GpxWavLabeler module.
 """
 if __name__ == "__main__":
     parser = ArgumentParser(description="Use GPX data to slice a WAV file")
