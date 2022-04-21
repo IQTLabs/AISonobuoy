@@ -1,11 +1,14 @@
 from argparse import ArgumentParser
 import hashlib
+import json
 import logging
 import os
 from pathlib import Path
 import re
 import shutil
 import tarfile
+
+import pandas as pd
 
 import S3Utilities as s3
 
@@ -138,6 +141,36 @@ def download_objects(download_path, bucket, prefix=None, force=False, decompress
                         shutil.move(str(download_path / name), str(copy_path / name))
 
 
+def load_ais_files(inp_path):
+    """Load all AIS files residing in the input path.
+
+    Note that AIS files contain a single AIS sample using JSON on each
+    line.
+
+    Parameters
+    ----------
+    inp_path : pathlib.Path()
+        Path to directory containing JSON files
+
+    Returns
+    -------
+    collection : object
+        The object loaded
+
+    """
+    dicts = []
+    req_keys = set(["speed", "lat", "lon"])
+    names = os.listdir(inp_path)
+    for name in names:
+        with open(inp_path / name, "r") as f:
+            for line in f:
+                dict = json.loads(line)
+                if req_keys.issubset(set(dict.keys())):
+                    dicts.append(dict)
+    samples = pd.DataFrame(dicts)
+    return samples
+
+
 """Provide a command-line interface for the AisWavLabeler module.
 """
 if __name__ == "__main__":
@@ -169,11 +202,16 @@ if __name__ == "__main__":
         help="decompress downloaded files",
     )
     args = parser.parse_args()
+    data_home = Path(args.data_home)
 
-    # Download all AIS files
+    # Download all files
     download_objects(
-        Path(args.data_home),
+        data_home,
         args.bucket,
         prefix=args.prefix,
         decompress=args.decompress,
     )
+
+    # Load all AIS files
+    logger.info("Loading all AIS files")
+    samples = load_ais_files(data_home / "ais")
