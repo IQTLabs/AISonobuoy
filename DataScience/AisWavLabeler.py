@@ -1,7 +1,11 @@
 from argparse import ArgumentParser
 import hashlib
 import logging
+import os
 from pathlib import Path
+import re
+import shutil
+import tarfile
 
 import S3Utilities as s3
 
@@ -70,9 +74,10 @@ def download_object(download_path, bucket, s3_object):
     return etag
 
 
-def download_objects(download_path, bucket, prefix=None):
+def download_objects(download_path, bucket, prefix=None, force=False, decompress=False):
     """Download all objects, optionally identified by their prefix, in
-    an AWS S3 bucket to a local path. Check the ETag.
+    an AWS S3 bucket to a local path. Check the ETag. Optionally
+    decompress and, if appropriate, move extracted files by type.
 
     Parameters
     ----------
@@ -82,27 +87,55 @@ def download_objects(download_path, bucket, prefix=None):
         The AWS S3 bucket
     prefix : str
         The AWS S3 prefix designating the object in the bucket
+    force : boolean
+        Force download
+    decompress : boolean
+        Decompress downloaded files
 
     Returns
     -------
     None
 
     """
+    # List the objects in the bucket
     if prefix is None:
         r = s3.list_objects(bucket)
     else:
         r = s3.list_objects(bucket, prefix=prefix)
     if r is not None:
+
+        # Consider each object
         s3_objects = r["Contents"]
         for s3_object in s3_objects:
             key = s3_object["Key"]
-            if (download_path / key).exists():
-                logger.info(f"File {key} exists")
-            else:
+
+            # Download the object if the corresponding file does not
+            # exist, or forced
+            if not (download_path / key).exists() or force:
                 etag = download_object(download_path, bucket, s3_object)
                 logger.info(f"File {key} downloaded")
                 if s3_object["ETag"].replace('"', "") != etag:
                     logger.error("ETag does not check")
+            else:
+                logger.info(f"File {key} exists")
+
+            # Optionally decompress
+            if decompress:
+                with tarfile.open(download_path / key) as f:
+                    f.extractall(download_path)
+                    names = f.getnames()
+                logger.info(f"Decompressed file {key}")
+
+                # Move files by type
+                for name in names:
+                    s = re.search(r"-([a-zA-Z]+)\.", name)
+                    if s is not None:
+                        type = s.group(1)
+                        copy_path = download_path / type
+                        if not copy_path.exists():
+                            os.mkdir(copy_path)
+                        # TODO: Remove str() once using Python 3.9+
+                        shutil.move(str(download_path / name), str(copy_path / name))
 
 
 """Provide a command-line interface for the AisWavLabeler module.
@@ -124,10 +157,23 @@ if __name__ == "__main__":
     parser.add_argument(
         "-D",
         "--data-home",
-        default=str(Path("~").expanduser() / "Data" / "AISonobuoy" / "AIS"),
+        default=str(
+            Path("~").expanduser() / "Data" / "AISonobuoy" / "aisonobuoy-pibuoy-v2"
+        ),
         help="the directory containing all downloaded AIS files",
+    )
+    parser.add_argument(
+        "-d",
+        "--decompress",
+        action="store_true",
+        help="decompress downloaded files",
     )
     args = parser.parse_args()
 
     # Download all AIS files
-    download_objects(Path(args.data_home), args.bucket, prefix=args.prefix)
+    download_objects(
+        Path(args.data_home),
+        args.bucket,
+        prefix=args.prefix,
+        decompress=args.decompress,
+    )
