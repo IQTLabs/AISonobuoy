@@ -230,6 +230,7 @@ def compute_source_metrics(source, gpx, hydrophone):
     vld_h = _h[vld_idx]
     vld_t = _t[vld_idx]
 
+    # TODO: Move to a utility function
     # Compute geocentric east, north, and zenith unit vectors at an
     # origin corresponding to the hydrophone longitude, latitude, and
     # elevation, and the corresponding orthogonal transformation
@@ -254,6 +255,7 @@ def compute_source_metrics(source, gpx, hydrophone):
     )
     E = np.row_stack((e_E, e_N, e_Z))
 
+    # TODO: Move to a utility function
     # Compute the geocentric position of the hydrophone
     f = 1 / F_INV
     N_h = R_OPLUS / math.sqrt(1 - f * (2 - f) * math.sin(hyd_varphi) ** 2)
@@ -265,6 +267,7 @@ def compute_source_metrics(source, gpx, hydrophone):
         ]
     )
 
+    # TODO: Move to a utility function
     # Compute the geocentric position of the source
     N_s = R_OPLUS / np.sqrt(1 - f * (2 - f) * np.sin(vld_varphi) ** 2)
     R_s = np.row_stack(
