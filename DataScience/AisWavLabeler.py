@@ -142,7 +142,8 @@ def download_objects(download_path, bucket, prefix=None, force=False, decompress
 
 
 def load_ais_files(inp_path):
-    """Load all AIS files residing in the input path.
+    """Load all AIS files residing on the input path containing
+    required keys.
 
     Note that AIS files contain a single AIS sample using JSON on each
     line.
@@ -154,8 +155,8 @@ def load_ais_files(inp_path):
 
     Returns
     -------
-    collection : object
-        The object loaded
+    samples : pd.DataFrame()
+        AIS samples
 
     """
     dicts = []
