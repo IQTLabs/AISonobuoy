@@ -196,8 +196,26 @@ def main():
 
     # Load all AIS files
     logger.info("Loading all AIS files")
-    ais = load_ais_files(data_home / "ais")
+    ais_pickle = data_home / "ais.pickle"
+    if not ais_pickle.exists():
+        ais = load_ais_files(data_home / "ais")
+        logger.info("Writing AIS pickle")
+        ais.to_pickle(ais_pickle)
+    else:
+        logger.info("Reading AIS pickle")
+        ais = pd.read_pickle(ais_pickle)
 
-    
+    # Get hydrophone metadata
+    logger.info("Getting hydrophone metadata")
+    hmd_pickle = data_home / "hmd.pickle"
+    if not hmd_pickle.exists():
+        hmd = get_hydrophone_metadata(data_home / "hydrophone")
+        logger.info("Writing hydrophone metadata pickle")
+        hmd.to_pickle(hmd_pickle)
+    else:
+        logger.info("Reading hydrophone metadata pickle")
+        hmd = pd.read_pickle(hmd_pickle)
+
+
 if __name__ == "__main__":
     main()
