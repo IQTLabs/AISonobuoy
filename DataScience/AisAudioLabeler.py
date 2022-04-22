@@ -22,7 +22,7 @@ if not root_logger.handlers:
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
 
-logger = logging.getLogger("AisWavLabeler")
+logger = logging.getLogger("AisAudioLabeler")
 logger.setLevel(logging.INFO)
 
 
@@ -155,8 +155,8 @@ def get_hydrophone_metadata(inp_path):
 
 
 def main():
-    """Provide a command-line interface for the AisWavLabeler module."""
-    parser = ArgumentParser(description="Use AIS data to slice a WAV file")
+    """Provide a command-line interface for the AisAudioLabeler module."""
+    parser = ArgumentParser(description="Use AIS data to slice a audio file")
     parser.add_argument(
         "-b",
         "--bucket",

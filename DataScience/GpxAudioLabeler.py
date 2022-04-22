@@ -28,7 +28,7 @@ if not root_logger.handlers:
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
 
-logger = logging.getLogger("GpxWavLabeler")
+logger = logging.getLogger("GpxAudioLabeler")
 logger.setLevel(logging.INFO)
 
 
@@ -747,7 +747,7 @@ def slice_source_audio_by_condition(
 
 
 def main():
-    """Provide a command-line interface for the GpxWavLabeler module."""
+    """Provide a command-line interface for the GpxAudioLabeler module."""
     parser = ArgumentParser(description="Use GPX data to slice a WAV file")
     parser.add_argument(
         "-D",
