@@ -1,6 +1,7 @@
 import json
 import logging
 import math
+import subprocess
 
 import numpy as np
 from pydub import AudioSegment
@@ -61,6 +62,37 @@ def get_wav_file(inp_path):
     logger.info(f"Getting {inp_path}")
     audio = AudioSegment.from_wav(inp_path)
     return audio
+
+
+def probe_audio_file(input_path):
+    """Probe audio file to obtain stream entry values.
+
+    Parameters
+    ----------
+    inp_path : pathlib.Path()
+        Path of the audo file to probe
+
+    Returns
+    -------
+    probe : dict
+        Values of the audio stream entries
+
+    See also:
+    https://github.com/jiaaro/pydub
+    """
+    cp = subprocess.run(
+        [
+            "ffprobe",
+            "-v", "error",
+            "-select_streams", "a:0",
+            "-show_entries", "stream=codec_name,codec_type,sample_rate,avg_frame_rate,duration",
+            "-of", "json",
+            str(input_path),
+        ],
+        capture_output=True,
+    )
+    probe = json.loads(cp.stdout)
+    return probe["streams"][0]
 
 
 def export_audio_clip(audio, start_t, stop_t, clip_filepath):

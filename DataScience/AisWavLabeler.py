@@ -10,7 +10,7 @@ import tarfile
 import pandas as pd
 
 import S3Utilities as s3
-
+import Utilities as u
 
 # Logging configuration
 root_logger = logging.getLogger()
@@ -26,7 +26,9 @@ logger = logging.getLogger("AisWavLabeler")
 logger.setLevel(logging.INFO)
 
 
-def download_buoy_objects(download_path, bucket, prefix=None, force=False, decompress=False):
+def download_buoy_objects(
+    download_path, bucket, prefix=None, force=False, decompress=False
+):
     """Download all objects, optionally identified by their prefix, in
     an AWS S3 bucket to a local path. Check the ETag. Optionally
     decompress and, if appropriate, move extracted files by type.
@@ -122,10 +124,38 @@ def load_ais_files(inp_path):
     return ais
 
 
-def main():
-    """Provide a command-line interface for the AisWavLabeler module.
+def get_hydrophone_metadata(inp_path):
+    """Probe all audio files residing on the input path.
+    
+    Parameters
+    ----------
+    inp_path : pathlib.Path()
+        Path to directory containing audio files
+
+    Returns
+    -------
+    hmd : pd.DataFrame()
+        Audio stream entries
 
     """
+    entries = []
+    names = os.listdir(inp_path)
+    for name in names:
+        entry = u.probe_audio_file(inp_path / name)
+        entry["name"] = name
+        s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
+        if s is not None:
+            start_timestamp = s.group(1)
+        else:
+            start_timestamp = s.group(1)
+        entry["start_timestamp"] = start_timestamp
+        entries.append(entry)
+    hmd = pd.DataFrame(entries)
+    return hmd
+
+
+def main():
+    """Provide a command-line interface for the AisWavLabeler module."""
     parser = ArgumentParser(description="Use AIS data to slice a WAV file")
     parser.add_argument(
         "-b",
