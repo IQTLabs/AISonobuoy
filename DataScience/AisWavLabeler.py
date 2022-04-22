@@ -105,26 +105,27 @@ def load_ais_files(inp_path):
 
     Returns
     -------
-    samples : pd.DataFrame()
+    ais : pd.DataFrame()
         AIS samples
 
     """
-    dicts = []
+    samples = []
     req_keys = set(["speed", "lat", "lon"])
     names = os.listdir(inp_path)
     for name in names:
         with open(inp_path / name, "r") as f:
             for line in f:
-                dict = json.loads(line)
-                if req_keys.issubset(set(dict.keys())):
-                    dicts.append(dict)
-    samples = pd.DataFrame(dicts)
-    return samples
+                sample = json.loads(line)
+                if req_keys.issubset(set(sample.keys())):
+                    samples.append(sample)
+    ais = pd.DataFrame(samples)
+    return ais
 
 
-"""Provide a command-line interface for the AisWavLabeler module.
-"""
-if __name__ == "__main__":
+def main():
+    """Provide a command-line interface for the AisWavLabeler module.
+
+    """
     parser = ArgumentParser(description="Use AIS data to slice a WAV file")
     parser.add_argument(
         "-b",
@@ -165,4 +166,8 @@ if __name__ == "__main__":
 
     # Load all AIS files
     logger.info("Loading all AIS files")
-    samples = load_ais_files(data_home / "ais")
+    ais = load_ais_files(data_home / "ais")
+
+    
+if __name__ == "__main__":
+    main()

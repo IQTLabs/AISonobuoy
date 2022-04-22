@@ -494,15 +494,16 @@ def slice_source_audio_by_cluster(
                                 or hyd_min_stop_t < dub_start_t
                             ):
                                 continue
-                            else:
-                                start_t = max(hyd_max_start_t, dub_start_t)
-                                stop_t = min(hyd_min_stop_t, dub_stop_t)
+                            start_t = max(hyd_max_start_t, dub_start_t)
+                            stop_t = min(hyd_min_stop_t, dub_stop_t)
                             n_clips += 1
-                            clip = audio[start_t:stop_t]
                             wav_filename = (
                                 "{:s}-{:d}-{:d}{:+.1f}{:+.1f}{:+.1f}{:+.1f}{:+.1f}.wav"
                             )
-                            clip.export(
+                            u.export_audio_clip(
+                                audio,
+                                start_t,
+                                stop_t,
                                 clip_home
                                 / wav_filename.format(
                                     hyd_name,
@@ -514,7 +515,6 @@ def slice_source_audio_by_cluster(
                                     heading_dot_centers[dot_lbl_idx][0],
                                     speed_centers[spd_lbl_idx][0],
                                 ),
-                                format="wav",
                             )
                             if n_clips > n_clips_max:
                                 break
@@ -675,13 +675,14 @@ def slice_source_audio_by_condition(
             dub_stop_t = int(dub_t_set[-1] * 1000)
             if dub_stop_t < hyd_max_start_t or hyd_min_stop_t < dub_start_t:
                 continue
-            else:
-                start_t = max(hyd_max_start_t, dub_start_t)
-                stop_t = min(hyd_min_stop_t, dub_stop_t)
+            start_t = max(hyd_max_start_t, dub_start_t)
+            stop_t = min(hyd_min_stop_t, dub_stop_t)
             n_clips += 1
-            clip = audio[start_t:stop_t]
             wav_filename = "{:s}-{:d}-{:d}-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}-and-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}-{:+.1f}to{:+.1f}.wav"
-            clip.export(
+            u.export_audio_clip(
+                audio,
+                start_t,
+                stop_t,
                 clip_home
                 / wav_filename.format(
                     hyd_name,
@@ -698,7 +699,6 @@ def slice_source_audio_by_condition(
                     speed_limits[0],
                     speed_limits[1],
                 ),
-                format="wav",
             )
             if n_clips > n_clips_max:
                 break
@@ -751,8 +751,6 @@ def main():
         default=str(Path("~").expanduser() / "Data" / "AISonobuoy"),
         help="the directory containing all GPX, WAV, and JSON files",
     )
-    # Note that paths in the collection file are relative to the data
-    # home directory
     parser.add_argument(
         "-c",
         "--collection-filename",
@@ -898,3 +896,7 @@ def main():
                         clip_home,
                         do_plot=args.do_plot_clips,
                     )
+
+
+if __name__ == "__main__":
+    main()
