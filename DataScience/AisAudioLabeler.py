@@ -189,6 +189,21 @@ def main():
         action="store_true",
         help="decompress downloaded files",
     )
+    parser.add_argument(
+        "--force-download",
+        action="store_true",
+        help="force file download",
+    )
+    parser.add_argument(
+        "--force-ais-pickle",
+        action="store_true",
+        help="force AIS pickle creation",
+    )
+    parser.add_argument(
+        "--force-hmd-pickle",
+        action="store_true",
+        help="force hydrophone metadata pickle creation",
+    )
     args = parser.parse_args()
     data_home = Path(args.data_home)
 
@@ -197,13 +212,14 @@ def main():
         data_home,
         args.bucket,
         prefix=args.prefix,
+        force=args.force_download,
         decompress=args.decompress,
     )
 
     # Load all AIS files
     logger.info("Loading all AIS files")
     ais_pickle = data_home / "ais.pickle"
-    if not ais_pickle.exists():
+    if not ais_pickle.exists() or args.force_ais_pickle:
         ais = load_ais_files(data_home / "ais")
         logger.info("Writing AIS pickle")
         ais.to_pickle(ais_pickle)
@@ -214,7 +230,7 @@ def main():
     # Get hydrophone metadata
     logger.info("Getting hydrophone metadata")
     hmd_pickle = data_home / "hmd.pickle"
-    if not hmd_pickle.exists():
+    if not hmd_pickle.exists() or args.force_hmd_pickle:
         hmd = get_hydrophone_metadata(data_home / "hydrophone")
         logger.info("Writing hydrophone metadata pickle")
         hmd.to_pickle(hmd_pickle)
@@ -222,6 +238,7 @@ def main():
         logger.info("Reading hydrophone metadata pickle")
         hmd = pd.read_pickle(hmd_pickle)
 
+    return ais, hmd
 
 if __name__ == "__main__":
-    main()
+    ais, hmd = main()
