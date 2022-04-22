@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 from datetime import datetime
-import json
 import logging
 import math
 from pathlib import Path
@@ -10,10 +9,10 @@ from lxml import etree
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
-from pydub import AudioSegment
 from sklearn.cluster import KMeans
 from sklearn_extra.cluster import KMedoids
 
+import Utilities as u
 
 # WGS84 parameters
 R_OPLUS = 6378137  # [m]
@@ -31,26 +30,6 @@ if not root.handlers:
 
 logger = logging.getLogger("GpxWavLabeler")
 logger.setLevel(logging.INFO)
-
-
-def load_json_file(inp_path):
-    """Load a JSON file.
-
-    Parameters
-    ----------
-    inp_path : pathlib.Path()
-        Path of the JSON file to load
-
-    Returns
-    -------
-    collection : object
-        The object loaded
-
-    """
-    logger.info(f"Loading {inp_path}")
-    with open(inp_path, "r") as f:
-        data = json.load(f)
-    return data
 
 
 def parse_source_gpx_file(inp_path):
@@ -155,26 +134,6 @@ def parse_source_gpx_file(inp_path):
     return gpx
 
 
-def get_hydrophone_wav_file(inp_path):
-    """Get source audio from a WAV file.
-    Parameters
-    ----------
-    inp_path : pathlib.Path()
-        Path of the WAV file to open
-
-    Returns
-    -------
-    audio : pydub.audio_segment.AudioSegment
-        The audio segment
-
-    See also:
-    https://github.com/jiaaro/pydub
-    """
-    logger.info(f"Getting {inp_path}")
-    audio = AudioSegment.from_wav(inp_path)
-    return audio
-
-
 def compute_source_metrics(source, gpx, hydrophone):
     """Compute the topocentric position and velocity of the source
     relative to the hydrophone, and corresponding heading, heading
@@ -230,56 +189,19 @@ def compute_source_metrics(source, gpx, hydrophone):
     vld_h = _h[vld_idx]
     vld_t = _t[vld_idx]
 
-    # TODO: Move to a utility function
-    # Compute geocentric east, north, and zenith unit vectors at an
-    # origin corresponding to the hydrophone longitude, latitude, and
-    # elevation, and the corresponding orthogonal transformation
-    # matrix from geocentric to topocentric coordinates
+    # Assign longitude, latitude, and elevation of hydrophone
     hyd_lambda = math.radians(hydrophone["lon"])
     hyd_varphi = math.radians(hydrophone["lat"])
     hyd_h = math.radians(hydrophone["ele"])
-    e_E = np.array([-math.sin(hyd_lambda), math.cos(hyd_lambda), 0])
-    e_N = np.array(
-        [
-            -math.sin(hyd_varphi) * math.cos(hyd_lambda),
-            -math.sin(hyd_varphi) * math.sin(hyd_lambda),
-            math.cos(hyd_varphi),
-        ]
-    )
-    e_Z = np.array(
-        [
-            math.cos(hyd_varphi) * math.cos(hyd_lambda),
-            math.cos(hyd_varphi) * math.sin(hyd_lambda),
-            math.sin(hyd_varphi),
-        ]
-    )
-    E = np.row_stack((e_E, e_N, e_Z))
 
-    # TODO: Move to a utility function
-    # Compute the geocentric position of the hydrophone
-    f = 1 / F_INV
-    N_h = R_OPLUS / math.sqrt(1 - f * (2 - f) * math.sin(hyd_varphi) ** 2)
-    R_h = np.array(
-        [
-            (N_h + hyd_h) * math.cos(hyd_varphi) * math.cos(hyd_lambda),
-            (N_h + hyd_h) * math.cos(hyd_varphi) * math.sin(hyd_lambda),
-            ((1 - f) ** 2 * N_h + hyd_h) * math.sin(hyd_varphi),
-        ]
-    )
+    # Compute the orthogonal transformation matrix from geocentric to
+    # topocentric coordinates at hydrophone longitude, and latitude
+    E = u.compute_E(hyd_lambda, hyd_varphi)
 
-    # TODO: Move to a utility function
-    # Compute the geocentric position of the source
-    N_s = R_OPLUS / np.sqrt(1 - f * (2 - f) * np.sin(vld_varphi) ** 2)
-    R_s = np.row_stack(
-        (
-            (N_s + vld_h) * np.cos(vld_varphi) * np.cos(vld_lambda),
-            (N_s + vld_h) * np.cos(vld_varphi) * np.sin(vld_lambda),
-            ((1 - f) ** 2 * N_s + vld_h) * np.sin(vld_varphi),
-        ),
-    )
-
-    # Compute the geocentric position of the source relative to the
-    # hydrophone
+    # Compute the geocentric position of the hydrophone, source, and
+    # source relative to the hydrophone
+    R_h = u.compute_R(hyd_lambda, hyd_varphi, hyd_h)
+    R_s = u.compute_R(vld_lambda, vld_varphi, vld_h)
     R_s_h = R_s - np.atleast_2d(R_h).reshape(3, 1)
 
     # Compute the topocentric position and velocity of the source
@@ -820,31 +742,8 @@ def slice_source_audio_by_condition(
         time.sleep(1)
 
 
-def export_audio_interval(audio, start_t, stop_t, clip_filepath):
-    """Export a clip from an audio segment.
-
-    Parameters
-    ----------
-    audio : pydub.audio_segment.AudioSegment
-        The audio segment
-    start_t : int
-        Start time of clip to export [ms]
-    start_t : int
-        Start time of clip to export [ms]
-    clip_filepath : pathlib.Path()
-        Path of the clip file to export
-
-    Returns
-    -------
-    None
-    """
-    clip = audio[start_t:stop_t]
-    clip.export(clip_filepath, format="wav")
-
-
-"""Provide a command-line interface for the GpxWavLabeler module.
-"""
-if __name__ == "__main__":
+def main():
+    """Provide a command-line interface for the GpxWavLabeler module."""
     parser = ArgumentParser(description="Use GPX data to slice a WAV file")
     parser.add_argument(
         "-D",
@@ -888,7 +787,7 @@ if __name__ == "__main__":
 
     # Load file describing the collection
     collection_path = Path(args.data_home) / args.collection_filename
-    collection = load_json_file(collection_path)
+    collection = u.load_json_file(collection_path)
 
     # Identify the interval during which any source emitted
     src_min_start_t = min([h["start_t"] for h in collection["sources"]]) * 1000  # [ms]
@@ -903,7 +802,7 @@ if __name__ == "__main__":
     )  # [ms]
 
     # Load file describing sampling cases
-    sampling = load_json_file(args.sampling_filepath)
+    sampling = u.load_json_file(args.sampling_filepath)
 
     # Consider each course
     for source in collection["sources"]:
@@ -913,11 +812,11 @@ if __name__ == "__main__":
         # Consider each hydrophone
         for hydrophone in collection["hydrophones"]:
             wav_path = Path(args.data_home) / hydrophone["name"]
-            audio = get_hydrophone_wav_file(wav_path)
+            audio = u.get_wav_file(wav_path)
 
             # Export audio with no source present, if it exists
             if src_max_stop_t < hyd_min_stop_t:
-                export_audio_interval(
+                u.export_audio_clip(
                     audio,
                     src_max_stop_t,
                     hyd_min_stop_t,

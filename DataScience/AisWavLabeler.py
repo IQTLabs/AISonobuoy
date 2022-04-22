@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-import hashlib
 import json
 import logging
 import os
@@ -55,40 +54,41 @@ def download_buoy_objects(download_path, bucket, prefix=None, force=False, decom
         r = s3.list_objects(bucket)
     else:
         r = s3.list_objects(bucket, prefix=prefix)
-    if r is not None:
+    if r is None:
+        return
 
-        # Consider each object
-        s3_objects = r["Contents"]
-        for s3_object in s3_objects:
-            key = s3_object["Key"]
+    # Consider each object
+    s3_objects = r["Contents"]
+    for s3_object in s3_objects:
+        key = s3_object["Key"]
 
-            # Download the object if the corresponding file does not
-            # exist, or forced
-            if not (download_path / key).exists() or force:
-                etag = download_object(download_path, bucket, s3_object)
-                logger.info(f"File {key} downloaded")
-                if s3_object["ETag"].replace('"', "") != etag:
-                    logger.error("ETag does not check")
-            else:
-                logger.info(f"File {key} exists")
+        # Download the object if the corresponding file does not
+        # exist, or forced
+        if not (download_path / key).exists() or force:
+            etag = s3.download_object(download_path, bucket, s3_object)
+            logger.info(f"File {key} downloaded")
+            if s3_object["ETag"].replace('"', "") != etag:
+                logger.error("ETag does not check")
+        else:
+            logger.info(f"File {key} exists")
 
-            # Optionally decompress
-            if decompress:
-                with tarfile.open(download_path / key) as f:
-                    f.extractall(download_path)
-                    names = f.getnames()
-                logger.info(f"Decompressed file {key}")
+        # Optionally decompress
+        if decompress:
+            with tarfile.open(download_path / key) as f:
+                f.extractall(download_path)
+                names = f.getnames()
+            logger.info(f"Decompressed file {key}")
 
-                # Move files by type
-                for name in names:
-                    s = re.search(r"-([a-zA-Z]+)\.", name)
-                    if s is not None:
-                        type = s.group(1)
-                        copy_path = download_path / type
-                        if not copy_path.exists():
-                            os.mkdir(copy_path)
-                        # TODO: Remove str() once using Python 3.9+
-                        shutil.move(str(download_path / name), str(copy_path / name))
+            # Move files by type
+            for name in names:
+                s = re.search(r"-([a-zA-Z]+)\.", name)
+                if s is not None:
+                    identifier = s.group(1)
+                    copy_path = download_path / identifier
+                    if not copy_path.exists():
+                        os.mkdir(copy_path)
+                    # TODO: Remove str() once using Python 3.9+
+                    shutil.move(str(download_path / name), str(copy_path / name))
 
 
 def load_ais_files(inp_path):
