@@ -118,8 +118,9 @@ def load_ais_files(inp_path):
         with open(inp_path / name, "r") as f:
             for line in f:
                 sample = json.loads(line)
-                if req_keys.issubset(set(sample.keys())):
-                    samples.append(sample)
+                if not req_keys.issubset(set(sample.keys())):
+                    continue
+                samples.append(sample)
     ais = pd.DataFrame(samples)
     return ais
 
@@ -139,16 +140,21 @@ def get_hydrophone_metadata(inp_path):
 
     """
     entries = []
+    req_keys = set(["sample_rate", "duration"])
     names = os.listdir(inp_path)
     for name in names:
         entry = u.probe_audio_file(inp_path / name)
+        if not req_keys.issubset(set(entry.keys())):
+            continue
+        entry["sample_rate"] = int(entry["sample_rate"])
+        entry["duration"] = float(entry["duration"])
         entry["name"] = name
         s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
         if s is not None:
             start_timestamp = s.group(1)
         else:
             start_timestamp = s.group(1)
-        entry["start_timestamp"] = start_timestamp
+        entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
     hmd = pd.DataFrame(entries)
     return hmd
