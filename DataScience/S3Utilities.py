@@ -1,18 +1,19 @@
 """Provides simplified and documented methods for interacting with AWS S3.
 """
+import hashlib
 import logging
 
 import boto3
 
 
-root = logging.getLogger()
-if not root.handlers:
+root_logger = logging.getLogger()
+if not root_logger.handlers:
     ch = logging.StreamHandler()
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     ch.setFormatter(formatter)
-    root.addHandler(ch)
+    root_logger.addHandler(ch)
 
 logger = logging.getLogger("S3Utilities")
 logger.setLevel(logging.INFO)
@@ -663,11 +664,12 @@ def list_objects(bucket, prefix=None):
         'EncodingType': 'url'
     }    
 
-    TODO: Update
     Parameters
     ----------
     bucket : str
         Name of the S3 bucket
+    prefix : str
+        The AWS S3 prefix designating objects in the bucket
 
     Returns
     -------

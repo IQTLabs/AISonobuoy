@@ -19,14 +19,14 @@ R_OPLUS = 6378137  # [m]
 F_INV = 298.257223563
 
 # Logging configuration
-root = logging.getLogger()
-if not root.handlers:
+root_logger = logging.getLogger()
+if not root_logger.handlers:
     ch = logging.StreamHandler()
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     ch.setFormatter(formatter)
-    root.addHandler(ch)
+    root_logger.addHandler(ch)
 
 logger = logging.getLogger("GpxWavLabeler")
 logger.setLevel(logging.INFO)
@@ -101,7 +101,9 @@ def parse_source_gpx_file(inp_path):
             trkseg["ele"] = []
             trkseg["time"] = []
             start_time = None
-            for trkpt_element in root.iter("{http://www.topografix.com/GPX/1/1}trkpt"):
+            for trkpt_element in trkseg_element.iter(
+                "{http://www.topografix.com/GPX/1/1}trkpt"
+            ):
                 trkseg["lat"].append(
                     math.radians(float(trkpt_element.get("lat")))
                 )  # [rad]
@@ -116,16 +118,18 @@ def parse_source_gpx_file(inp_path):
                 else:
                     trkseg["ele"].append(-R_OPLUS)
 
-                time = datetime.fromisoformat(
+                cur_time = datetime.fromisoformat(
                     trkpt_element.find("{http://www.topografix.com/GPX/1/1}time").text[
                         :-1
                     ]
                 )
                 if start_time is None:
-                    start_time = time
+                    start_time = cur_time
                     trkseg["time"].append(0.0)
                 else:
-                    trkseg["time"].append((time - start_time).total_seconds())  # [s]
+                    trkseg["time"].append(
+                        (cur_time - start_time).total_seconds()
+                    )  # [s]
 
             trk["trksegs"].append(trkseg)
 
