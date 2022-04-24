@@ -5,7 +5,8 @@ __pycache__
 *.swo
 *.gpx
 *-checkpoint.ipynb
-.idea
 .dir-locals.el
+.idea
+.ipynb_checkpoints
 .requirements.txt
 .tern-port
