@@ -2,7 +2,7 @@
     "sources": [
         {
             "type": "bucket",
-            "name": "aisonobuoy-pibuoy-v2",
+            "name": "aisonobuoy-pibuoy-v2"
         }
     ],
     "hydrophones": [
@@ -11,7 +11,7 @@
             "name": "aisonobuoy-pibuoy-v2",
             "lat": 0.0,
             "lon": 0.0,
-            "ele": 0.0,
+            "ele": 0.0
         }
     ]
 }
