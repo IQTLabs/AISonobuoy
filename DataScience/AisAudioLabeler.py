@@ -10,7 +10,7 @@ import tarfile
 import pandas as pd
 
 import S3Utilities as s3
-import Utilities as u
+import LabelerUtilities as lu
 
 # Logging configuration
 root_logger = logging.getLogger()
@@ -143,7 +143,7 @@ def get_hydrophone_metadata(inp_path):
     req_keys = set(["sample_rate", "duration"])
     names = os.listdir(inp_path)
     for name in names:
-        entry = u.probe_audio_file(inp_path / name)
+        entry = lu.probe_audio_file(inp_path / name)
         if not req_keys.issubset(set(entry.keys())):
             continue
         entry["sample_rate"] = int(entry["sample_rate"])
