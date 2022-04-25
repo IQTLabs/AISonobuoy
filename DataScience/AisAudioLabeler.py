@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import pickle
 import re
 import shutil
 import tarfile
@@ -130,8 +131,10 @@ def load_ais_files(inp_path):
                     # Collect samples containing position
                     n_positions += 1
                     positions.append(sample)
+
                 elif type_keys.issubset(set(sample.keys())):
-                    # Collect samples containing the mapping from mmsi to shiptype
+                    # Collect samples containing the mapping from mmsi
+                    # to shiptype
                     n_types += 1
                     if sample["mmsi"] not in types:
                         types[sample["mmsi"]] = sample["shiptype"]
@@ -168,6 +171,8 @@ def get_hydrophone_metadata(inp_path):
         entry["sample_rate"] = int(entry["sample_rate"])
         entry["duration"] = float(entry["duration"])
         entry["name"] = name
+
+        # Identify start timestamp from audio file name
         s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
         if s is not None:
             start_timestamp = s.group(1)
@@ -176,7 +181,399 @@ def get_hydrophone_metadata(inp_path):
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
     hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
+
     return hmd
+
+
+def get_ais_pickle(data_home, source, force=False, ais=None):
+    """Read AIS dataframe pickle, if it exists, or load AIS files as a
+    dataframe and write pickle. Optionally force write an AIS
+    dataframe pickle.
+
+    Parameters
+    ----------
+    data_home : pathlib.Path()
+        Path to directory containing data files
+    source : dict
+        The source configuration
+    force : boolean
+        Flag to force creation of the pickle, or not
+
+    Returns
+    -------
+    ais : pd.DataFrame()
+        AIS position samples with ship type
+
+    """
+    ais_pickle = data_home / source["name"] / "ais.pickle"
+    if not ais_pickle.exists() or force:
+        if ais is None:
+            logger.info("Loading all AIS files")
+            ais = load_ais_files(data_home / source["name"] / "ais")
+        logger.info("Writing AIS pickle")
+        ais.to_pickle(ais_pickle)
+    else:
+        logger.info("Reading AIS pickle")
+        ais = pd.read_pickle(ais_pickle)
+    return ais
+
+
+def get_shp_pickle(data_home, source, shp=None):
+    """Read SHP dictionary pickle, if it exists, or write SHP
+    dictionary pickle, if SHP dictionary is not None.
+
+    Parameters
+    ----------
+    data_home : pathlib.Path()
+        Path to directory containing data files
+    source : dict
+        The source configuration
+    shp : dict
+        AIS start and stop timestamps corresponding to each status
+        interval
+
+    Returns
+    -------
+    shp : dict
+        AIS start and stop timestamps corresponding to each status
+        interval
+
+    """
+    shp_pickle = data_home / source["name"] / "shp.pickle"
+    if shp_pickle.exists():
+        logger.info("Reading SHP pickle")
+        with open(shp_pickle, "rb") as f:
+            shp = pickle.load(f)
+    elif shp is not None:
+        logger.info("Writing SHP pickle")
+        with open(shp_pickle, "wb") as f:
+            pickle.dump(shp, f)
+    return shp
+
+
+def get_hmd_pickle(data_home, hydrophone, force=False, hmd=None):
+    """Read hydrophone metadata dataframe pickle, if it exists, or get
+    hydrophone metadata as a dataframe and write pickle.
+
+    Parameters
+    ----------
+    data_path : pathlib.Path()
+        Path to directory containing data files
+    hydrophone : dict
+        The hydrophone configuration
+    force : boolean
+        Flag to force creation of the pickle, or not
+
+    Returns
+    -------
+    hmd : pd.DataFrame()
+        Hydrophone metadata
+
+    """
+    hmd_pickle = data_home / hydrophone["name"] / "hmd.pickle"
+    if not hmd_pickle.exists() or force:
+        if hmd is None:
+            logger.info("Getting hydrophone metadata")
+            hmd = get_hydrophone_metadata(data_home / hydrophone["name"] / "hydrophone")
+        logger.info("Writing hydrophone metadata pickle")
+        hmd.to_pickle(hmd_pickle)
+    else:
+        logger.info("Reading HMD pickle")
+        hmd = pd.read_pickle(hmd_pickle)
+    return hmd
+
+
+def augment_ais_data(source, hydrophone, ais, hmd, do_plot=True):
+    """Augment AIS dataframe with distance from the hydrophone, speed,
+    and ship counts when underway, or not underway. Optionally plot
+    the corresponding time intervals, and a distance histogram.
+
+    Parameters
+    ----------
+    source : dict
+        The source configuration
+    hydrophone : dict
+        The hydrophone configuration
+    ais : pd.DataFrame()
+        AIS position samples with ship type
+    hmd : pd.DataFrame()
+        Hydrophone metadata
+
+    Returns
+    -------
+    ais : pd.DataFrame()
+        AIS position samples with ship type and counts
+    hmd : pd.DataFrame()
+        Hydrophone metadata (unchanged)
+    shp : dict
+        AIS start and stop timestamps corresponding to each status
+        interval
+
+    """
+    # Append AIS data columns
+    ais["h"] = 0
+    ais["distance"] = 0
+    ais["speed"] = 0
+    ais["shipcount_uw"] = 0
+    ais["mmsis_uw"] = [[] for _ in range(len(ais.index))]
+    ais["shipcount_nuw"] = 0
+    ais["mmsis_nuw"] = [[] for _ in range(len(ais.index))]
+
+    # Initialize ship counts
+    min_t = min(ais["timestamp"].min(), hmd["start_timestamp"].min())
+    max_t = max(
+        ais["timestamp"].max(), (hmd["start_timestamp"] + hmd["duration"]).max()
+    )
+    timestamp = np.array(range(min_t, max_t + 1))
+    shipcount_uw = pd.DataFrame(
+        {"count": np.zeros(timestamp.shape), "mmsis": [[] for _ in timestamp]},
+        index=timestamp,
+    )
+    shipcount_nuw = pd.DataFrame(
+        {"count": np.zeros(timestamp.shape), "mmsis": [[] for _ in timestamp]},
+        index=timestamp,
+    )
+
+    # Consider each unique ship
+    shp = {}
+    if do_plot:
+        fig, axs = plt.subplots()
+    groupby = ais.groupby(["mmsi"])
+    n_group = 0
+    for group in groupby:
+        n_group += 1
+        logger.info(f"Processing group {group[0]}")
+
+        # Assign AIS dataframe
+        ais_g = group[1].copy().reset_index()
+        mmsi = ais_g["mmsi"].unique()
+        if mmsi.size != 1:
+            raise Exception("More than one MMSI found in group")
+        else:
+            mmsi = mmsi[0]
+
+        # Initialize SHP dictionary for tracking ship counts and
+        # status intervals for each ship
+        shp[mmsi] = {}
+
+        # Compute source metrics and assign
+        vld_t = ais_g["timestamp"].to_numpy()  # [s]
+        vld_lambda = np.deg2rad(ais_g["lon"].to_numpy())  # [rad]
+        vld_varphi = np.deg2rad(ais_g["lat"].to_numpy())  # [rad]
+        vld_h = ais_g["h"].to_numpy()  # [m]
+        (
+            distance,
+            heading,
+            heading_dot,
+            speed,
+            r_s_h,
+            v_s_h,
+        ) = lu.compute_source_metrics(
+            source, vld_t, vld_lambda, vld_varphi, vld_h, hydrophone
+        )
+        ais.loc[ais["mmsi"] == mmsi, "distance"] = distance
+        ais.loc[ais["mmsi"] == mmsi, "speed"] = speed
+
+        # Consider each unique status
+        for status in ais_g["status"].unique():
+            logger.info(f"Processing status {status} for group {group[0]}")
+
+            # Assign AIS dataframe and select columns
+            ais_s = ais_g[ais_g["status"] == status]
+            index = ais_s.index.to_numpy()
+
+            # Consider each interval during which the current ship has
+            # the current status
+            index_sets = np.split(index, np.where(np.diff(index) > 1)[0] + 1)
+            shp[mmsi][status] = []
+            for index_set in index_sets:
+                start_timestamp = ais_g.iloc[
+                    index_set[0], ais_s.columns.get_loc("timestamp")
+                ]
+                stop_timestamp = ais_g.iloc[
+                    index_set[-1], ais_s.columns.get_loc("timestamp")
+                ]
+
+                # Collect status intervals for each ship
+                shp[mmsi][status].append((start_timestamp, stop_timestamp))
+
+                # Update ship counts
+                if status in ["UnderWayUsingEngine"]:
+                    shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
+                    shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
+                        lambda x: x.append(mmsi)
+                    )
+                    if do_plot:
+                        axs.plot(
+                            [start_timestamp, stop_timestamp], [n_group, n_group], "r"
+                        )
+
+                elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
+                        lambda x: x.append(mmsi)
+                    )
+                    if do_plot:
+                        axs.plot(
+                            [start_timestamp, stop_timestamp], [n_group, n_group], "b"
+                        )
+
+    # Plot hydrophone time intervals
+    if do_plot:
+        for iA in range(hmd.shape[0]):
+            axs.plot(
+                hmd["start_timestamp"][iA] + np.array([0, hmd["duration"][iA]]),
+                n_group + np.array([1, 1]),
+                "k",
+            )
+
+        # Label axes and show plot
+        axs.set_xlabel("Timestamp [s]")
+        axs.set_ylabel("Group")
+        plt.show()
+
+    # Assign ship counts and mmsis when underway, and not underway
+    logger.info("Assigning ship counts underway")
+    ais["shipcount_uw"] = ais["timestamp"].apply(lambda x: shipcount_uw.loc[x, "count"])
+    logger.info("Assigning ship mmsis underway")
+    ais["mmsis_uw"] = ais["timestamp"].apply(lambda x: shipcount_uw.loc[x, "mmsis"])
+    logger.info("Assigning ship counts not underway")
+    ais["shipcount_nuw"] = ais["timestamp"].apply(
+        lambda x: shipcount_nuw.loc[x, "count"]
+    )
+    logger.info("Assigning ship mmsis not underway")
+    ais["mmsis_nuw"] = ais["timestamp"].apply(lambda x: shipcount_nuw.loc[x, "mmsis"])
+
+    # Plot histogram of distance for times at which only two ships are
+    # reporting their status as underway
+    if do_plot:
+        fig, axs = plt.subplots()
+        axs.hist(ais.loc[ais["shipcount_uw"] == 2, ["distance"]].to_numpy(), bins=100)
+        axs.set_title("Distance")
+        axs.set_xlabel("distance [m]")
+        axs.set_ylabel("counts")
+        plt.show()
+
+    return ais, hmd, shp
+
+
+def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_ships):
+    """Export audio clips from AIS intervals during which the
+    specified maximum number of ships are underway. Label the audio
+    clip using the attributes of the ship closest to the hydrophone.
+
+    Parameters
+    ----------
+    ais : pd.DataFrame()
+        AIS position samples with ship type and counts
+    hmd : pd.DataFrame()
+        Hydrophone metadata (unchanged)
+    shp : dict
+        AIS start and stop timestamps corresponding to each status
+        interval
+    data_home : pathlib.Path()
+        Path to directory containing data files
+    hydrophone : dict
+        The hydrophone configuration
+    clip_home : pathlib.Path()
+        Home directory for clip files
+    max_n_ships : int
+        Maximum number of ships underway simultaneously
+
+    Returns
+    -------
+    n_audio_clips : int
+        The number of exported audio clips
+
+    """
+    # Identify rows with no more than eight ships underway
+    status = "UnderWayUsingEngine"
+    ais_columns = ["timestamp", "mmsi", "shiptype", "status", "distance", "mmsis_uw"]
+    ais_g = ais.loc[ais["shipcount_uw"] <= max_n_ships, ais_columns]
+    logger.info(f"Found {ais_g.shape[0]} ship groups")
+
+    # Process each ship group
+    n_clips = 0
+    mmsis = []
+    for index, row_g in ais_g.iterrows():
+        mmsig = row_g["mmsis_uw"]
+
+        # Consider each ship
+        distance_m = float("+Infinity")
+        interval_m = ()
+        mmsi_m = ""
+        shiptype_m = ""
+        timestamp = row_g["timestamp"]
+        for mmsi in mmsig:
+
+            # Skip ships previously selected
+            if mmsi in mmsis:
+                continue
+
+            # Identify the interval corresponding to the current ship
+            # and status
+            found_interval = False
+            for interval in shp[mmsi][status]:
+                if interval[0] <= timestamp and timestamp <= interval[1]:
+                    found_interval = True
+                    break
+            if not found_interval:
+                raise Exception(f"Did not find interval for ship {mmsi}")
+
+            # Identify the AIS dataframe row for the current ship at
+            # the start of the interval
+            row_c = ais.loc[
+                (ais["mmsi"] == mmsi) & (ais["timestamp"] == interval[0]), ais_columns
+            ].iloc[0]
+
+            # Select the ship that is closest to the hydrophone
+            if row_c["distance"] < distance_m:
+                distance_m = row_c["distance"]
+                mmsi_m = row_c["mmsi"]
+                shiptype_m = row_c["shiptype"]
+                interval_m = interval
+
+        # Skip group if no ship selected
+        if mmsi_m == "":
+            continue
+
+        # Collect selected ships
+        mmsis.append(mmsi_m)
+        logger.info(f"Selected ship {mmsi_m}")
+
+        # Select the largest audio interval no larger than 540 seconds
+        start_timestamp_0 = interval_m[0]
+        start_timestamp_1 = min(interval_m[0] + 540, interval_m[1])
+
+        # Identify the audio files corresponding to the audio
+        # interval, and get the audio
+        hmd_columns = ["name", "start_timestamp"]
+        row_0 = hmd.loc[hmd["start_timestamp"] < start_timestamp_0, hmd_columns].iloc[
+            -1
+        ]
+        row_1 = hmd.loc[hmd["start_timestamp"] < start_timestamp_1, hmd_columns].iloc[
+            -1
+        ]
+        inp_path = data_home / hydrophone["name"] / "hydrophone"
+        if row_0["start_timestamp"] == row_1["start_timestamp"]:
+            # Get one audio file
+            audio = lu.get_audio_file(inp_path / row_0["name"])
+
+        else:
+            # Get two audio files and concatenate
+            audio_0 = lu.get_audio_file(inp_path / row_0["name"])
+            audio_1 = lu.get_audio_file(inp_path / row_1["name"])
+            audio = audio_0 + audio_1
+
+        # Export the audio clip labeled using attributes of the
+        # selected ship
+        name = Path(row_0["name"]).stem
+        start_t = (start_timestamp_0 - row_0["start_timestamp"]) * 1000  # [ms]
+        stop_t = start_t + 540 * 1000  # [ms]
+        wav_filename = f"{name}-{start_t}-{stop_t}-{mmsi_m}-{shiptype_m}-{status}-{distance_m:.1f}.wav"
+        lu.export_audio_clip(audio, start_t, stop_t, clip_home / wav_filename)
+        logger.info(f"Exported audio file {wav_filename}")
+        n_clips += 1
 
 
 def main():
@@ -216,6 +613,11 @@ def main():
         help="force hydrophone metadata pickle creation",
     )
     parser.add_argument(
+        "--force-shp-pickle",
+        action="store_true",
+        help="force SHP pickle creation",
+    )
+    parser.add_argument(
         "-s",
         "--sampling-filepath",
         default=str(Path(__file__).parent / "data" / "sampling-ais.json"),
@@ -223,9 +625,9 @@ def main():
     )
     parser.add_argument(
         "-P",
-        "--do-plot-metrics",
+        "--do-plot-intervals",
         action="store_true",
-        help="do plot track with computed metrics",
+        help="do plot ship status intervals",
     )
     parser.add_argument(
         "-C",
@@ -240,14 +642,19 @@ def main():
     collection_path = Path(args.data_home) / args.collection_filename
     collection = lu.load_json_file(collection_path)
 
-    # Load file describing sampling cases
-    sampling = lu.load_json_file(args.sampling_filepath)
-
     # For now, assume a single source and hydrophone
     if len(collection["sources"]) > 1 or len(collection["hydrophones"]) > 1:
         raise Exception("Only one source and one hydrophone expected")
     source = collection["sources"][0]
     hydrophone = collection["hydrophones"][0]
+
+    # Load file describing sampling cases
+    sampling = lu.load_json_file(args.sampling_filepath)
+
+    # For now, assume a single sampling case
+    if len(sampling) > 1:
+        raise Exception("Only one sampling case expected")
+    case = sampling[0]
 
     # Download all source files
     if source["name"] != hydrophone["name"] or source["prefix"] != hydrophone["prefix"]:
@@ -262,110 +669,29 @@ def main():
         decompress=args.decompress,
     )
 
-    # Load all AIS files
-    ais_pickle = data_home / source["name"] / "ais.pickle"
-    if not ais_pickle.exists() or args.force_ais_pickle:
-        logger.info("Loading all AIS files")
-        ais = load_ais_files(data_home / source["name"] / "ais")
-        logger.info("Writing AIS pickle")
-        ais.to_pickle(ais_pickle)
-    else:
-        logger.info("Reading AIS pickle")
-        ais = pd.read_pickle(ais_pickle)
-
-    # Get hydrophone metadata
-    hmd_pickle = data_home / hydrophone["name"] / "hmd.pickle"
-    if not hmd_pickle.exists() or args.force_hmd_pickle:
-        logger.info("Getting hydrophone metadata")
-        hmd = get_hydrophone_metadata(data_home / hydrophone["name"] / "hydrophone")
-        logger.info("Writing hydrophone metadata pickle")
-        hmd.to_pickle(hmd_pickle)
-    else:
-        logger.info("Reading hydrophone metadata pickle")
-        hmd = pd.read_pickle(hmd_pickle)
-
-    # Plot AIS time intervals for each vessel and status
-    # See:
-    # https://www.navcen.uscg.gov/?pageName=AISMessagesA
-    # https://gpsd.gitlab.io/gpsd/AIVDM.html#_types_1_2_and_3_position_report_class_a
-    # https://github.com/M0r13n/pyais/blob/96e01d9f2fac380a87d4948cac2b236c6a1a7c4f/pyais/decode.py
-    figUW, axsUW = plt.subplots()
-    figNUW, axsNUW = plt.subplots()
-    groupby = ais.groupby(["mmsi"])
-    n_group = 0
-    for group in groupby:
-        n_group += 1
-        logger.info(f"Processing group {group[0]}")
-
-        # Assign AIS dataframe and add height
-        ais_g = group[1]
-        ais_g["h"] = 0
-
-        # Ensure unique identity
-        mmsi = ais_g["mmsi"].unique()
-        if mmsi.size != 1:
-            raise Exception("More than one MMSI found in group")
-
-        # Consider each unique status
-        for status in ais_g["status"].unique():
-            logger.info(f"Processing status {status} for group {group[0]}")
-
-            # Assign AIS dataframe and select columns
-            ais_s = ais_g[ais_g["status"] == status]
-            vld_t = ais_s["timestamp"].to_numpy()  # [s]
-            vld_lambda = np.deg2rad(ais_s["lon"].to_numpy())  # [rad]
-            vld_varphi = np.deg2rad(ais_s["lat"].to_numpy())  # [rad]
-            vld_h = ais_s["h"].to_numpy()  # [m]
-
-            delta_t_max = 540
-            vld_t_sets = np.split(vld_t, np.where(np.diff(vld_t) > delta_t_max)[0] + 1)
-            for vld_t_set in vld_t_sets:
-                if status in ["UnderWayUsingEngine"]:
-                    axsUW.plot([vld_t_set[0], vld_t_set[-1]], [n_group, n_group], "k")
-
-                elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-                    axsNUW.plot([vld_t_set[0], vld_t_set[-1]], [n_group, n_group], "k")
-
-            # Compute and plot source metrics for the current hydrophone
-            (
-                distance,
-                heading,
-                heading_dot,
-                speed,
-                r_s_h,
-                v_s_h,
-            ) = lu.compute_source_metrics(
-                source, vld_t, vld_lambda, vld_varphi, vld_h, hydrophone
-            )
-            if args.do_plot_metrics:
-                lu.plot_source_metrics(
-                    source, hydrophone, heading, heading_dot, distance, speed, r_s_h
-                )
-
-    # Plot hydrophone time intervals
-    for iA in range(hmd.shape[0]):
-        axsUW.plot(
-            hmd["start_timestamp"][iA] + np.array([0, hmd["duration"][iA]]),
-            n_group + np.array([1, 1]),
-            "k",
+    # Get AIS data, hydrophone metadata, and augment AIS data with
+    # distance, speed, and ship counts, if needed. Get corresponding
+    # SHP data.
+    ais = get_ais_pickle(data_home, source, force=args.force_ais_pickle)
+    hmd = get_hmd_pickle(data_home, hydrophone, force=args.force_hmd_pickle)
+    if "shipcount_uw" not in ais.columns or args.force_shp_pickle:
+        ais, hmd, shp = augment_ais_data(
+            source, hydrophone, ais, hmd, do_plot=args.do_plot_intervals
         )
-        axsNUW.plot(
-            hmd["start_timestamp"][iA] + np.array([0, hmd["duration"][iA]]),
-            n_group + np.array([1, 1]),
-            "k",
-        )
+        ais = get_ais_pickle(data_home, source, force=True, ais=ais)
+        shp = get_shp_pickle(data_home, source, shp=shp)
+    else:
+        shp = get_shp_pickle(data_home, source)
 
-    # Label axes and show plot
-    axsUW.set_title("UnderWayUsingEngine")
-    axsUW.set_xlabel("Timestamp [s]")
-    axsUW.set_ylabel("Group")
-    axsNUW.set_title("AtAnchor, Moored, NotUnderCommand")
-    axsNUW.set_xlabel("Timestamp [s]")
-    axsNUW.set_ylabel("Group")
-    plt.show()
-
-    return collection, sampling, ais, hmd
+    # Export audio clips from AIS intervals during which two ships are
+    # underway. Label the audio clip using the attributes of the ship
+    # closest to the hydrophone.
+    clip_home = Path(args.clip_home) / case["output_dir"]
+    if not clip_home.exists():
+        clip_home.mkdir(parents=True)
+    export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, case["max_n_ships"])
+    return ais, hmd, shp
 
 
 if __name__ == "__main__":
-    collection, sampling, ais, hmd = main()
+    ais, hmd, shp = main()

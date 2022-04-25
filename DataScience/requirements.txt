@@ -28,12 +28,14 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.22.1
+boto3==1.22.2
     # via -r requirements.in
-botocore==1.25.1
+botocore==1.25.2
     # via
     #   boto3
     #   s3transfer
+branca==0.5.0
+    # via folium
 certifi==2021.10.8
     # via requests
 cffi==1.15.0
@@ -56,6 +58,8 @@ executing==0.8.3
     # via stack-data
 fastjsonschema==2.15.3
     # via nbformat
+folium==0.12.1.post1
+    # via -r requirements.in
 fonttools==4.33.3
     # via matplotlib
 idna==3.3
@@ -78,6 +82,8 @@ jedi==0.18.1
     # via ipython
 jinja2==3.1.1
     # via
+    #   branca
+    #   folium
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
@@ -109,7 +115,7 @@ jupyter-core==4.10.0
     #   nbconvert
     #   nbformat
     #   notebook
-jupyter-server==1.16.0
+jupyter-server==1.17.0
     # via
     #   jupyterlab
     #   jupyterlab-server
@@ -164,6 +170,7 @@ notebook-shim==0.1.0
 numpy==1.22.3
     # via
     #   -r requirements.in
+    #   folium
     #   matplotlib
     #   pandas
     #   scikit-learn
@@ -233,7 +240,9 @@ pyzmq==22.3.0
     #   jupyter-server
     #   notebook
 requests==2.27.1
-    # via jupyterlab-server
+    # via
+    #   folium
+    #   jupyterlab-server
 s3transfer==0.5.2
     # via boto3
 scikit-learn==1.0.2

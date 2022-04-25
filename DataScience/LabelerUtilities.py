@@ -50,12 +50,13 @@ def load_json_file(inp_path):
     return data
 
 
-def get_wav_file(inp_path):
-    """Get source audio from a WAV file.
+def get_audio_file(inp_path):
+    """Get audio segemnt from an audio file.
+
     Parameters
     ----------
     inp_path : pathlib.Path()
-        Path of the WAV file to open
+        Path of the audio file to open
 
     Returns
     -------
@@ -66,7 +67,12 @@ def get_wav_file(inp_path):
     https://github.com/jiaaro/pydub
     """
     logger.info(f"Getting {inp_path}")
-    audio = AudioSegment.from_wav(inp_path)
+    if inp_path.suffix.lower() == ".wav":
+        audio = AudioSegment.from_wav(inp_path)
+
+    elif inp_path.suffix.lower() == ".flac":
+        audio = AudioSegment.from_file(inp_path, "flac")
+
     return audio
 
 
