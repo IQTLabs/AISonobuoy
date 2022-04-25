@@ -1,7 +1,12 @@
 import json
 import logging
 import math
+from pathlib import Path
 import subprocess
+
+from matplotlib import pyplot as plt
+from sklearn.cluster import KMeans
+from sklearn_extra.cluster import KMedoids
 
 import numpy as np
 from pydub import AudioSegment
@@ -194,3 +199,202 @@ def compute_R(_lambda, _varphi, _h):
             ),
         )
     return R
+
+
+def compute_source_metrics(source, vld_t, vld_lambda, vld_varphi, vld_h, hydrophone):
+    """Compute the topocentric position and velocity of the source
+    relative to the hydrophone, and corresponding heading, heading
+    first derivative, distance, and speed.
+
+    Parameters
+    ----------
+    source : dict
+        The source configuration
+    vld_t
+        Time from start of track [s]
+    vld_lambda
+        Geodetic longitude [rad]
+    vld_varphi
+        Geodetic latitude [rad]
+    vld_h
+        Elevation [m]
+    hydrophone : dict
+        The hydrophone configuration
+
+    Returns
+    -------
+    distance : numpy.ndarray
+        Source distance from hydrophone [m]
+    heading : numpy.ndarray
+        Source heading, zero at north, clockwise positive
+    heading_dot : numpy.ndarray
+        Source heading first derivative
+    speed : numpy.ndarray
+        Source speed [m/s]
+    r_s_h : numpy.ndarray
+        Source topocentric (east, north, zenith) position [m]
+    v_s_h : numpy.ndarray
+        Source topocentric (east, north, zenith) velocity [m/s]
+
+    See:
+    Montenbruck O., Gill E.; Satellite Orbits; Springer, Berlin (2001); pp. 37 and 188.
+    """
+    logger.info(
+        f"Computing source {source['name']} metrics for hydrophone {Path(hydrophone['name'].lower()).stem}"
+    )
+    # Assign longitude, latitude, and elevation of hydrophone
+    hyd_lambda = math.radians(hydrophone["lon"])
+    hyd_varphi = math.radians(hydrophone["lat"])
+    hyd_h = math.radians(hydrophone["ele"])
+
+    # Compute the orthogonal transformation matrix from geocentric to
+    # topocentric coordinates at hydrophone longitude, and latitude
+    E = ul.compute_E(hyd_lambda, hyd_varphi)
+
+    # Compute the geocentric position of the hydrophone, source, and
+    # source relative to the hydrophone
+    R_h = ul.compute_R(hyd_lambda, hyd_varphi, hyd_h)
+    R_s = ul.compute_R(vld_lambda, vld_varphi, vld_h)
+    R_s_h = R_s - np.atleast_2d(R_h).reshape(3, 1)
+
+    # Compute the topocentric position and velocity of the source
+    # relative to the origin, and corresponding heading, heading first
+    # derivative, distance, and speed
+    # TODO: Use instantaneous orthogonal transformation matrix?
+    r_s_h = np.matmul(E, R_s_h)
+    v_s_h = np.gradient(r_s_h, vld_t, axis=1)
+    distance = np.sqrt(np.sum(np.square(r_s_h), axis=0))
+    heading = 90 - np.degrees(np.arctan2(v_s_h[1, :], v_s_h[0, :]))
+    heading_dot = np.abs(
+        pd.DataFrame(np.gradient(heading, vld_t)).ewm(span=3).mean().to_numpy()
+    ).flatten()
+    speed = np.sqrt(np.sum(np.square(v_s_h), axis=0))
+    return distance, heading, heading_dot, speed, r_s_h, v_s_h
+
+
+def plot_source_metrics(
+    source, hydrophone, heading, heading_dot, distance, speed, r_s_h
+):
+    """Plot source track, and histograms of source distance, heading,
+    heading first derivative, and speed.
+
+    Parameters
+    ----------
+    source : dict
+        The source configuration
+    hydrophone : dict
+        The hydrophone configuration
+    heading : numpy.ndarray
+        Source heading, zero at north, clockwise positive
+    heading_dot : numpy.ndarray
+        Source heading first derivative
+    distance : numpy.ndarray
+        Source distance from hydrophone [m]
+    speed : numpy.ndarray
+        Source speed [m/s]
+    r_s_h : numpy.ndarray
+        Source topocentric (east, north, zenith) position [m]
+
+    Returns
+    -------
+    None
+    """
+    logger.info(
+        f"Plotting source {source['name']} metrics for hydrophone {Path(hydrophone['name'].lower()).stem}"
+    )
+    fig, axs = plt.subplots()
+    axs.plot(r_s_h[0, :], r_s_h[1, :])
+    axs.axhline(color="gray", linestyle="dotted")
+    axs.axvline(color="gray", linestyle="dotted")
+    axs.set_title("Track")
+    axs.set_xlabel("east [m]")
+    axs.set_ylabel("north [m]")
+    plt.show()
+
+    fig, axs = plt.subplots()
+    axs.hist(distance, bins=100)
+    axs.set_title("Distance")
+    axs.set_xlabel("distance [m]")
+    axs.set_ylabel("counts")
+    plt.show()
+
+    fig, axs = plt.subplots()
+    axs.hist(90 - heading, bins=180)
+    axs.set_title("Headings")
+    axs.set_xlabel("heading [deg]")
+    axs.set_ylabel("counts")
+    plt.show()
+
+    fig, axs = plt.subplots()
+    axs.hist(np.abs(heading_dot), bins=100)
+    axs.set_title("Heading First Derivative")
+    axs.set_xlabel("heading first derivative [deg/s]")
+    axs.set_ylabel("counts")
+    plt.show()
+
+    fig, axs = plt.subplots()
+    axs.hist(speed, bins=100)
+    axs.set_title("Speed")
+    axs.set_xlabel("speed [m/s]")
+    axs.set_ylabel("counts")
+    plt.show()
+
+
+def cluster_source_metrics(
+    distance,
+    distance_n_clusters,
+    heading,
+    heading_n_clusters,
+    heading_dot,
+    heading_dot_n_clusters,
+    speed,
+    speed_n_clusters,
+):
+    """Compute clusters of distance, heading, heading first derivative,
+    and speed.
+
+    Parameters
+    ----------
+    distance : numpy.ndarray
+        Source distance from the hydrophone [m]
+    distance_n_clusters : int
+        Number of distance clusters
+    heading : numpy.ndarray
+        Source heading, zero at north, clockwise positive [deg]
+    heading_n_clusters : int
+        Number of heading clusters
+    heading_dot : numpy.ndarray
+        Source heading first derivative, zero at north, clockwise
+        positive [deg/s]
+    heading_dot_n_clusters : int
+        Number of heading dot clusters
+    speed : numpy.ndarray
+        Source speed [m/s]
+    speed_n_clusters : int
+        Number of speed clusters
+
+    Returns
+    -------
+    distance_clusters : sklearn.cluster.KMeans
+        Fitted estimator for distance
+    heading_clusters : sklearn.cluster.KMeans
+        Fitted estimator for heading
+    heading_dot_clusters : sklearn_extra.cluster.KMedoids
+        Fitted estimator for heading first derivative
+    speed_clusters : sklearn.cluster.KMeans
+        Fitted estimator for speed
+    """
+    logger.info(f"Computing clusters of heading, distance, and speed")
+    distance_clusters = KMeans(n_clusters=distance_n_clusters, random_state=0).fit(
+        distance.reshape(-1, 1)
+    )
+    heading_clusters = KMeans(n_clusters=heading_n_clusters, random_state=0).fit(
+        90 - heading.reshape(-1, 1)
+    )
+    heading_dot_clusters = KMedoids(
+        n_clusters=heading_dot_n_clusters, random_state=0
+    ).fit(heading_dot.reshape(-1, 1))
+    speed_clusters = KMeans(n_clusters=speed_n_clusters, random_state=0).fit(
+        speed.reshape(-1, 1)
+    )
+    return distance_clusters, heading_clusters, heading_dot_clusters, speed_clusters
