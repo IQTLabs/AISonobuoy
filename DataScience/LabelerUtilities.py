@@ -5,12 +5,13 @@ from pathlib import Path
 import subprocess
 
 from matplotlib import pyplot as plt
+import numpy as np
+import pandas as pd
+from pydub import AudioSegment
 from sklearn.cluster import KMeans
 from sklearn_extra.cluster import KMedoids
 
-import numpy as np
-from pydub import AudioSegment
-
+import LabelerUtilities as lu
 
 # WGS84 parameters
 R_OPLUS = 6378137  # [m]
@@ -249,12 +250,12 @@ def compute_source_metrics(source, vld_t, vld_lambda, vld_varphi, vld_h, hydroph
 
     # Compute the orthogonal transformation matrix from geocentric to
     # topocentric coordinates at hydrophone longitude, and latitude
-    E = ul.compute_E(hyd_lambda, hyd_varphi)
+    E = lu.compute_E(hyd_lambda, hyd_varphi)
 
     # Compute the geocentric position of the hydrophone, source, and
     # source relative to the hydrophone
-    R_h = ul.compute_R(hyd_lambda, hyd_varphi, hyd_h)
-    R_s = ul.compute_R(vld_lambda, vld_varphi, vld_h)
+    R_h = lu.compute_R(hyd_lambda, hyd_varphi, hyd_h)
+    R_s = lu.compute_R(vld_lambda, vld_varphi, vld_h)
     R_s_h = R_s - np.atleast_2d(R_h).reshape(3, 1)
 
     # Compute the topocentric position and velocity of the source
