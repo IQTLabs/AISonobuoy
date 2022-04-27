@@ -144,7 +144,7 @@ def load_ais_files(inp_path):
 
 def get_hydrophone_metadata(inp_path):
     """Probe all audio files residing on the input path.
-    
+
     Parameters
     ----------
     inp_path : pathlib.Path()
@@ -173,7 +173,7 @@ def get_hydrophone_metadata(inp_path):
             start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
-    hmd = pd.DataFrame(entries)
+    hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
     return hmd
 
 
