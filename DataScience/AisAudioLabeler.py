@@ -179,26 +179,18 @@ def get_hydrophone_metadata(inp_path):
 
 def main():
     """Provide a command-line interface for the AisAudioLabeler module."""
-    parser = ArgumentParser(description="Use AIS data to slice a audio file")
-    parser.add_argument(
-        "-b",
-        "--bucket",
-        default="aisonobuoy-pibuoy-v2",
-        help="the AWS S3 bucket containing AIS files",
-    )
-    parser.add_argument(
-        "-p",
-        "--prefix",
-        default="compressed",
-        help="the prefix in the AWS S3 bucket designating AIS files",
-    )
+    parser = ArgumentParser(description="Use AIS data to slice an audio file")
     parser.add_argument(
         "-D",
         "--data-home",
-        default=str(
-            Path("~").expanduser() / "Data" / "AISonobuoy" / "aisonobuoy-pibuoy-v2"
-        ),
+        default=str(Path("~").expanduser() / "Data" / "AISonobuoy"),
         help="the directory containing all downloaded AIS files",
+    )
+    parser.add_argument(
+        "-c",
+        "--collection-filename",
+        default="collection-ais.json",
+        help="the path of the collection JSON file to load",
     )
     parser.add_argument(
         "-d",
@@ -221,23 +213,58 @@ def main():
         action="store_true",
         help="force hydrophone metadata pickle creation",
     )
+    parser.add_argument(
+        "-s",
+        "--sampling-filepath",
+        default=str(Path(__file__).parent / "data" / "sampling-ais.json"),
+        help="the path of the sampling JSON file to process",
+    )
+    parser.add_argument(
+        "-P",
+        "--do-plot-metrics",
+        action="store_true",
+        help="do plot track with computed metrics",
+    )
+    parser.add_argument(
+        "-C",
+        "--clip-home",
+        default=str(Path("~").expanduser() / "Datasets" / "AISonobuoy"),
+        help="the directory containing clip WAV files",
+    )
     args = parser.parse_args()
     data_home = Path(args.data_home)
 
-    # Download all files
+    # Load file describing the collection
+    collection_path = Path(args.data_home) / args.collection_filename
+    collection = lu.load_json_file(collection_path)
+
+    # Load file describing sampling cases
+    sampling = lu.load_json_file(args.sampling_filepath)
+
+    # For now, assume a single source and hydrophone
+    if len(collection["sources"]) > 1 or len(collection["hydrophones"]) > 1:
+        raise Exception("Only one source and one hydrophone expected")
+    source = collection["sources"][0]
+    hydrophone = collection["hydrophones"][0]
+
+    # Download all source files
+    if source["name"] != hydrophone["name"] or source["prefix"] != hydrophone["prefix"]:
+        raise Exception(
+            "Source and hydrophone expected using the same prefix from the same bucket"
+        )
     download_buoy_objects(
-        data_home,
-        args.bucket,
-        prefix=args.prefix,
+        data_home / source["name"],
+        source["name"],
+        source["prefix"],
         force=args.force_download,
         decompress=args.decompress,
     )
 
     # Load all AIS files
-    logger.info("Loading all AIS files")
-    ais_pickle = data_home / "ais.pickle"
+    ais_pickle = data_home / source["name"] / "ais.pickle"
     if not ais_pickle.exists() or args.force_ais_pickle:
-        ais = load_ais_files(data_home / "ais")
+        logger.info("Loading all AIS files")
+        ais = load_ais_files(data_home / source["name"] / "ais")
         logger.info("Writing AIS pickle")
         ais.to_pickle(ais_pickle)
     else:
@@ -245,10 +272,10 @@ def main():
         ais = pd.read_pickle(ais_pickle)
 
     # Get hydrophone metadata
-    logger.info("Getting hydrophone metadata")
-    hmd_pickle = data_home / "hmd.pickle"
+    hmd_pickle = data_home / hydrophone["name"] / "hmd.pickle"
     if not hmd_pickle.exists() or args.force_hmd_pickle:
-        hmd = get_hydrophone_metadata(data_home / "hydrophone")
+        logger.info("Getting hydrophone metadata")
+        hmd = get_hydrophone_metadata(data_home / hydrophone["name"] / "hydrophone")
         logger.info("Writing hydrophone metadata pickle")
         hmd.to_pickle(hmd_pickle)
     else:
