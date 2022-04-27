@@ -26,7 +26,7 @@ if not root_logger.handlers:
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
 
-logger = logging.getLogger("S3Utilities")
+logger = logging.getLogger("LabelerUtilities")
 logger.setLevel(logging.INFO)
 
 
