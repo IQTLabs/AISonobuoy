@@ -7,6 +7,8 @@ import re
 import shutil
 import tarfile
 
+from matplotlib import pyplot as plt
+import numpy as np
 import pandas as pd
 
 import S3Utilities as s3
@@ -282,7 +284,88 @@ def main():
         logger.info("Reading hydrophone metadata pickle")
         hmd = pd.read_pickle(hmd_pickle)
 
-    return ais, hmd
+    # Plot AIS time intervals for each vessel and status
+    # See:
+    # https://www.navcen.uscg.gov/?pageName=AISMessagesA
+    # https://gpsd.gitlab.io/gpsd/AIVDM.html#_types_1_2_and_3_position_report_class_a
+    # https://github.com/M0r13n/pyais/blob/96e01d9f2fac380a87d4948cac2b236c6a1a7c4f/pyais/decode.py
+    figUW, axsUW = plt.subplots()
+    figNUW, axsNUW = plt.subplots()
+    groupby = ais.groupby(["mmsi"])
+    n_group = 0
+    for group in groupby:
+        n_group += 1
+        logger.info(f"Processing group {group[0]}")
+
+        # Assign AIS dataframe and add height
+        ais_g = group[1]
+        ais_g["h"] = 0
+
+        # Ensure unique identity
+        mmsi = ais_g["mmsi"].unique()
+        if mmsi.size != 1:
+            raise Exception("More than one MMSI found in group")
+
+        # Consider each unique status
+        for status in ais_g["status"].unique():
+            logger.info(f"Processing status {status} for group {group[0]}")
+
+            # Assign AIS dataframe and select columns
+            ais_s = ais_g[ais_g["status"] == status]
+            vld_t = ais_s["timestamp"].to_numpy()  # [s]
+            vld_lambda = np.deg2rad(ais_s["lon"].to_numpy())  # [rad]
+            vld_varphi = np.deg2rad(ais_s["lat"].to_numpy())  # [rad]
+            vld_h = ais_s["h"].to_numpy()  # [m]
+
+            delta_t_max = 540
+            vld_t_sets = np.split(vld_t, np.where(np.diff(vld_t) > delta_t_max)[0] + 1)
+            for vld_t_set in vld_t_sets:
+                if status in ["UnderWayUsingEngine"]:
+                    axsUW.plot([vld_t_set[0], vld_t_set[-1]], [n_group, n_group], "k")
+
+                elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
+                    axsNUW.plot([vld_t_set[0], vld_t_set[-1]], [n_group, n_group], "k")
+
+            # Compute and plot source metrics for the current hydrophone
+            (
+                distance,
+                heading,
+                heading_dot,
+                speed,
+                r_s_h,
+                v_s_h,
+            ) = lu.compute_source_metrics(
+                source, vld_t, vld_lambda, vld_varphi, vld_h, hydrophone
+            )
+            if args.do_plot_metrics:
+                lu.plot_source_metrics(
+                    source, hydrophone, heading, heading_dot, distance, speed, r_s_h
+                )
+
+    # Plot hydrophone time intervals
+    for iA in range(hmd.shape[0]):
+        axsUW.plot(
+            hmd["start_timestamp"][iA] + np.array([0, hmd["duration"][iA]]),
+            n_group + np.array([1, 1]),
+            "k",
+        )
+        axsNUW.plot(
+            hmd["start_timestamp"][iA] + np.array([0, hmd["duration"][iA]]),
+            n_group + np.array([1, 1]),
+            "k",
+        )
+
+    # Label axes and show plot
+    axsUW.set_title("UnderWayUsingEngine")
+    axsUW.set_xlabel("Timestamp [s]")
+    axsUW.set_ylabel("Group")
+    axsNUW.set_title("AtAnchor, Moored, NotUnderCommand")
+    axsNUW.set_xlabel("Timestamp [s]")
+    axsNUW.set_ylabel("Group")
+    plt.show()
+
+    return collection, sampling, ais, hmd
+
 
 if __name__ == "__main__":
-    ais, hmd = main()
+    collection, sampling, ais, hmd = main()
