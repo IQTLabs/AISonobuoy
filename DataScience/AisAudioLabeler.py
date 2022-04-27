@@ -108,20 +108,37 @@ def load_ais_files(inp_path):
     Returns
     -------
     ais : pd.DataFrame()
-        AIS samples
+        AIS position samples with ship type
 
     """
-    samples = []
-    req_keys = set(["speed", "lat", "lon"])
+    positions = []
+    position_keys = set(["mmsi", "status", "timestamp", "speed", "lat", "lon"])
+    types = {}
+    type_keys = set(["mmsi", "shiptype"])
     names = os.listdir(inp_path)
+    n_lines = 0
+    n_positions = 0
+    n_types = 0
     for name in names:
         with open(inp_path / name, "r") as f:
             for line in f:
+                n_lines += 1
                 sample = json.loads(line)
-                if not req_keys.issubset(set(sample.keys())):
-                    continue
-                samples.append(sample)
-    ais = pd.DataFrame(samples)
+                if position_keys.issubset(set(sample.keys())):
+                    # Collect samples containing position
+                    n_positions += 1
+                    positions.append(sample)
+                elif type_keys.issubset(set(sample.keys())):
+                    # Collect samples containing the mapping from mmsi to shiptype
+                    n_types += 1
+                    if sample["mmsi"] not in types:
+                        types[sample["mmsi"]] = sample["shiptype"]
+
+    ais = pd.DataFrame(positions).sort_values(by=["timestamp"], ignore_index=True)
+    ais["shiptype"] = ais["mmsi"].apply(lambda x: types[x] if x in types else None)
+    logger.info(f"Read {n_lines} lines")
+    logger.info(f"Found {n_positions} positions")
+    logger.info(f"Found {n_types} types")
     return ais
 
 
