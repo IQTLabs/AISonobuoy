@@ -22,7 +22,7 @@ See [FeatherBuoy/README.md](FeatherBuoy/README.md)
 
 A buoy built around the [Particle.io Tracker SOM Evaluation Board](https://docs.particle.io/datasheets/asset-tracking/tracker-som-eval-board/). The Tracker Eval board is connected to a [Adafruit Quad 2x2 FeatherWing](https://www.adafruit.com/product/4253) via the i2c port to allow Feather form factor devices and sensors to be connected. The electronics are housed in a 4in schedule 40 PVC pipe. Ballast is added to the bottom of the pipe for appropriate floatation orientation
 
-![particle-tracker-buoy](ParticleTrackerBuoy/4in-pvc-particle-tracker.jpg)
+<img src="ParticleTrackerBuoy/media/AISonobuoy.png" alt="particle-tracker-buoy" height="400px" title="particle-tracker-buoy">
 
 See [ParticleTrackerBuoy](ParticleTrackerBuoy)
 
