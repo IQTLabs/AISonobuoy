@@ -1,4 +1,4 @@
-![cad-image](media/cad-image.jpg)
+![cad-image](media/PiBuoy2.png)
 
 The following are the hardware and software requirements and installation instructions for the Raspberry Pi Zero buoy version.
 
