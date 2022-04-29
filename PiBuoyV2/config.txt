@@ -79,7 +79,7 @@ arm_boost=1
 
 [all]
 enable_uart=1
-dtoverlay=rpi-sense
+dtoverlay=i2c-rtc,ds1339=1,addr=0x69
 dtoverlay=disable-bt
 dtoverlay=hifiberry-dacplusadcpro
 start_x=0
