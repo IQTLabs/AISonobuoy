@@ -1,0 +1,41 @@
+[
+    {
+        "name": "default",
+        "method": {
+            "type": "clusters",
+            "distance_n_clusters": 3,
+            "heading_n_clusters": 10,
+            "heading_dot_n_clusters": 2,
+            "speed_n_clusters": 4
+        },
+        "delta_t_max": 4.0,
+        "n_clips_max": 3,
+        "output_dir": "default"
+    },
+    {
+        "name": "close-north-stable-fast",
+        "method": {
+            "type": "conditionals",
+            "distance_limits": [0, 250],
+            "heading_limits": [-10, 0, 0, 10],
+            "heading_dot_limits": [0, 1],
+            "speed_limits": [10, 20]
+        },
+        "delta_t_max": 4.0,
+        "n_clips_max": 3,
+        "output_dir": "close-north-stable-fast"
+    },
+    {
+        "name": "far-south-unstable-slow",
+        "method": {
+            "type": "conditionals",
+            "distance_limits": [250, 1000],
+            "heading_limits": [-180, -170, 170, 180],
+            "heading_dot_limits": [1, 10],
+            "speed_limits": [0, 10]
+        },
+        "delta_t_max": 4.0,
+        "n_clips_max": 3,
+        "output_dir": "far-south-unstable-slow"
+    }
+]

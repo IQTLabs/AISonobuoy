@@ -1,7 +1,12 @@
 .DS_Store
 __pycache__
+*~
 *.swp
 *.swo
 *.gpx
 *-checkpoint.ipynb
+.dir-locals.el
 .idea
+.ipynb_checkpoints
+.requirements.txt
+.tern-port
