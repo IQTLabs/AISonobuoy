@@ -79,6 +79,10 @@ def download_buoy_objects(
 
         # Optionally decompress
         if decompress:
+            # Skip JSON status files
+            if (download_path / key).suffix == ".json":
+                logger.info(f"Skipping file {key}")
+                continue
             with tarfile.open(download_path / key) as f:
                 f.extractall(download_path)
                 names = f.getnames()
@@ -121,7 +125,7 @@ def load_ais_files(inp_path):
     names = os.listdir(inp_path)
     n_lines = 0
     n_positions = 0
-    n_types = 0
+    n_mmsis = 0
     for name in names:
         with open(inp_path / name, "r") as f:
             for line in f:
@@ -135,7 +139,7 @@ def load_ais_files(inp_path):
                 elif type_keys.issubset(set(sample.keys())):
                     # Collect samples containing the mapping from mmsi
                     # to shiptype
-                    n_types += 1
+                    n_mmsis += 1
                     if sample["mmsi"] not in types:
                         types[sample["mmsi"]] = sample["shiptype"]
 
@@ -143,7 +147,7 @@ def load_ais_files(inp_path):
     ais["shiptype"] = ais["mmsi"].apply(lambda x: types[x] if x in types else None)
     logger.info(f"Read {n_lines} lines")
     logger.info(f"Found {n_positions} positions")
-    logger.info(f"Found {n_types} types")
+    logger.info(f"Found {n_mmsis} mmsis")
     return ais
 
 
@@ -218,7 +222,7 @@ def get_ais_pickle(data_home, source, force=False, ais=None):
     return ais
 
 
-def get_shp_pickle(data_home, source, shp=None):
+def get_shp_pickle(data_home, source, force=False, shp=None):
     """Read SHP dictionary pickle, if it exists, or write SHP
     dictionary pickle, if SHP dictionary is not None.
 
@@ -228,6 +232,8 @@ def get_shp_pickle(data_home, source, shp=None):
         Path to directory containing data files
     source : dict
         The source configuration
+    force : boolean
+        Flag to force creation of the pickle, or not
     shp : dict
         AIS start and stop timestamps corresponding to each status
         interval
@@ -240,11 +246,13 @@ def get_shp_pickle(data_home, source, shp=None):
 
     """
     shp_pickle = data_home / source["name"] / "shp.pickle"
-    if shp_pickle.exists():
+    if shp_pickle.exists() and not force:
         logger.info("Reading SHP pickle")
         with open(shp_pickle, "rb") as f:
             shp = pickle.load(f)
-    elif shp is not None:
+    else:
+        if shp is None:
+            raise Exception("Must provide SHP dataframe")
         logger.info("Writing SHP pickle")
         with open(shp_pickle, "wb") as f:
             pickle.dump(shp, f)
@@ -320,9 +328,9 @@ def augment_ais_data(source, hydrophone, ais, hmd, do_plot=True):
     ais["mmsis_nuw"] = [[] for _ in range(len(ais.index))]
 
     # Initialize ship counts
-    min_t = min(ais["timestamp"].min(), hmd["start_timestamp"].min())
-    max_t = max(
-        ais["timestamp"].max(), (hmd["start_timestamp"] + hmd["duration"]).max()
+    min_t = int(min(ais["timestamp"].min(), hmd["start_timestamp"].min()))
+    max_t = int(max(
+        ais["timestamp"].max(), (hmd["start_timestamp"] + hmd["duration"]).max())
     )
     timestamp = np.array(range(min_t, max_t + 1))
     shipcount_uw = pd.DataFrame(
@@ -679,7 +687,7 @@ def main():
             source, hydrophone, ais, hmd, do_plot=args.do_plot_intervals
         )
         ais = get_ais_pickle(data_home, source, force=True, ais=ais)
-        shp = get_shp_pickle(data_home, source, shp=shp)
+        shp = get_shp_pickle(data_home, source, force=True, shp=shp)
     else:
         shp = get_shp_pickle(data_home, source)
 
