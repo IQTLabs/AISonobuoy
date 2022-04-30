@@ -1,4 +1,4 @@
-![cad-image](media/cad-image.jpg)
+![cad-image](media/PiBuoy2.png)
 
 The following are the hardware and software requirements and installation instructions for the Raspberry Pi Zero buoy version.
 
@@ -7,13 +7,14 @@ The following are the hardware and software requirements and installation instru
 - Raspberry Pi Zero 2 W
 - HiFiBerry DAC+ADC Pro
 - dAISy HAT
-- Sense HAT
+- Environment Sensor HAT
+- SIM7600G-H 4G HAT (B)
 - PiJuice Zero
 - pHAT Stack
 - 12000mAh PiJuice Battery
 - H2A Hydrophone
 - Seahorse 56 Micro Case
-- [3D Printed Chasis](stl-files)
+- [3D Printed Chassis](stl-files)
 
 # Hardware configuration installation
 
@@ -113,14 +114,19 @@ sudo dpkg -i ./pijuice-base_1.8_all.deb
 sudo reboot
 ```
 
-15. Update the firmware on the PiJuice to V1.6 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
+15. Change the I2C address of the RTC on the pijuice, from the menu choose `General`, change the I2C address RTC value from 68 to 69 (0x68 conflicts with the 9DOF on the environment sensor hat), Apply settings.
 ```
 pijuice_cli
 ```
 
-16. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+16. Update the firmware on the PiJuice to V1.6 (choose `Firmware` from the menu). Note: this will power cycle the Pi if a battery isn't attached.
+```
+pijuice_cli
+```
 
-17. Start PiBuoy containers.
+17. Update `/opt/AISonobuoy/PiBuoyV2/.env` to suit deployment needs.
+
+18. Start PiBuoy containers.
 ```
 cd /opt/AISonobuoy/PiBuoyV2
 docker-compose up -d
