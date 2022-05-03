@@ -688,6 +688,7 @@ def main():
         )
         ais = get_ais_pickle(data_home, source, force=True, ais=ais)
         shp = get_shp_pickle(data_home, source, force=True, shp=shp)
+
     else:
         shp = get_shp_pickle(data_home, source)
 
