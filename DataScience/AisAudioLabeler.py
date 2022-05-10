@@ -215,7 +215,7 @@ def get_ais_pickle(data_home, source, force=False, ais=None):
             logger.info("Loading all AIS files")
             ais = load_ais_files(data_home / source["name"] / "ais")
         logger.info("Writing AIS pickle")
-        ais.to_pickle(ais_pickle)
+        ais.to_pickle(ais_pickle, protocol=4)
     else:
         logger.info("Reading AIS pickle")
         ais = pd.read_pickle(ais_pickle)
@@ -284,7 +284,7 @@ def get_hmd_pickle(data_home, hydrophone, force=False, hmd=None):
             logger.info("Getting hydrophone metadata")
             hmd = get_hydrophone_metadata(data_home / hydrophone["name"] / "hydrophone")
         logger.info("Writing hydrophone metadata pickle")
-        hmd.to_pickle(hmd_pickle)
+        hmd.to_pickle(hmd_pickle, protocol=4)
     else:
         logger.info("Reading HMD pickle")
         hmd = pd.read_pickle(hmd_pickle)
