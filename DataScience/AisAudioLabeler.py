@@ -382,22 +382,25 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         # Consider each unique status
         for status in ais_g["status"].unique():
             logger.info(f"Processing status {status} for group {group[0]}")
+            # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
+            if status in ["UnderWayUsingEngine"]:
+                timestamp_diff = 10  # [s]
+            elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
+                timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
             ais_s = ais_g[ais_g["status"] == status]
-            index = ais_s.index.to_numpy()
+            timestamp = ais_s["timestamp"].to_numpy()
 
             # Consider each interval during which the current ship has
             # the current status
-            index_sets = np.split(index, np.where(np.diff(index) > 1)[0] + 1)
+            timestamp_sets = np.split(
+                timestamp, np.where(np.diff(timestamp) > timestamp_diff)[0] + 1
+            )
             shp[mmsi][status] = []
-            for index_set in index_sets:
-                start_timestamp = ais_g.iloc[
-                    index_set[0], ais_s.columns.get_loc("timestamp")
-                ]
-                stop_timestamp = ais_g.iloc[
-                    index_set[-1], ais_s.columns.get_loc("timestamp")
-                ]
+            for timestamp_set in timestamp_sets:
+                start_timestamp = timestamp_set.min()
+                stop_timestamp = timestamp_set.max()
 
                 # Collect status intervals for each ship
                 shp[mmsi][status].append((start_timestamp, stop_timestamp))
@@ -728,9 +731,7 @@ def main():
     ais = get_ais_pickle(data_home, source, force=args.force_ais_pickle)
     hmd = get_hmd_pickle(data_home, hydrophone, force=args.force_hmd_pickle)
     if "shipcount_uw" not in ais.columns or args.force_shp_pickle:
-        ais, hmd, shp = augment_ais_data(
-            source, hydrophone, ais, hmd, do_plot=args.do_plot_intervals
-        )
+        ais, hmd, shp = augment_ais_data(source, hydrophone, ais, hmd)
         ais = get_ais_pickle(data_home, source, force=True, ais=ais)
         shp = get_shp_pickle(data_home, source, force=True, shp=shp)
 
