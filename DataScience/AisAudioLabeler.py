@@ -387,6 +387,8 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 timestamp_diff = 10  # [s]
             elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
                 timestamp_diff = 180  # [s]
+            else:
+                timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
             ais_s = ais_g[ais_g["status"] == status]
@@ -462,7 +464,7 @@ def plot_intervals(shp, hmd):
             elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
                 color = "b"
             else:
-                continue
+                color = "g"
 
             # Plot each interval for the current ship and status
             for interval in intervals:
