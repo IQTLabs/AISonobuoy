@@ -1,3 +1,0 @@
-[submodule ".\\ParticleTrackerBuoy\\tracker-edge"]
-	path = .\\ParticleTrackerBuoy\\tracker-edge
-	url = git@github.com:IQTLabs/tracker-edge.git
