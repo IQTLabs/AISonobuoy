@@ -738,15 +738,27 @@ def main():
     else:
         shp = get_shp_pickle(data_home, source)
 
+    # Plot ship status and hydrophone recording intervals
+    if args.do_plot_intervals:
+        plot_intervals(shp)
+
+    # Plot histogram of distance for times at which at most a
+    # specified maximum number of ships are reporting their status as
+    # underway.
+    if args.do_plot_histogram:
+        plot_histogram(ais, args.max_n_ships)
+
     # Export audio clips from AIS intervals during which two ships are
     # underway. Label the audio clip using the attributes of the ship
     # closest to the hydrophone.
-    clip_home = Path(args.clip_home) / case["output_dir"]
-    if not clip_home.exists():
-        clip_home.mkdir(parents=True)
-    export_audio_clips(
-        ais, hmd, shp, data_home, hydrophone, clip_home, case["max_n_ships"]
-    )
+    if args.do_export_clips:
+        clip_home = Path(args.clip_home) / case["output_dir"]
+        if not clip_home.exists():
+            clip_home.mkdir(parents=True)
+        export_audio_clips(
+            ais, hmd, shp, data_home, hydrophone, clip_home, case["max_n_ships"]
+        )
+
     return ais, hmd, shp
 
 
