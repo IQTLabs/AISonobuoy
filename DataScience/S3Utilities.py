@@ -662,7 +662,7 @@ def list_objects(bucket, prefix=None):
             },
         ],
         'EncodingType': 'url'
-    }    
+    }
 
     Parameters
     ----------

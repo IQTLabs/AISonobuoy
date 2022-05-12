@@ -329,8 +329,8 @@ def augment_ais_data(source, hydrophone, ais, hmd, do_plot=True):
 
     # Initialize ship counts
     min_t = int(min(ais["timestamp"].min(), hmd["start_timestamp"].min()))
-    max_t = int(max(
-        ais["timestamp"].max(), (hmd["start_timestamp"] + hmd["duration"]).max())
+    max_t = int(
+        max(ais["timestamp"].max(), (hmd["start_timestamp"] + hmd["duration"]).max())
     )
     timestamp = np.array(range(min_t, max_t + 1))
     shipcount_uw = pd.DataFrame(
@@ -698,7 +698,9 @@ def main():
     clip_home = Path(args.clip_home) / case["output_dir"]
     if not clip_home.exists():
         clip_home.mkdir(parents=True)
-    export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, case["max_n_ships"])
+    export_audio_clips(
+        ais, hmd, shp, data_home, hydrophone, clip_home, case["max_n_ships"]
+    )
     return ais, hmd, shp
 
 

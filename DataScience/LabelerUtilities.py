@@ -95,10 +95,14 @@ def probe_audio_file(input_path):
     cp = subprocess.run(
         [
             "ffprobe",
-            "-v", "error",
-            "-select_streams", "a:0",
-            "-show_entries", "stream=codec_name,codec_type,sample_rate,avg_frame_rate,duration",
-            "-of", "json",
+            "-v",
+            "error",
+            "-select_streams",
+            "a:0",
+            "-show_entries",
+            "stream=codec_name,codec_type,sample_rate,avg_frame_rate,duration",
+            "-of",
+            "json",
             str(input_path),
         ],
         capture_output=True,
