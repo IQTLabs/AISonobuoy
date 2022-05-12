@@ -1,0 +1,3 @@
+[submodule "ParticleTrackerBuoy/modem-myriota"]
+	path = ParticleTrackerBuoy/modem-myriota
+	url = https://github.com/IQTLabs/modem-myriota
