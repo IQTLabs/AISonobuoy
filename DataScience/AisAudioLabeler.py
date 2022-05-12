@@ -432,7 +432,7 @@ def augment_ais_data(source, hydrophone, ais, hmd):
     return ais, hmd, shp
 
 
-def plot_intervals(shp):
+def plot_intervals(shp, hmd):
     """Plot ship status and hydrophone recording intervals.
 
     Parameters
@@ -440,6 +440,8 @@ def plot_intervals(shp):
     shp : dict
         AIS start and stop timestamps corresponding to each status
         interval
+    hmd : pd.DataFrame()
+        Hydrophone metadata (unchanged)
 
     Returns
     -------
@@ -454,16 +456,20 @@ def plot_intervals(shp):
         n_ship += 1
 
         # Consider each status for the current ship
-        for status, interval in statuses.items():
-
-            # Plot ship status interval
+        for status, intervals in statuses.items():
             if status in ["UnderWayUsingEngine"]:
                 color = "r"
             elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
                 color = "b"
-            axs.plot(interval, [n_ship, n_ship], color)
+            else:
+                continue
+
+            # Plot each interval for the current ship and status
+            for interval in intervals:
+                axs.plot(interval, [n_ship, n_ship], color)
 
     # Consider each hydrophone metadta entry
+    xlim = axs.get_xlim()
     for iA in range(hmd.shape[0]):
 
         # Plot hydrophone recording intervals
@@ -472,6 +478,7 @@ def plot_intervals(shp):
             n_ship + np.array([1, 1]),
             "k",
         )
+    axs.set_xlim(xlim)
 
     # Label axes and show plot
     axs.set_xlabel("Timestamp [s]")
@@ -671,17 +678,17 @@ def main():
         help="the path of the sampling JSON file to process",
     )
     parser.add_argument(
-        "--do-plot-intervals",
+        "--plot-intervals",
         action="store_true",
         help="do plot ship status and hydrophone recording intervals",
     )
     parser.add_argument(
-        "--do-plot-histogram",
+        "--plot-histogram",
         action="store_true",
         help="do plot ship distance from hydrophone histogram",
     )
     parser.add_argument(
-        "--do-export-clips",
+        "--export-clips",
         action="store_true",
         help="do export audio clips",
     )
@@ -739,19 +746,19 @@ def main():
         shp = get_shp_pickle(data_home, source)
 
     # Plot ship status and hydrophone recording intervals
-    if args.do_plot_intervals:
-        plot_intervals(shp)
+    if args.plot_intervals:
+        plot_intervals(shp, hmd)
 
     # Plot histogram of distance for times at which at most a
     # specified maximum number of ships are reporting their status as
     # underway.
-    if args.do_plot_histogram:
+    if args.plot_histogram:
         plot_histogram(ais, args.max_n_ships)
 
     # Export audio clips from AIS intervals during which two ships are
     # underway. Label the audio clip using the attributes of the ship
     # closest to the hydrophone.
-    if args.do_export_clips:
+    if args.export_clips:
         clip_home = Path(args.clip_home) / case["output_dir"]
         if not clip_home.exists():
             clip_home.mkdir(parents=True)
