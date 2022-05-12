@@ -291,10 +291,9 @@ def get_hmd_pickle(data_home, hydrophone, force=False, hmd=None):
     return hmd
 
 
-def augment_ais_data(source, hydrophone, ais, hmd, do_plot=True):
+def augment_ais_data(source, hydrophone, ais, hmd):
     """Augment AIS dataframe with distance from the hydrophone, speed,
-    and ship counts when underway, or not underway. Optionally plot
-    the corresponding time intervals, and a distance histogram.
+    and ship counts when underway, or not underway.
 
     Parameters
     ----------
@@ -344,8 +343,6 @@ def augment_ais_data(source, hydrophone, ais, hmd, do_plot=True):
 
     # Consider each unique ship
     shp = {}
-    if do_plot:
-        fig, axs = plt.subplots()
     groupby = ais.groupby(["mmsi"])
     n_group = 0
     for group in groupby:
@@ -411,34 +408,11 @@ def augment_ais_data(source, hydrophone, ais, hmd, do_plot=True):
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
-                    if do_plot:
-                        axs.plot(
-                            [start_timestamp, stop_timestamp], [n_group, n_group], "r"
-                        )
-
                 elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
                     shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
                     shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
-                    if do_plot:
-                        axs.plot(
-                            [start_timestamp, stop_timestamp], [n_group, n_group], "b"
-                        )
-
-    # Plot hydrophone time intervals
-    if do_plot:
-        for iA in range(hmd.shape[0]):
-            axs.plot(
-                hmd["start_timestamp"][iA] + np.array([0, hmd["duration"][iA]]),
-                n_group + np.array([1, 1]),
-                "k",
-            )
-
-        # Label axes and show plot
-        axs.set_xlabel("Timestamp [s]")
-        axs.set_ylabel("Group")
-        plt.show()
 
     # Assign ship counts and mmsis when underway, and not underway
     logger.info("Assigning ship counts underway")
@@ -452,17 +426,79 @@ def augment_ais_data(source, hydrophone, ais, hmd, do_plot=True):
     logger.info("Assigning ship mmsis not underway")
     ais["mmsis_nuw"] = ais["timestamp"].apply(lambda x: shipcount_nuw.loc[x, "mmsis"])
 
-    # Plot histogram of distance for times at which only two ships are
-    # reporting their status as underway
-    if do_plot:
-        fig, axs = plt.subplots()
-        axs.hist(ais.loc[ais["shipcount_uw"] == 2, ["distance"]].to_numpy(), bins=100)
-        axs.set_title("Distance")
-        axs.set_xlabel("distance [m]")
-        axs.set_ylabel("counts")
-        plt.show()
-
     return ais, hmd, shp
+
+
+def plot_intervals(shp):
+    """Plot ship status and hydrophone recording intervals.
+
+    Parameters
+    ----------
+    shp : dict
+        AIS start and stop timestamps corresponding to each status
+        interval
+
+    Returns
+    -------
+    None
+
+    """
+    fig, axs = plt.subplots()
+
+    # Consider each ship
+    n_ship = 0
+    for mmsi, statuses in shp.items():
+        n_ship += 1
+
+        # Consider each status for the current ship
+        for status, interval in statuses.items():
+
+            # Plot ship status interval
+            if status in ["UnderWayUsingEngine"]:
+                color = "r"
+            elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
+                color = "b"
+            axs.plot(interval, [n_ship, n_ship], color)
+
+    # Consider each hydrophone metadta entry
+    for iA in range(hmd.shape[0]):
+
+        # Plot hydrophone recording intervals
+        axs.plot(
+            hmd["start_timestamp"][iA] + np.array([0, hmd["duration"][iA]]),
+            n_ship + np.array([1, 1]),
+            "k",
+        )
+
+    # Label axes and show plot
+    axs.set_xlabel("Timestamp [s]")
+    axs.set_ylabel("Group")
+    plt.show()
+
+
+def plot_histogram(ais, max_n_ships):
+    """Plot histogram of distance for times at which at most a
+    specified maximum number of ships are reporting their status as
+    underway.
+
+    Parameters
+    ----------
+    ais : pd.DataFrame()
+        AIS position samples with ship type and counts
+
+    Returns
+    -------
+    None
+
+    """
+    fig, axs = plt.subplots()
+    axs.hist(
+        ais.loc[ais["shipcount_uw"] <= max_n_ships, ["distance"]].to_numpy(), bins=100
+    )
+    axs.set_title("Distance")
+    axs.set_xlabel("distance [m]")
+    axs.set_ylabel("counts")
+    plt.show()
 
 
 def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_ships):
@@ -632,10 +668,19 @@ def main():
         help="the path of the sampling JSON file to process",
     )
     parser.add_argument(
-        "-P",
         "--do-plot-intervals",
         action="store_true",
-        help="do plot ship status intervals",
+        help="do plot ship status and hydrophone recording intervals",
+    )
+    parser.add_argument(
+        "--do-plot-histogram",
+        action="store_true",
+        help="do plot ship distance from hydrophone histogram",
+    )
+    parser.add_argument(
+        "--do-export-clips",
+        action="store_true",
+        help="do export audio clips",
     )
     parser.add_argument(
         "-C",
