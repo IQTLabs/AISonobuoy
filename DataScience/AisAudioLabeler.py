@@ -544,7 +544,7 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
     """
     # Identify rows with no more than eight ships underway
     status = "UnderWayUsingEngine"
-    ais_columns = ["timestamp", "mmsi", "shiptype", "status", "distance", "mmsis_uw"]
+    ais_columns = ["timestamp", "mmsi", "shiptype", "status", "distance", "mmsis_uw", "shipcount_uw"]
     ais_g = ais.loc[ais["shipcount_uw"] <= max_n_ships, ais_columns]
     logger.info(f"Found {ais_g.shape[0]} ship groups")
 
@@ -552,15 +552,16 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
     n_clips = 0
     mmsis = []
     for index, row_g in ais_g.iterrows():
-        mmsig = row_g["mmsis_uw"]
+        mmsis_g = row_g["mmsis_uw"]
 
         # Consider each ship
         distance_m = float("+Infinity")
         interval_m = ()
         mmsi_m = ""
         shiptype_m = ""
+        shipcount_m = ""
         timestamp = row_g["timestamp"]
-        for mmsi in mmsig:
+        for mmsi in mmsis_g:
 
             # Skip ships previously selected
             if mmsi in mmsis:
@@ -587,6 +588,7 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
                 distance_m = row_c["distance"]
                 mmsi_m = row_c["mmsi"]
                 shiptype_m = row_c["shiptype"]
+                shipcount_m = int(row_c["shipcount_uw"])
                 interval_m = interval
 
         # Skip group if no ship selected
@@ -595,7 +597,7 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
 
         # Collect selected ships
         mmsis.append(mmsi_m)
-        logger.info(f"Selected ship {mmsi_m}")
+        logger.info(f"Selected ship {mmsi_m} at {distance_m:.1f} [m] among {shipcount_m} ships")
 
         # Select the largest audio interval no larger than 540 seconds
         start_timestamp_0 = interval_m[0]
