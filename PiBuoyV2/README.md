@@ -1,4 +1,4 @@
-![cad-image](media/PiBuoy2.png)
+<img src="./media/pibuoy2-hydrophone-solar.png" alt="pibuoy" height="400px" title="pibuoy">
 
 The following are the hardware and software requirements and installation instructions for the Raspberry Pi Zero buoy version.
 
@@ -23,6 +23,8 @@ The following are the hardware and software requirements and installation instru
 2. Add Mic Bias jumpers to the HiFiBerry HAT.
 
 3. Remove pin 12 from the header attached to the dAISy HAT.
+
+<img src="./media/pibuoy2-hydrophone-solar-exploded.png" alt="pibuoy" height="400px" title="pibuoy">
 
 # Deployments
 
