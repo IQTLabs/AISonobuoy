@@ -1,41 +1,57 @@
 # AISonobuoy
+
 Maritime Situational Awareness: An Exploration
 
 # About
-TODO
 
-# Configurations
+The AI Sonobuoy project is intended to demonstrate the process and design methodology for developing an AI-enabled hydrophone. We are building an integrated system that detects ship propellers using hydrophones. Data is collected, stored, and processed locally using onboard microprocessors. Onboard detection algorithms trigger remote alerts when objects of interest are detected.
 
-## PiBuoy
+# The Life Cycle of AI at the Edge Systems
 
-A buoy designed to run an 8GB Raspberry Pi4 with poower management that can do collection of audio via a hydrophone. It can be equipped with an AIS reciever and other sensors such as GPS, LTE, temperature and a 9-axis gryoscope. The form factor is designed to support 2 solar panels and a 30Ah battery.
+## Sensor to Solution
+
+Our Sensor to Solution methodology for this project involves a Collection system to record hydrophone audio, AIS data, and other environmental telemetry. An Analysis process automatically labels the audio data and trains a machine learning (ML) model. The ML model is then deployed on a low-power Detection device which can trigger remote alerts for detection events.
+
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│              │    │              │    │              │
+│  COLLECTION  ├───►│   ANALYSIS   ├───►│  DETECTION   │
+│              │    │              │    │              │
+└──────────────┘    └──────────────┘    └──────────────┘
+```
+
+Reference implementations for each of the Sensor to Solution functions can be seen below.
+
+## Collection
+
+### PiBuoy
+
+A buoy designed to run an Raspberry Pi with power management that can do continuous collection of hydrophone audio. It is equipped with an AIS reciever and other sensors such as GPS, LTE, temperature and a 9-axis gryoscope.
+
+<img src="./PiBuoyV2/media/PiBuoy2.png" alt="particle-tracker-buoy" height="400px" title="particle-tracker-buoy">
 
 See [PiBuoy/README.md](PiBuoy/README.md)
 
-## FeatherBuoy
+## Analysis
 
-A buoy designed to support the Adafruit [FeatherWing Tripler](https://www.adafruit.com/product/3417) base board which supports Feather MCU's (Particle, Arduino M0, etc)​ and accessories. Buoy form factor is based on the [MakerBuoy](https://github.com/wjpavalko/Maker-Buoy) design.
+TODO
+- tagging tools
+- EdgeImpulse
+- ML considerations
 
-See [FeatherBuoy/README.md](FeatherBuoy/README.md)
+See [DataScience](./DataScience/README.md)
 
-## ParticleTrackerBuoy
+## Detection
 
-A buoy built around the [Particle.io Tracker SOM Evaluation Board](https://docs.particle.io/datasheets/asset-tracking/tracker-som-eval-board/). The Tracker Eval board is connected to a [Adafruit Quad 2x2 FeatherWing](https://www.adafruit.com/product/4253) via the i2c port to allow Feather form factor devices and sensors to be connected. The electronics are housed in a 4in schedule 40 PVC pipe. Ballast is added to the bottom of the pipe for appropriate floatation orientation
+### ParticleTrackerBuoy
 
-<img src="ParticleTrackerBuoy/media/AISonobuoy.png" alt="particle-tracker-buoy" height="400px" title="particle-tracker-buoy">
+A buoy built around the [Particle.io Tracker SOM Evaluation Board](https://docs.particle.io/datasheets/asset-tracking/tracker-som-eval-board/). The Tracker Eval board is connected to a [Adafruit Quad 2x2 FeatherWing](https://www.adafruit.com/product/4253) via the i2c port to allow Feather form factor devices and sensors to be connected. An optional [Myriota Module](https://myriota.com/) can be used to enable satellite communications. The electronics are housed in a 4in schedule 40 PVC pipe. Ballast is added to the bottom of the pipe for appropriate floatation orientation. 
 
-See [ParticleTrackerBuoy](ParticleTrackerBuoy)
+<img src="./ParticleTrackerBuoy/media/AISonobuoy.png" alt="particle-tracker-buoy" height="400px" title="particle-tracker-buoy">
 
-# Deployments
+See [ParticleTrackerBuoy/README](ParticleTrackerBuoy/README.md)
 
-## PiBuoy
+# Data Visualization
 
-Having deployed the first buoy, PiBuoy v1 Mark I, that was designed from the ground up (several learnings were integrated from the [Maker Buoy](https://www.makerbuoy.com/)) for data collection for this project before replicating the buildout of it proved more difficult than expected. Recently, while trying to remotely replicate the Mark I, there was difficulty in making the [Sixfab 3G-4G/LTE Base HAT](https://sixfab.com/product/raspberry-pi-4g-lte-modem-kit/) (the data connection for the buoy) work with the cell network provider we had chosen despite having seemingly configured everything correctly.
-
-<img src="/docs/img/sixfab_buoy.jpg" height="300" alt="Sixfab HAT on top of a RaspberryPi, additional wiring in the configuration for the buoy"/>
-
-Not having a spare SIM card attached to a network provider to reproduce the setup locally proved difficult at first, until the idea of leveraging the work from [Daedalus]( https://github.com/IQTLabs/Daedalus) came to mind. With Daedalus, one can provision their own SIM card with whatever APN and settings they’d like and connect devices using a software-defined radio (SDR) to create a private 4G LTE/5G network that provides a data connection over the network connection of the machine running Daedalus. Using the [Daedalus tool]( https://github.com/IQTLabs/Daedalus/blob/main/blue/README.md), we were able to demonstrate the settings on the Sixfab and modem were configured correctly which greatly reduced the amount of remote debugging that was needed.
-
-<img src="/docs/img/sixfab_bladerf.jpg" height="300" alt="Sixfab with SIM card on top of a RaspberryPi next to the BladeRF SDR"/>
-
-In this case, the issue ended up being extremely poor signal inside of an office building, that once cleanly started in an environment that had a clear signal the connection worked as expected.
+TODO
+A key components of any data collection system is visualization.
