@@ -34,12 +34,29 @@ See [PiBuoyV2/README.md](PiBuoyV2/README.md)
 
 ## Analysis
 
-TODO
-- tagging tools
-- EdgeImpulse
-- ML considerations
+### Manual Laeling
 
-See [DataScience](./DataScience/README.md)
+The simplest method for getting started with analysis is to manually label the audio data.  We use [Audacity](https://www.audacityteam.org) to label segments of boat/no\_boat in our audio files.
+
+<img src="./DataScience/img/audacity_sample.png" alt="pibuoy" height="200px" title="audacity">
+
+### Edge Impulse
+
+With a set of labels in hand, we create a machine learning model using [Edge Impulse](https://www.edgeimpulse.com) that can easily be deployed to the edge.  We use spectrogram features to build a binary classifier for boat/no\_boat:
+
+<img src="./DataScience/img/binary_model.png" alt="pibuoy" height="300px" title="ei_model">
+
+### Bootstrapping Labels
+
+For more sophisticated models, bootstrapping labels from the data collect is preferrable to manual labeling.  We can use GPS tracks or [AIS](https://en.wikipedia.org/wiki/Automatic_identification_system) data to determine vessel speed and distance from the hydrophone.  This allows use to build a 5-class audio classifier with classes: no\_boat, near\_slow, near\_fast, far\_slow, far\_fast. Below we show the far\_slow portion of a particular test run.
+
+<img src="./DataScience/img/tracks.png" alt="pibuoy" height="300px" title="tracks">
+
+Below we show the results of a 5-class Edge Impulse model.
+
+<img src="./DataScience/img/5class_model.png" alt="pibuoy" height="400px" title="ei_model">
+
+See [DataScience](./DataScience/README.md) for further details.
 
 ## Detection
 
