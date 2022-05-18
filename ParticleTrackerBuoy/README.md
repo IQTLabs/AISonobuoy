@@ -52,6 +52,6 @@ The Particle Tracker Buoy was designed to use low-cost and easily accessible com
 
 ## Software
 
-- The Particle Tracker firmware and flashing instructions are located in the [aisonobuoy-particle-tracker](./aisonobuoy-particle-tracker/) submodule.
+- The Particle Tracker firmware and flashing instructions are located in the [aisonobuoy-particle-tracker](https://github.com/IQTLabs/aisonobuoy-particle-tracker/) submodule.
 
-- The Myriota Modem firmware and flashing instructions are located in the [modem-myriota](./modem-myriota) submodule
+- The Myriota Modem firmware and flashing instructions are located in the [modem-myriota](https://github.com/IQTLabs/modem-myriota) submodule
