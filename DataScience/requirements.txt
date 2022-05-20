@@ -139,7 +139,7 @@ mistune==0.8.4
     # via nbconvert
 nbclassic==0.3.7
     # via jupyterlab
-nbclient==0.6.0
+nbclient==0.6.3
     # via nbconvert
 nbconvert==6.5.0
     # via
