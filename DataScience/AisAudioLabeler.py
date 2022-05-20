@@ -3,7 +3,6 @@ import json
 import logging
 import os
 from pathlib import Path
-import pickle
 import re
 import shutil
 import tarfile
@@ -189,108 +188,6 @@ def get_hydrophone_metadata(inp_path):
     return hmd
 
 
-def get_ais_pickle(data_home, source, force=False, ais=None):
-    """Read AIS dataframe pickle, if it exists, or load AIS files as a
-    dataframe and write pickle. Optionally force write an AIS
-    dataframe pickle.
-
-    Parameters
-    ----------
-    data_home : pathlib.Path()
-        Path to directory containing data files
-    source : dict
-        The source configuration
-    force : boolean
-        Flag to force creation of the pickle, or not
-
-    Returns
-    -------
-    ais : pd.DataFrame()
-        AIS position samples with ship type
-
-    """
-    ais_pickle = data_home / source["name"] / "ais.pickle"
-    if not ais_pickle.exists() or force:
-        if ais is None:
-            logger.info("Loading all AIS files")
-            ais = load_ais_files(data_home / source["name"] / "ais")
-        logger.info("Writing AIS pickle")
-        ais.to_pickle(ais_pickle, protocol=4)
-    else:
-        logger.info("Reading AIS pickle")
-        ais = pd.read_pickle(ais_pickle)
-    return ais
-
-
-def get_shp_pickle(data_home, source, force=False, shp=None):
-    """Read SHP dictionary pickle, if it exists, or write SHP
-    dictionary pickle, if SHP dictionary is not None.
-
-    Parameters
-    ----------
-    data_home : pathlib.Path()
-        Path to directory containing data files
-    source : dict
-        The source configuration
-    force : boolean
-        Flag to force creation of the pickle, or not
-    shp : dict
-        AIS start and stop timestamps corresponding to each status
-        interval
-
-    Returns
-    -------
-    shp : dict
-        AIS start and stop timestamps corresponding to each status
-        interval
-
-    """
-    shp_pickle = data_home / source["name"] / "shp.pickle"
-    if shp_pickle.exists() and not force:
-        logger.info("Reading SHP pickle")
-        with open(shp_pickle, "rb") as f:
-            shp = pickle.load(f)
-    else:
-        if shp is None:
-            raise Exception("Must provide SHP dataframe")
-        logger.info("Writing SHP pickle")
-        with open(shp_pickle, "wb") as f:
-            pickle.dump(shp, f)
-    return shp
-
-
-def get_hmd_pickle(data_home, hydrophone, force=False, hmd=None):
-    """Read hydrophone metadata dataframe pickle, if it exists, or get
-    hydrophone metadata as a dataframe and write pickle.
-
-    Parameters
-    ----------
-    data_path : pathlib.Path()
-        Path to directory containing data files
-    hydrophone : dict
-        The hydrophone configuration
-    force : boolean
-        Flag to force creation of the pickle, or not
-
-    Returns
-    -------
-    hmd : pd.DataFrame()
-        Hydrophone metadata
-
-    """
-    hmd_pickle = data_home / hydrophone["name"] / "hmd.pickle"
-    if not hmd_pickle.exists() or force:
-        if hmd is None:
-            logger.info("Getting hydrophone metadata")
-            hmd = get_hydrophone_metadata(data_home / hydrophone["name"] / "hydrophone")
-        logger.info("Writing hydrophone metadata pickle")
-        hmd.to_pickle(hmd_pickle, protocol=4)
-    else:
-        logger.info("Reading HMD pickle")
-        hmd = pd.read_pickle(hmd_pickle)
-    return hmd
-
-
 def augment_ais_data(source, hydrophone, ais, hmd):
     """Augment AIS dataframe with distance from the hydrophone, speed,
     and ship counts when underway, or not underway.
@@ -434,6 +331,108 @@ def augment_ais_data(source, hydrophone, ais, hmd):
     return ais, hmd, shp
 
 
+def get_ais_dataframe(data_home, source, force=False, ais=None):
+    """Read AIS dataframe parquet, if it exists, or load AIS files as a
+    dataframe and write parquet. Optionally force write an AIS
+    dataframe parquet.
+
+    Parameters
+    ----------
+    data_home : pathlib.Path()
+        Path to directory containing data files
+    source : dict
+        The source configuration
+    force : boolean
+        Flag to force creation of the parquet, or not
+
+    Returns
+    -------
+    ais : pd.DataFrame()
+        AIS position samples with ship type
+
+    """
+    ais_parquet = data_home / source["name"] / "ais.parquet"
+    if not ais_parquet.exists() or force:
+        if ais is None:
+            logger.info("Loading all AIS files")
+            ais = load_ais_files(data_home / source["name"] / "ais")
+        logger.info("Writing AIS parquet")
+        ais.to_parquet(ais_parquet)
+    else:
+        logger.info("Reading AIS parquet")
+        ais = pd.read_parquet(ais_parquet)
+    return ais
+
+
+def get_hmd_dataframe(data_home, hydrophone, force=False, hmd=None):
+    """Read hydrophone metadata dataframe parquet, if it exists, or get
+    hydrophone metadata as a dataframe and write parquet.
+
+    Parameters
+    ----------
+    data_path : pathlib.Path()
+        Path to directory containing data files
+    hydrophone : dict
+        The hydrophone configuration
+    force : boolean
+        Flag to force creation of the parquet, or not
+
+    Returns
+    -------
+    hmd : pd.DataFrame()
+        Hydrophone metadata
+
+    """
+    hmd_parquet = data_home / hydrophone["name"] / "hmd.parquet"
+    if not hmd_parquet.exists() or force:
+        if hmd is None:
+            logger.info("Getting hydrophone metadata")
+            hmd = get_hydrophone_metadata(data_home / hydrophone["name"] / "hydrophone")
+        logger.info("Writing hydrophone metadata parquet")
+        hmd.to_parquet(hmd_parquet)
+    else:
+        logger.info("Reading HMD parquet")
+        hmd = pd.read_parquet(hmd_parquet)
+    return hmd
+
+
+def get_shp_dictionary(data_home, source, force=False, shp=None):
+    """Read SHP dictionary JSON, if it exists, or write SHP
+    dictionary JSON, if SHP dictionary is not None.
+
+    Parameters
+    ----------
+    data_home : pathlib.Path()
+        Path to directory containing data files
+    source : dict
+        The source configuration
+    force : boolean
+        Flag to force creation of the JSON, or not
+    shp : dict
+        AIS start and stop timestamps corresponding to each status
+        interval
+
+    Returns
+    -------
+    shp : dict
+        AIS start and stop timestamps corresponding to each status
+        interval
+
+    """
+    shp_json = data_home / source["name"] / "shp.json"
+    if shp_json.exists() and not force:
+        logger.info("Reading SHP JSON")
+        with open(shp_json, "rb") as f:
+            shp = json.load(f)
+    else:
+        if shp is None:
+            raise Exception("Must provide SHP dataframe")
+        logger.info("Writing SHP JSON")
+        with open(shp_json, "wb") as f:
+            json.dump(shp, f)
+    return shp
+
+
 def plot_intervals(shp, hmd):
     """Plot ship status and hydrophone recording intervals.
 
@@ -544,7 +543,15 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
     """
     # Identify rows with no more than eight ships underway
     status = "UnderWayUsingEngine"
-    ais_columns = ["timestamp", "mmsi", "shiptype", "status", "distance", "mmsis_uw", "shipcount_uw"]
+    ais_columns = [
+        "timestamp",
+        "mmsi",
+        "shiptype",
+        "status",
+        "distance",
+        "mmsis_uw",
+        "shipcount_uw",
+    ]
     ais_g = ais.loc[ais["shipcount_uw"] <= max_n_ships, ais_columns]
     logger.info(f"Found {ais_g.shape[0]} ship groups")
 
@@ -597,7 +604,9 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
 
         # Collect selected ships
         mmsis.append(mmsi_m)
-        logger.info(f"Selected ship {mmsi_m} at {distance_m:.1f} [m] among {shipcount_m} ships")
+        logger.info(
+            f"Selected ship {mmsi_m} at {distance_m:.1f} [m] among {shipcount_m} ships"
+        )
 
         # Select the largest audio interval no larger than 540 seconds
         start_timestamp_0 = interval_m[0]
@@ -661,19 +670,19 @@ def main():
         help="force file download",
     )
     parser.add_argument(
-        "--force-ais-pickle",
+        "--force-ais-parquet",
         action="store_true",
-        help="force AIS pickle creation",
+        help="force AIS parquet creation",
     )
     parser.add_argument(
-        "--force-hmd-pickle",
+        "--force-hmd-parquet",
         action="store_true",
-        help="force hydrophone metadata pickle creation",
+        help="force hydrophone metadata parquet creation",
     )
     parser.add_argument(
-        "--force-shp-pickle",
+        "--force-shp-json",
         action="store_true",
-        help="force SHP pickle creation",
+        help="force SHP JSON creation",
     )
     parser.add_argument(
         "-s",
@@ -739,15 +748,15 @@ def main():
     # Get AIS data, hydrophone metadata, and augment AIS data with
     # distance, speed, and ship counts, if needed. Get corresponding
     # SHP data.
-    ais = get_ais_pickle(data_home, source, force=args.force_ais_pickle)
-    hmd = get_hmd_pickle(data_home, hydrophone, force=args.force_hmd_pickle)
-    if "shipcount_uw" not in ais.columns or args.force_shp_pickle:
+    ais = get_ais_dataframe(data_home, source, force=args.force_ais_parquet)
+    hmd = get_hmd_dataframe(data_home, hydrophone, force=args.force_hmd_parquet)
+    if "shipcount_uw" not in ais.columns or args.force_shp_json:
         ais, hmd, shp = augment_ais_data(source, hydrophone, ais, hmd)
-        ais = get_ais_pickle(data_home, source, force=True, ais=ais)
-        shp = get_shp_pickle(data_home, source, force=True, shp=shp)
+        ais = get_ais_dataframe(data_home, source, force=True, ais=ais)
+        shp = get_shp_dictionary(data_home, source, force=True, shp=shp)
 
     else:
-        shp = get_shp_pickle(data_home, source)
+        shp = get_shp_dictionary(data_home, source)
 
     # Plot ship status and hydrophone recording intervals
     if args.plot_intervals:
