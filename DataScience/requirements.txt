@@ -4,7 +4,7 @@
 #
 #    pip-compile
 #
-anyio==3.5.0
+anyio==3.6.1
     # via jupyter-server
 appnope==0.1.3
     # via
@@ -28,15 +28,15 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.22.10
+boto3==1.23.4
     # via -r requirements.in
-botocore==1.25.10
+botocore==1.26.4
     # via
     #   boto3
     #   s3transfer
 branca==0.5.0
     # via folium
-certifi==2021.10.8
+certifi==2022.5.18.1
     # via requests
 cffi==1.15.0
     # via argon2-cffi-bindings
@@ -121,11 +121,11 @@ jupyter-server==1.17.0
     #   jupyterlab-server
     #   nbclassic
     #   notebook-shim
-jupyterlab==3.4.0
+jupyterlab==3.4.2
     # via -r requirements.in
 jupyterlab-pygments==0.2.2
     # via nbconvert
-jupyterlab-server==2.13.0
+jupyterlab-server==2.14.0
     # via jupyterlab
 kiwisolver==1.4.2
     # via matplotlib
@@ -173,6 +173,7 @@ numpy==1.22.3
     #   folium
     #   matplotlib
     #   pandas
+    #   pyarrow
     #   scikit-learn
     #   scikit-learn-extra
     #   scipy
@@ -184,7 +185,7 @@ packaging==21.3
     #   jupyterlab-server
     #   matplotlib
     #   nbconvert
-pandas==1.3.5
+pandas==1.4.2
     # via -r requirements.in
 pandocfilters==1.5.0
     # via nbconvert
@@ -194,7 +195,7 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==9.1.0
+pillow==9.1.1
     # via matplotlib
 prometheus-client==0.14.1
     # via
@@ -210,6 +211,8 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.2
     # via stack-data
+pyarrow==8.0.0
+    # via -r requirements.in
 pycparser==2.21
     # via cffi
 pydub==0.25.1
@@ -218,7 +221,7 @@ pygments==2.12.0
     # via
     #   ipython
     #   nbconvert
-pyparsing==3.0.8
+pyparsing==3.0.9
     # via
     #   matplotlib
     #   packaging
@@ -234,7 +237,7 @@ pytz==2022.1
     # via
     #   babel
     #   pandas
-pyzmq==22.3.0
+pyzmq==23.0.0
     # via
     #   jupyter-client
     #   jupyter-server
@@ -245,13 +248,13 @@ requests==2.27.1
     #   jupyterlab-server
 s3transfer==0.5.2
     # via boto3
-scikit-learn==1.0.2
+scikit-learn==1.1.1
     # via
     #   -r requirements.in
     #   scikit-learn-extra
 scikit-learn-extra==0.2.0
     # via -r requirements.in
-scipy==1.8.0
+scipy==1.8.1
     # via
     #   scikit-learn
     #   scikit-learn-extra
@@ -270,7 +273,7 @@ soupsieve==2.3.2.post1
     # via beautifulsoup4
 stack-data==0.2.0
     # via ipython
-terminado==0.13.3
+terminado==0.15.0
     # via
     #   jupyter-server
     #   notebook
@@ -286,7 +289,7 @@ tornado==6.1
     #   jupyterlab
     #   notebook
     #   terminado
-traitlets==5.2.0
+traitlets==5.2.1.post0
     # via
     #   ipykernel
     #   ipython
