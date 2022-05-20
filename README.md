@@ -12,7 +12,7 @@ The AI Sonobuoy project is intended to demonstrate the process and design method
 
 Our Sensor to Solution methodology for this project involves a Collection system to record hydrophone audio, AIS data, and other environmental telemetry. An Analysis process automatically labels the audio data and trains a machine learning (ML) model. The ML model is then deployed on a low-power Detection device which can trigger remote alerts for detection events.
 
-```mermaid
+```mermaid 
 graph LR
     A(Collection) --> B(Analysis) --> C(Detection)
 ```
@@ -73,6 +73,6 @@ As part of the AI Sonobuoy project, we are developing a series of visualizations
 
 |Cloud IoT Visualizations|React Dashboard (Telemetry Data)|React Dashboard (Map View)|
 |:--:|:--:|:--:|
-|<img width="1648" alt="Thumbnail 1" src="https://user-images.githubusercontent.com/45634754/168863523-48f15e2a-2a1a-4fde-81ed-072d35ee7916.png">|<img width="1648" alt="Thumbnail 2" src="https://user-images.githubusercontent.com/45634754/168862811-990d6597-0221-4688-a56c-5bdabea1a61c.png">|<img width="1648" alt="Thumbnail 3" src="https://user-images.githubusercontent.com/45634754/169570594-33c2c161-a055-4bc6-b72a-e939f3eebec3.png">|
+|<img width="1648" alt="Thumbnail 1" src="https://user-images.githubusercontent.com/45634754/169581508-2c91493a-1be3-45bd-b5bb-57e37cbc247d.png">|<img width="1648" alt="Thumbnail 2" src="https://user-images.githubusercontent.com/45634754/168862811-990d6597-0221-4688-a56c-5bdabea1a61c.png">|<img width="1648" alt="Thumbnail 3" src="https://user-images.githubusercontent.com/45634754/169570594-33c2c161-a055-4bc6-b72a-e939f3eebec3.png">|
 
 This visualization prototyping effort is a work-in-process focused on displaying the AI Sonobuoy's location, temperature (°F), humidity, and state of charge. However, future extensions might visualize different types of data and/or adopt different data encoding strategies. For more details, please see the `aisonobouy-react-dashboards` repository (currently internal-only).
