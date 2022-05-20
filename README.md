@@ -34,7 +34,7 @@ See [PiBuoyV2/README.md](PiBuoyV2/README.md)
 
 ## Analysis
 
-### Manual Laeling
+### Manual Labeling
 
 The simplest method for getting started with analysis is to manually label the audio data.  We use [Audacity](https://www.audacityteam.org) to label segments of boat/no\_boat in our audio files.
 
