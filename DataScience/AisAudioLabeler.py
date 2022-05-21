@@ -422,13 +422,13 @@ def get_shp_dictionary(data_home, source, force=False, shp=None):
     shp_json = data_home / source["name"] / "shp.json"
     if shp_json.exists() and not force:
         logger.info("Reading SHP JSON")
-        with open(shp_json, "rb") as f:
+        with open(shp_json, "r") as f:
             shp = json.load(f)
     else:
         if shp is None:
             raise Exception("Must provide SHP dataframe")
         logger.info("Writing SHP JSON")
-        with open(shp_json, "wb") as f:
+        with open(shp_json, "w") as f:
             json.dump(shp, f)
     return shp
 
