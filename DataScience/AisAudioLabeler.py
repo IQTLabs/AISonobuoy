@@ -298,8 +298,8 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             )
             shp[mmsi][status] = []
             for timestamp_set in timestamp_sets:
-                start_timestamp = timestamp_set.min()
-                stop_timestamp = timestamp_set.max()
+                start_timestamp = int(timestamp_set.min())
+                stop_timestamp = int(timestamp_set.max())
 
                 # Collect status intervals for each ship
                 shp[mmsi][status].append((start_timestamp, stop_timestamp))
