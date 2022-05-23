@@ -496,6 +496,8 @@ def plot_histogram(ais, max_n_ships):
     ----------
     ais : pd.DataFrame()
         AIS position samples with ship type and counts
+    max_n_ships : int
+        Maximum number of ships underway simultaneously
 
     Returns
     -------
@@ -512,10 +514,13 @@ def plot_histogram(ais, max_n_ships):
     plt.show()
 
 
-def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_ships):
+def export_audio_clips(
+    ais, hmd, shp, data_home, hydrophone, clip_home, max_n_ships, max_distance
+):
     """Export audio clips from AIS intervals during which the
-    specified maximum number of ships are underway. Label the audio
-    clip using the attributes of the ship closest to the hydrophone.
+    specified maximum number of ships at the specified maximum distance are reporting
+    their status as underway. Label the audio clip using the
+    attributes of the ship closest to the hydrophone.
 
     Parameters
     ----------
@@ -534,6 +539,8 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
         Home directory for clip files
     max_n_ships : int
         Maximum number of ships underway simultaneously
+    max_distance : float
+        Maximum distance of ships underway simultaneously
 
     Returns
     -------
@@ -541,7 +548,9 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
         The number of exported audio clips
 
     """
-    # Identify rows with no more than eight ships underway
+    # Identify rows with no more than the specified number of ship at
+    # the specified maximum distance are reporting their status as
+    # underway
     status = "UnderWayUsingEngine"
     ais_columns = [
         "timestamp",
@@ -552,7 +561,12 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
         "mmsis_uw",
         "shipcount_uw",
     ]
-    ais_g = ais.loc[ais["shipcount_uw"] <= max_n_ships, ais_columns]
+    ais_g = ais.loc[
+        (ais["status"] == status)
+        & (ais["shipcount_uw"] <= max_n_ships)
+        & (ais["distance"] <= max_distance),
+        ais_columns,
+    ]
     logger.info(f"Found {ais_g.shape[0]} ship groups")
 
     # Process each ship group
@@ -584,11 +598,19 @@ def export_audio_clips(ais, hmd, shp, data_home, hydrophone, clip_home, max_n_sh
             if not found_interval:
                 raise Exception(f"Did not find interval for ship {mmsi}")
 
-            # Identify the AIS dataframe row for the current ship at
-            # the start of the interval
-            row_c = ais.loc[
-                (ais["mmsi"] == mmsi) & (ais["timestamp"] == interval[0]), ais_columns
-            ].iloc[0]
+            # Identify the earliest AIS dataframe row for the current
+            # ship within the interval and maximum distance
+            rows_c = ais.loc[
+                (ais["mmsi"] == mmsi)
+                & (interval[0] <= ais["timestamp"])
+                & (ais["timestamp"] <= interval[1])
+                & (ais["distance"] <= max_distance),
+                ais_columns,
+            ]
+            if rows_c.size == 0:
+                continue
+            else:
+                row_c = rows_c.iloc[0]
 
             # Select the ship that is closest to the hydrophone
             if row_c["distance"] < distance_m:
@@ -766,7 +788,7 @@ def main():
     # specified maximum number of ships are reporting their status as
     # underway.
     if args.plot_histogram:
-        plot_histogram(ais, args.max_n_ships)
+        plot_histogram(ais, case["max_n_ships"])
 
     # Export audio clips from AIS intervals during which two ships are
     # underway. Label the audio clip using the attributes of the ship
@@ -776,7 +798,14 @@ def main():
         if not clip_home.exists():
             clip_home.mkdir(parents=True)
         export_audio_clips(
-            ais, hmd, shp, data_home, hydrophone, clip_home, case["max_n_ships"]
+            ais,
+            hmd,
+            shp,
+            data_home,
+            hydrophone,
+            clip_home,
+            case["max_n_ships"],
+            case["max_distance"],
         )
 
     return ais, hmd, shp

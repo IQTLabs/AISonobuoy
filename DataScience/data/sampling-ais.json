@@ -1,7 +1,8 @@
 [
     {
         "name": "default",
-        "max_n_ships": 8,
-        "output_dir": "no-more-than-eight-distance-min"
+        "max_n_ships": 3,
+        "max_distance": 500.0,
+        "output_dir": "no-more-than-three-or-500-m-then-min-distance"
     }
 ]
