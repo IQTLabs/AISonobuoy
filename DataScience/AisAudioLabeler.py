@@ -518,9 +518,9 @@ def export_audio_clips(
     ais, hmd, shp, data_home, hydrophone, clip_home, max_n_ships, max_distance
 ):
     """Export audio clips from AIS intervals during which the
-    specified maximum number of ships at the specified maximum distance are reporting
-    their status as underway. Label the audio clip using the
-    attributes of the ship closest to the hydrophone.
+    specified maximum number of ships at the specified maximum
+    distance are reporting their status as underway. Label the audio
+    clip using the attributes of the ship closest to the hydrophone.
 
     Parameters
     ----------
