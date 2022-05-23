@@ -642,7 +642,7 @@ def main():
             if hydrophone["type"] != "file":
                 raise Exception("Unexpected hydrophone type")
             wav_path = Path(args.data_home) / hydrophone["name"]
-            audio = lu.get_wav_file(wav_path)
+            audio = lu.get_audio_file(wav_path)
 
             # Export audio with no source present, if it exists
             if src_max_stop_t < hyd_min_stop_t:
