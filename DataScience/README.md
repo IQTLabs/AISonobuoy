@@ -1,3 +1,121 @@
+The DataScience directory contains Python modules and Jupyter
+Notebooks for creating labeled audio files from simultaneious audio
+recordings and GPS or AIS data collections.
+
+The GpxAudioLabeler module provides methods and a command-line
+interface for the processing of the audio and GPS data collected in a
+controlled environment with specified audio sources. The
+AisAudioLabeler module provides methods and a command-line interface
+for the processing of the audio and AIS data collected by
+pibuoy-v2. The LabelerUtilites module provides methods for coordinate
+transformations, clustering, and plotting, and the S3Utilities.py
+module provides simplified and documented methods for interacting with
+AWS S3.
+
+== GpxAudioLabeler ==
+
+The GpxAudioLabeler provide methods and a command-line interface for:
+
+* Parsing a GPX file produced with a specified structure
+
+* Exporting audio clips by heading, heading first derivative,
+  distance, and speed clusters or limits
+
+* Plot source track and label the intersection of the heading, heading
+  first derivative, distance, and speed groups
+
+Usage: GpxAudioLabeler.py [-h] [-D DATA_HOME] [-c COLLECTION_FILENAME] [-s SAMPLING_FILEPATH] [-C CLIP_HOME]
+                          [-p] [-P]
+
+Optional arguments:
+  -h, --help            Show this help message and exit
+  -D DATA_HOME, --data-home DATA_HOME
+                        The directory containing all GPX, WAV, and JSON files
+  -c COLLECTION_FILENAME, --collection-filename COLLECTION_FILENAME
+                        The path of the collection JSON file to load
+  -s SAMPLING_FILEPATH, --sampling-filepath SAMPLING_FILEPATH
+                        The path of the sampling JSON file to process
+  -p, --do-plot-clips   Do plot track with identified clips
+  -P, --do-plot-metrics
+                        Do plot track with computed metrics
+  -C CLIP_HOME, --clip-home CLIP_HOME
+                        The directory containing clip WAV files
+
+== AisAudioLabeler ==
+
+The AisAudioLabeler module provides methods and a command-line
+interface for:
+
+* Downloading, validating, and decompressing all objects, optionally
+  identified by their prefix, in an AWS S3 bucket to a local path
+
+* Loading all AIS files
+
+* Probing all audio files using ffprobe
+
+* Augmenting AIS data with distance from the hydrophone, speed, and
+  ship counts when underway, or not underway
+
+* Exporting audio clips from AIS intervals during which a specified
+  maximum number of ships at a specified maximum distance are
+  reporting their status as underway, and labeling the audio clip
+  using the attributes of the ship closest to the hydrophone
+
+* Plotting ship status and hydrophone recording intervals
+
+* Plotting histogram of distance for times at which at most a
+  specified maximum number of ships are reporting their status as
+  underway
+
+Usage: AisAudioLabeler.py [-h] [-D DATA_HOME] [-c COLLECTION_FILENAME] [-s SAMPLING_FILEPATH] [-C CLIP_HOME]
+                          [-d] [--force-download] [--force-ais-parquet] [--force-hmd-parquet] [--force-shp-json]
+                          [--export-clips] [--plot-intervals] [--plot-histogram]
+
+Optional arguments:
+  -h, --help            Show this help message and exit
+  -D DATA_HOME, --data-home DATA_HOME
+                        The directory containing all downloaded AIS files
+  -c COLLECTION_FILENAME, --collection-filename COLLECTION_FILENAME
+                        The path of the collection JSON file to load
+  -d, --decompress      Decompress downloaded files
+  --force-download      Force file download
+  --force-ais-parquet   Force AIS parquet creation
+  --force-hmd-parquet   Force hydrophone metadata parquet creation
+  --force-shp-json      Force SHP JSON creation
+  -s SAMPLING_FILEPATH, --sampling-filepath SAMPLING_FILEPATH
+                        The path of the sampling JSON file to process
+  --plot-intervals      Do plot ship status and hydrophone recording intervals
+  --plot-histogram      Do plot ship distance from hydrophone histogram
+  --export-clips        Do export audio clips
+  -C CLIP_HOME, --clip-home CLIP_HOME
+                        The directory containing clip WAV files
+
+== LabelerUtilites ==
+
+The LabelerUtilites module provides methods for:
+
+* Computing the geocentric position given geodetic longitude and
+  latitude, and elevation
+
+* Computing geocentric east, north, and zenith unit vectors at a given
+  geodetic longitude and latitude, and the corresponding orthogonal
+  transformation matrix from geocentric to topocentric coordinates
+
+* Computing the topocentric position and velocity of the source
+  relative to the hydrophone, and corresponding heading, heading first
+  derivative, distance, and speed
+
+* Computing clusters of distance, heading, heading first derivative,
+  and speed
+
+* Plotting source track, and histograms of source distance, heading,
+  heading first derivative, and speed
+
+
+
+
+
+
 The collection JSON contains information in the following format
 to describe the sources and hydrophones used during the
 collection.
