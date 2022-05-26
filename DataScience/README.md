@@ -1,3 +1,5 @@
+# Datascience
+
 The DataScience directory contains Python modules and Jupyter
 Notebooks for creating labeled audio files from simultaneious audio
 recordings and GPS or AIS data collections.
@@ -12,7 +14,7 @@ transformations, clustering, and plotting, and the S3Utilities.py
 module provides simplified and documented methods for interacting with
 AWS S3.
 
-== GpxAudioLabeler ==
+## GpxAudioLabeler
 
 The GpxAudioLabeler provide methods and a command-line interface for:
 
@@ -41,7 +43,7 @@ Optional arguments:
   -P, --do-plot-metrics
                         Do plot track with computed metrics
 
-=== Collection JSON ==
+### Collection JSON
 
 The collection JSON contains information in the following format to
 describe the sources and hydrophones used during the collection.
@@ -72,7 +74,7 @@ Format:
     ]
 }
 
-=== Sample JSON ===
+### Sample JSON
 
 The sample JSON document contains entries in the following format
 which describe the method, and its parameters, used in creating
@@ -130,7 +132,7 @@ Where:
 * n_clips_max specifies the maximum number of clips exported in each
   segment
 
-== AisAudioLabeler ==
+## AisAudioLabeler
 
 The AisAudioLabeler module provides methods and a command-line
 interface for:
@@ -179,7 +181,7 @@ Optional arguments:
   -C CLIP_HOME, --clip-home CLIP_HOME
                         The directory containing clip WAV files
 
-=== Collection JSON ==
+### Collection JSON
 
 The collection JSON contains information in the following format to
 describe the sources and hydrophones used during the collection.
@@ -208,7 +210,7 @@ Format:
     ]
 }
 
-=== Sample JSON ===
+### Sample JSON
 
 The sample JSON document contains entries in the following format
 which describe the method, and its parameters, used in creating
@@ -234,7 +236,7 @@ Where:
 * max_distance specifies the maximum distance of ships underway
   simultaneously from the hydrophone
 
-== LabelerUtilites ==
+## LabelerUtilites
 
 The LabelerUtilites module provides methods for:
 
@@ -254,9 +256,3 @@ The LabelerUtilites module provides methods for:
 
 * Plotting source track, and histograms of source distance, heading,
   heading first derivative, and speed
-
-
-
-
-
-
