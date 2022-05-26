@@ -35,11 +35,100 @@ Optional arguments:
                         The path of the collection JSON file to load
   -s SAMPLING_FILEPATH, --sampling-filepath SAMPLING_FILEPATH
                         The path of the sampling JSON file to process
+  -C CLIP_HOME, --clip-home CLIP_HOME
+                        The directory containing clip WAV files
   -p, --do-plot-clips   Do plot track with identified clips
   -P, --do-plot-metrics
                         Do plot track with computed metrics
-  -C CLIP_HOME, --clip-home CLIP_HOME
-                        The directory containing clip WAV files
+
+=== Collection JSON ==
+
+The collection JSON contains information in the following format to
+describe the sources and hydrophones used during the collection.
+
+Start and stop times are in seconds from the beginning of the
+collection. Geodetic latitude, and longitude are in degrees. Elevation
+is in meters.
+
+Format:
+{
+    "sources": [
+        {
+            "type": "file" | "bucket"
+            "name": "track.gpx",
+            "start_t": 0,
+            "stop_t": 8000.0
+        }
+    ],
+    "hydrophones": [
+        {
+            "name": "unit.wav",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0,
+            "start_t": 1000,
+            "stop_t": 9000
+        }
+    ]
+}
+
+=== Sample JSON ===
+
+The sample JSON document contains entries in the following format
+which describe the method, and its parameters, used in creating
+labeled samples from the collection. The method can be either
+"clusters" or "conditionals".
+
+If "clusters", the samples are all placed in the specified output
+directory, and labeled with the start and stop times, and the
+distance, heading, heading rate, and speed cluster averages.
+
+If "conditionals", the samples are all placed in the output
+directory and labeled with the start and stop times, and the
+distance, heading, heading rate, and speed limits. Multiple
+entries with the "conditionals" method will result in samples in a
+set of labeled directories.
+
+The maximum time delta between positions used to define a
+contiguous audio sample is in seconds.
+
+Format:
+[
+    {
+        "name": "default",
+        "method": {
+            "type": "clusters",
+            "distance_n_clusters": 3,
+            "heading_n_clusters": 10,
+            "heading_dot_n_clusters": 2,
+            "speed_n_clusters": 4
+        },
+        "delta_t_max": 4.0,
+        "n_clips_max": 3,
+        "output_dir": "default"
+    },
+    {
+        "name": "close-north-stable-fast",
+        "method": {
+            "type": "conditionals",
+            "distance_limits": [0, 250],
+            "heading_limits": [-10, 0, 0, 10],
+            "heading_dot_limits": [0, 1],
+            "speed_limits": [10, 20]
+        },
+        "delta_t_max": 4.0,
+        "n_clips_max": 3,
+        "output_dir": "close-north-stable-fast"
+    }
+]
+
+Where:
+
+* delta_t_max specifies the maximum time delta between positions in
+  seconds used to define a contiguous audio sample
+
+* n_clips_max specifies the maximum number of clips exported in each
+  segment
 
 == AisAudioLabeler ==
 
@@ -90,6 +179,61 @@ Optional arguments:
   -C CLIP_HOME, --clip-home CLIP_HOME
                         The directory containing clip WAV files
 
+=== Collection JSON ==
+
+The collection JSON contains information in the following format to
+describe the sources and hydrophones used during the collection.
+
+Geodetic latitude, and longitude are in degrees. Elevation is in
+meters.
+
+Format:
+{
+    "sources": [
+        {
+            "type": "bucket",
+            "name": "aisonobuoy-pibuoy-v2",
+            "prefix": "compressed"
+        }
+    ],
+    "hydrophones": [
+        {
+            "type": "bucket",
+            "name": "aisonobuoy-pibuoy-v2",
+            "prefix": "compressed",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0
+        }
+    ]
+}
+
+=== Sample JSON ===
+
+The sample JSON document contains entries in the following format
+which describe the method, and its parameters, used in creating
+labeled samples from the collection.
+
+The distance is in meters.
+
+Format:
+[
+    {
+        "name": "default",
+        "max_n_ships": 3,
+        "max_distance": 500.0,
+        "output_dir": "no-more-than-three-or-500-m-then-min-distance"
+    }
+]
+
+Where:
+
+* max_n_ships specifies the maximum number of ships underway
+  simultaneously
+
+* max_distance specifies the maximum distance of ships underway
+  simultaneously from the hydrophone
+
 == LabelerUtilites ==
 
 The LabelerUtilites module provides methods for:
@@ -116,79 +260,3 @@ The LabelerUtilites module provides methods for:
 
 
 
-The collection JSON contains information in the following format
-to describe the sources and hydrophones used during the
-collection.
-
-Start and stop times are in seconds. Latitude, and longitude are
-in degrees. Elevation is in meters.
-
-Format:
-{
-    "sources": [
-        {
-            "type": "file" | "bucket"
-            "name": "track.gpx",
-            "start_t": 0,
-            "stop_t": 8000.0
-        }
-    ],
-    "hydrophones": [
-        {
-            "name": "unit.wav",
-            "lat": 0.0,
-            "lon": 0.0,
-            "ele": 0.0,
-            "start_t": 1000,
-            "stop_t": 9000
-        }
-    ]
-}
-
-The sample JSON document contains entries in the following format
-which describe the method, and its parameters, used in creating
-labeled samples from the collection. The method can be either
-"clusters" or "conditionals".
-
-If "clusters", the samples are all placed in the specified output
-directory, and labeled with the start and stop times, and the
-distance, heading, heading rate, and speed cluster averages.
-
-If "conditionals", the samples are all placed in the output
-directory and labeled with the start and stop times, and the
-distance, heading, heading rate, and speed limits. Multiple
-entries with the "conditionals" method will result in samples in a
-set of labeled directories.
-
-The maximum time delta between positions used to define a
-contiguous audio sample is in seconds.
-
-Format:
-[
-    {
-        "name": "default",
-        "method": {
-            "type": "clusters",
-            "distance_n_clusters": 3,
-            "heading_n_clusters": 10,
-            "heading_dot_n_clusters": 2,
-            "speed_n_clusters": 4
-        },
-        "delta_t_max": 4.0,
-        "n_clips_max": 3,
-        "output_dir": "default"
-    },
-    {
-        "name": "close-north-stable-fast",
-        "method": {
-            "type": "conditionals",
-            "distance_limits": [0, 250],
-            "heading_limits": [-10, 0, 0, 10],
-            "heading_dot_limits": [0, 1],
-            "speed_limits": [10, 20]
-        },
-        "delta_t_max": 4.0,
-        "n_clips_max": 3,
-        "output_dir": "close-north-stable-fast"
-    }
-]
