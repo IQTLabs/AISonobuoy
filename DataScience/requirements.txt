@@ -28,7 +28,7 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.23.7
+boto3==1.23.9
     # via -r requirements.in
 botocore==1.26.7
     # via
