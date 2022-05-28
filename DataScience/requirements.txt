@@ -72,7 +72,7 @@ importlib-resources==5.7.1
     # via jsonschema
 ipykernel==6.13.0
     # via notebook
-ipython==8.3.0
+ipython==8.4.0
     # via
     #   ipykernel
     #   jupyterlab
