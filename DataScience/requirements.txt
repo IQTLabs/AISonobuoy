@@ -30,7 +30,7 @@ bleach==5.0.0
     # via nbconvert
 boto3==1.24.0
     # via -r requirements.in
-botocore==1.26.9
+botocore==1.27.0
     # via
     #   boto3
     #   s3transfer
