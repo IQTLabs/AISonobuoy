@@ -28,9 +28,9 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.23.8
+boto3==1.24.0
     # via -r requirements.in
-botocore==1.26.8
+botocore==1.27.0
     # via
     #   boto3
     #   s3transfer
@@ -72,7 +72,7 @@ importlib-resources==5.7.1
     # via jsonschema
 ipykernel==6.13.0
     # via notebook
-ipython==8.3.0
+ipython==8.4.0
     # via
     #   ipykernel
     #   jupyterlab
@@ -289,7 +289,7 @@ tornado==6.1
     #   jupyterlab
     #   notebook
     #   terminado
-traitlets==5.2.1.post0
+traitlets==5.2.2.post1
     # via
     #   ipykernel
     #   ipython
