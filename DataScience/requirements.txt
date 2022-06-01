@@ -246,7 +246,7 @@ requests==2.27.1
     # via
     #   folium
     #   jupyterlab-server
-s3transfer==0.5.2
+s3transfer==0.6.0
     # via boto3
 scikit-learn==1.1.1
     # via
