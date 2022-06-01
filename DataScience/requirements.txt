@@ -129,7 +129,7 @@ jupyterlab-server==2.14.0
     # via jupyterlab
 kiwisolver==1.4.2
     # via matplotlib
-lxml==4.8.0
+lxml==4.9.0
     # via -r requirements.in
 markupsafe==2.1.1
     # via
