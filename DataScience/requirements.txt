@@ -289,7 +289,7 @@ tornado==6.1
     #   jupyterlab
     #   notebook
     #   terminado
-traitlets==5.2.1.post0
+traitlets==5.2.2.post1
     # via
     #   ipykernel
     #   ipython
