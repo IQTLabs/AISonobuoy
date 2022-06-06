@@ -2,9 +2,23 @@ import uuid
 import random
 import pandas as pd
 
+def _offset_information(df):
+    # Create unique id
+    id = uuid.uuid4()
 
-def offset_data(ais):
-    """Offsets lat and lon by random amount for each induvidual mmsi. Also changes ship mmsi into uuid
+    # Get offset to random coordinate
+    lat, lon = random.uniform(-90, 90), random.uniform(-180, 180)
+    lat_offset = lat - df.iloc[0]["lat"]
+    lon_offset = lon - df.iloc[0]["lon"]
+
+    # Apply id and offset
+    df = df.assign(mmsi=id)
+    df["lat"] = df["lat"].apply(lambda x: x + lat_offset)
+    df["lon"] = df["lon"].apply(lambda x: x + lon_offset)
+    return df
+
+def scramble_data(ais):
+    """Offsets lat and lon by random amount for each individual mmsi. Also changes ship mmsi into uuid
 
     Parameters
     ----------
@@ -18,59 +32,9 @@ def offset_data(ais):
 
     """
 
-    # Create Dict mapping for mmsi
-    mmsi_offsets = {}
-    rows = []
+    ais_scrambled = ais.groupby("mmsi").apply(_offset_information)
 
-    for index, row in ais.iterrows():
-        if row["mmsi"] not in mmsi_offsets:
-            # Create new randomized identifier and coordinates
-            id = uuid.uuid4()
-            mmsi_offsets[row["mmsi"]] = {"uuid": id}
-            lat, lon = random.uniform(-90, 90), random.uniform(-180, 180)
-            lat_offset = lat - row["lat"]
-            lon_offset = lon - row["lon"]
-            mmsi_offsets[row["mmsi"]]["lat_offset"] = lat_offset
-            mmsi_offsets[row["mmsi"]]["lon_offset"] = lon_offset
-        else:
-            # Read identifier from map
-            id = mmsi_offsets[row["mmsi"]]["uuid"]
-            # Calculate lat/lon from offset
-            lat = mmsi_offsets[row["mmsi"]]["lat_offset"] + row["lat"]
-            lon = mmsi_offsets[row["mmsi"]]["lon_offset"] + row["lon"]
-
-        mmsis_uw = [mmsi_offsets[x]["uuid"].hex for x in row["mmsis_uw"]]
-        mmsis_nuw = [mmsi_offsets[x]["uuid"].hex for x in row["mmsis_nuw"]]
-        rows.append(
-            [
-                row["type"],
-                row["repeat"],
-                id.hex,
-                row["status"],
-                row["turn"],
-                row["speed"],
-                row["accuracy"],
-                lon,
-                lat,
-                row["course"],
-                row["heading"],
-                row["second"],
-                row["maneuver"],
-                row["raim"],
-                row["radio"],
-                row["timestamp"],
-                row["shiptype"],
-                row["h"],
-                row["distance"],
-                row["shipcount_uw"],
-                mmsis_uw,
-                row["shipcount_nuw"],
-                mmsis_nuw,
-            ]
-        )
-
-    scrambled_ais = pd.DataFrame(rows, columns=ais.columns)
-    return scrambled_ais
+    return ais_scrambled
 
 
 def trim_ais_data(ais, shp_count=3):
@@ -89,48 +53,20 @@ def trim_ais_data(ais, shp_count=3):
         AIS position samples with ship type and counts, with extra ship positions removed
 
     """
-    allowed_ships = set()
-    rows = []
-    for index, row in ais.iterrows():
-        mmsi = row["mmsi"]
-        # Add mmsi to allowed ships if under the limit
-        if len(allowed_ships) < shp_count:
-            allowed_ships.add(mmsi)
+    trimmed_ais = pd.DataFrame()
+    grouped_ais = ais.groupby("mmsi")
+    count = 0
+    for group in grouped_ais:
+        if count >= shp_count:
+            break
+        # Add ship to return value
+        trimmed_ais = trimmed_ais.append(group[1])
+        count += 1
 
-        if mmsi in allowed_ships:
-            rows.append(
-                [
-                    row["type"],
-                    row["repeat"],
-                    row["mmsi"],
-                    row["status"],
-                    row["turn"],
-                    row["speed"],
-                    row["accuracy"],
-                    row["lon"],
-                    row["lat"],
-                    row["course"],
-                    row["heading"],
-                    row["second"],
-                    row["maneuver"],
-                    row["raim"],
-                    row["radio"],
-                    row["timestamp"],
-                    row["shiptype"],
-                    row["h"],
-                    row["distance"],
-                    row["shipcount_uw"],
-                    row["mmsis_uw"],
-                    row["shipcount_nuw"],
-                    row["mmsis_nuw"],
-                ]
-            )
-
-    trimmed_ais = pd.DataFrame(rows, columns=ais.columns)
     return trimmed_ais
 
 
-def create_status_test_data(ais_test_data):
+def create_status_test_data(ais):
     """Trim ais data to single ship and creates randomized status.
 
     Parameters
@@ -144,46 +80,12 @@ def create_status_test_data(ais_test_data):
         AIS dataframe with more varied statuses
     """
 
-    mmsi_first = ais_test_data["mmsi"].iloc[0]
+    mmsi_first = ais["mmsi"].iloc[0]
 
-    single_ship_ais_data = ais_test_data[ais_test_data["mmsi"] == mmsi_first]
+    single_ship_ais_data = ais.groupby('mmsi').get_group(mmsi_first)
+    single_ship_ais_data["status"] = single_ship_ais_data["status"].apply(lambda x: random.choice(["AtAnchor", "Moored", "NotUnderCommand", "UnderWayUsingEngine"]))
 
-    new_rows = []
-    status = random.choice(["AtAnchor", "Moored", "NotUnderCommand", "UnderWayUsingEngine"])
-
-    for index, row in single_ship_ais_data.iterrows():
-        if index % 5 == 0:
-            status = random.choice(["AtAnchor", "Moored", "NotUnderCommand", "UnderWayUsingEngine"])
-
-        new_rows.append(
-            [
-                row["type"],
-                row["repeat"],
-                row["mmsi"],
-                status,
-                row["turn"],
-                row["speed"],
-                row["accuracy"],
-                row["lon"],
-                row["lat"],
-                row["course"],
-                row["heading"],
-                row["second"],
-                row["maneuver"],
-                row["raim"],
-                row["radio"],
-                row["timestamp"],
-                row["shiptype"],
-                row["h"],
-                row["distance"],
-                row["shipcount_uw"],
-                row["mmsis_uw"],
-                row["shipcount_nuw"],
-                row["mmsis_nuw"],
-            ]
-        )
-    forced_status_ais = pd.DataFrame(new_rows, columns=single_ship_ais_data.columns)
-    return forced_status_ais
+    return single_ship_ais_data
 
 def write_parquet(path, df):
     """writes a file as a parquet.
@@ -204,7 +106,7 @@ ais_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais.parquet"
 trimmed_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais_test.parquet"
 ais = pd.read_parquet(ais_parquet_path)
 
-offset_ais = offset_data(ais)
+offset_ais = scramble_data(ais)
 trimmed_offset_ais = trim_ais_data(offset_ais)
 
 write_parquet(trimmed_parquet_path, trimmed_offset_ais)
