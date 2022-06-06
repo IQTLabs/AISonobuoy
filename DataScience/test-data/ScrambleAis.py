@@ -1,6 +1,5 @@
 import uuid
 import random
-import pickle
 import pandas as pd
 
 
@@ -186,27 +185,26 @@ def create_status_test_data(ais_test_data):
     forced_status_ais = pd.DataFrame(new_rows, columns=single_ship_ais_data.columns)
     return forced_status_ais
 
-def write_pickle(path, object):
-    """writes a file as a pickle.
+def write_parquet(path, df):
+    """writes a file as a parquet.
 
    Parameters
    ----------
    path : str
-       String of path to write pickle
-   object : ~
-       Object to write to pickle
+       String of path to write parquet
+   df : ~
+       Pandas Dataframe to write to parquet
    """
 
-    with open(path, "wb") as f:
-        pickle.dump(object, f)
+    df.to_parquet(path)
 
 
 data_home = "/Users/williamspear/Data/AISonobuoy"
-ais_pickle_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais.pickle"
-trimmed_pickle_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais_test.pickle"
-ais = pd.read_pickle(ais_pickle_path)
+ais_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais.parquet"
+trimmed_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais_test.parquet"
+ais = pd.read_parquet(ais_parquet_path)
 
 offset_ais = offset_data(ais)
 trimmed_offset_ais = trim_ais_data(offset_ais)
 
-write_pickle(trimmed_pickle_path, trimmed_offset_ais)
+write_parquet(trimmed_parquet_path, trimmed_offset_ais)
