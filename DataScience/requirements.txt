@@ -28,9 +28,9 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.24.2
+boto3==1.24.3
     # via -r requirements.in
-botocore==1.27.2
+botocore==1.27.3
     # via
     #   boto3
     #   s3transfer
@@ -70,7 +70,7 @@ importlib-metadata==4.11.4
     # via jupyterlab-server
 importlib-resources==5.7.1
     # via jsonschema
-ipykernel==6.13.0
+ipykernel==6.13.1
     # via notebook
 ipython==8.4.0
     # via
@@ -101,7 +101,7 @@ jsonschema==4.6.0
     # via
     #   jupyterlab-server
     #   nbformat
-jupyter-client==7.3.2
+jupyter-client==7.3.3
     # via
     #   ipykernel
     #   jupyter-server
