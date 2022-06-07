@@ -101,12 +101,16 @@ def write_parquet(path, df):
     df.to_parquet(path)
 
 
-data_home = "/Users/williamspear/Data/AISonobuoy"
-ais_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais.parquet"
-trimmed_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais_test.parquet"
-ais = pd.read_parquet(ais_parquet_path)
+def main():
+    data_home = "/Users/williamspear/Data/AISonobuoy"
+    ais_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais.parquet"
+    trimmed_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais_test.parquet"
+    ais = pd.read_parquet(ais_parquet_path)
 
-offset_ais = scramble_data(ais)
-trimmed_offset_ais = trim_ais_data(offset_ais)
+    offset_ais = scramble_data(ais)
+    trimmed_offset_ais = trim_ais_data(offset_ais)
 
-write_parquet(trimmed_parquet_path, trimmed_offset_ais)
+    write_parquet(trimmed_parquet_path, trimmed_offset_ais)
+
+if __name__ == "__main__":
+    main()
