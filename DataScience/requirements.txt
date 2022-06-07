@@ -70,7 +70,7 @@ importlib-metadata==4.11.4
     # via jupyterlab-server
 importlib-resources==5.7.1
     # via jsonschema
-ipykernel==6.13.0
+ipykernel==6.13.1
     # via notebook
 ipython==8.4.0
     # via
