@@ -26,7 +26,7 @@ Reference implementations for each of the Sensor to Solution functions can be se
 
 ### PiBuoy
 
-A buoy designed to run an Raspberry Pi with power management that can do continuous collection of hydrophone audio. It is equipped with an AIS reciever and other sensors such as GPS, LTE, temperature and a 9-axis gryoscope.
+A buoy designed to run an Raspberry Pi with power management that can do continuous collection of hydrophone audio. It is equipped with an AIS receiver and other sensors such as GPS, LTE, temperature, and a 9-axis gyroscope.
 
 <img src="./PiBuoyV2/media/pibuoy2-hydrophone-solar.png" alt="pibuoy" height="400px" title="pibuoy">
 
@@ -48,7 +48,7 @@ With a set of labels in hand, we create a machine learning model using [Edge Imp
 
 ### Bootstrapping Labels
 
-For more sophisticated models, bootstrapping labels from the data collect is preferrable to manual labeling.  We can use GPS tracks or [AIS](https://en.wikipedia.org/wiki/Automatic_identification_system) data to determine vessel speed and distance from the hydrophone.  This allows use to build a 5-class audio classifier with classes: no\_boat, near\_slow, near\_fast, far\_slow, far\_fast. Below we show the far\_slow portion of a particular test run.
+For more sophisticated models, bootstrapping labels from the data collect is preferable to manual labeling.  We can use GPS tracks or [AIS](https://en.wikipedia.org/wiki/Automatic_identification_system) data to determine vessel speed and distance from the hydrophone.  This allows use to build a 5-class audio classifier with classes: no\_boat, near\_slow, near\_fast, far\_slow, far\_fast. Below we show the far\_slow portion of a particular test run.
 
 <img src="./DataScience/img/tracks.png" alt="pibuoy" height="300px" title="tracks">
 
