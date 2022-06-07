@@ -4,7 +4,7 @@
 #
 #    pip-compile
 #
-anyio==3.5.0
+anyio==3.6.1
     # via jupyter-server
 appnope==0.1.3
     # via
@@ -28,13 +28,15 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.22.1
+boto3==1.24.2
     # via -r requirements.in
-botocore==1.25.1
+botocore==1.27.3
     # via
     #   boto3
     #   s3transfer
-certifi==2021.10.8
+branca==0.5.0
+    # via folium
+certifi==2022.5.18.1
     # via requests
 cffi==1.15.0
     # via argon2-cffi-bindings
@@ -56,19 +58,21 @@ executing==0.8.3
     # via stack-data
 fastjsonschema==2.15.3
     # via nbformat
+folium==0.12.1.post1
+    # via -r requirements.in
 fonttools==4.33.3
     # via matplotlib
 idna==3.3
     # via
     #   anyio
     #   requests
-importlib-metadata==4.11.3
+importlib-metadata==4.11.4
     # via jupyterlab-server
 importlib-resources==5.7.1
     # via jsonschema
 ipykernel==6.13.0
     # via notebook
-ipython==8.2.0
+ipython==8.4.0
     # via
     #   ipykernel
     #   jupyterlab
@@ -76,8 +80,10 @@ ipython-genutils==0.2.0
     # via notebook
 jedi==0.18.1
     # via ipython
-jinja2==3.1.1
+jinja2==3.1.2
     # via
+    #   branca
+    #   folium
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
@@ -89,13 +95,13 @@ jmespath==1.0.0
     #   botocore
 joblib==1.1.0
     # via scikit-learn
-json5==0.9.6
+json5==0.9.8
     # via jupyterlab-server
-jsonschema==4.4.0
+jsonschema==4.6.0
     # via
     #   jupyterlab-server
     #   nbformat
-jupyter-client==7.3.0
+jupyter-client==7.3.2
     # via
     #   ipykernel
     #   jupyter-server
@@ -109,27 +115,27 @@ jupyter-core==4.10.0
     #   nbconvert
     #   nbformat
     #   notebook
-jupyter-server==1.16.0
+jupyter-server==1.17.0
     # via
     #   jupyterlab
     #   jupyterlab-server
     #   nbclassic
     #   notebook-shim
-jupyterlab==3.3.4
+jupyterlab==3.4.2
     # via -r requirements.in
 jupyterlab-pygments==0.2.2
     # via nbconvert
-jupyterlab-server==2.13.0
+jupyterlab-server==2.14.0
     # via jupyterlab
 kiwisolver==1.4.2
     # via matplotlib
-lxml==4.8.0
+lxml==4.9.0
     # via -r requirements.in
 markupsafe==2.1.1
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.5.1
+matplotlib==3.5.2
     # via -r requirements.in
 matplotlib-inline==0.1.3
     # via
@@ -139,13 +145,13 @@ mistune==0.8.4
     # via nbconvert
 nbclassic==0.3.7
     # via jupyterlab
-nbclient==0.6.0
+nbclient==0.6.4
     # via nbconvert
 nbconvert==6.5.0
     # via
     #   jupyter-server
     #   notebook
-nbformat==5.3.0
+nbformat==5.4.0
     # via
     #   jupyter-server
     #   nbclient
@@ -161,11 +167,13 @@ notebook==6.4.11
     # via nbclassic
 notebook-shim==0.1.0
     # via nbclassic
-numpy==1.22.3
+numpy==1.22.4
     # via
     #   -r requirements.in
+    #   folium
     #   matplotlib
     #   pandas
+    #   pyarrow
     #   scikit-learn
     #   scikit-learn-extra
     #   scipy
@@ -187,7 +195,7 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==9.1.0
+pillow==9.1.1
     # via matplotlib
 prometheus-client==0.14.1
     # via
@@ -195,7 +203,7 @@ prometheus-client==0.14.1
     #   notebook
 prompt-toolkit==3.0.29
     # via ipython
-psutil==5.9.0
+psutil==5.9.1
     # via ipykernel
 ptyprocess==0.7.0
     # via
@@ -203,6 +211,8 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.2
     # via stack-data
+pyarrow==8.0.0
+    # via -r requirements.in
 pycparser==2.21
     # via cffi
 pydub==0.25.1
@@ -211,7 +221,7 @@ pygments==2.12.0
     # via
     #   ipython
     #   nbconvert
-pyparsing==3.0.8
+pyparsing==3.0.9
     # via
     #   matplotlib
     #   packaging
@@ -227,22 +237,24 @@ pytz==2022.1
     # via
     #   babel
     #   pandas
-pyzmq==22.3.0
+pyzmq==23.1.0
     # via
     #   jupyter-client
     #   jupyter-server
     #   notebook
 requests==2.27.1
-    # via jupyterlab-server
-s3transfer==0.5.2
+    # via
+    #   folium
+    #   jupyterlab-server
+s3transfer==0.6.0
     # via boto3
-scikit-learn==1.0.2
+scikit-learn==1.1.1
     # via
     #   -r requirements.in
     #   scikit-learn-extra
 scikit-learn-extra==0.2.0
     # via -r requirements.in
-scipy==1.8.0
+scipy==1.8.1
     # via
     #   scikit-learn
     #   scikit-learn-extra
@@ -261,7 +273,7 @@ soupsieve==2.3.2.post1
     # via beautifulsoup4
 stack-data==0.2.0
     # via ipython
-terminado==0.13.3
+terminado==0.15.0
     # via
     #   jupyter-server
     #   notebook
@@ -277,7 +289,7 @@ tornado==6.1
     #   jupyterlab
     #   notebook
     #   terminado
-traitlets==5.1.1
+traitlets==5.2.2.post1
     # via
     #   ipykernel
     #   ipython

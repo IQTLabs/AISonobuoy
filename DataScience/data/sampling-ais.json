@@ -1,54 +1,8 @@
 [
     {
-        "name": "close-fast",
-        "method": {
-            "type": "conditionals",
-            "distance_limits": [0, 100],
-            "heading_limits": [-180, 0, 0, 180],
-            "heading_dot_limits": [0, 10],
-            "speed_limits": [0, 100]
-        },
-        "delta_t_max": 4.0,
-        "n_clips_max": 3,
-        "output_dir": "close-fast"
-    },
-    {
-        "name": "close-slow",
-        "method": {
-            "type": "conditionals",
-            "distance_limits": [0, 100],
-            "heading_limits": [-180, 0, 0, 180],
-            "heading_dot_limits": [0, 10],
-            "speed_limits": [0, 100]
-        },
-        "delta_t_max": 4.0,
-        "n_clips_max": 3,
-        "output_dir": "close-slow"
-    },
-    {
-        "name": "far-fast",
-        "method": {
-            "type": "conditionals",
-            "distance_limits": [100, 10000],
-            "heading_limits": [-180, 0, 0, 180],
-            "heading_dot_limits": [0, 10],
-            "speed_limits": [0, 100]
-        },
-        "delta_t_max": 4.0,
-        "n_clips_max": 3,
-        "output_dir": "far-fast"
-    },
-    {
-        "name": "far-slow",
-        "method": {
-            "type": "conditionals",
-            "distance_limits": [100, 10000],
-            "heading_limits": [-180, 0, 0, 180],
-            "heading_dot_limits": [0, 10],
-            "speed_limits": [0, 100]
-        },
-        "delta_t_max": 4.0,
-        "n_clips_max": 3,
-        "output_dir": "far-slow"
+        "name": "default",
+        "max_n_ships": 3,
+        "max_distance": 500.0,
+        "output_dir": "no-more-than-three-or-500-m-then-min-distance"
     }
 ]
