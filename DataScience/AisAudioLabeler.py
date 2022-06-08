@@ -75,6 +75,10 @@ def download_buoy_objects(
 
         # Download the object if the corresponding file does not
         # exist, or forced
+        if prefix is not None:
+            os.makedirs(download_path / prefix, exist_ok=True)
+        else:
+            os.makedirs(download_path, exist_ok=True)
         if not (download_path / key).exists() or force:
             etag = s3.download_object(download_path, bucket, s3_object)
             logger.info(f"File {key} downloaded")
@@ -124,14 +128,17 @@ def load_ais_files(inp_path):
         AIS position samples with ship type
 
     """
+    if not inp_path.exists():
+        logger.error(f"Path {inp_path} does not exist")
+        return
     positions = []
     position_keys = set(["mmsi", "status", "timestamp", "speed", "lat", "lon"])
     types = {}
     type_keys = set(["mmsi", "shiptype"])
-    names = os.listdir(inp_path)
     n_lines = 0
     n_positions = 0
     n_mmsis = 0
+    names = os.listdir(inp_path)
     for name in names:
         with open(inp_path / name, "r") as f:
             for line in f:
