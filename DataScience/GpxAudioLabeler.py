@@ -633,7 +633,7 @@ def main():
         if source["type"] != "file":
             raise Exception("Unexpected source type")
         gpx_path = Path(args.data_home) / source["name"]
-        gpx, vld_lambda, vld_varphi, vld_h, vld_t = parse_source_gpx_file(
+        gpx, vld_t, vld_lambda, vld_varphi, vld_h = parse_source_gpx_file(
             gpx_path, source
         )
 
