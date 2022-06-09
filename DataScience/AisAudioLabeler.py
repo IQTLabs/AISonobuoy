@@ -100,7 +100,7 @@ def download_buoy_objects(
 
             # Move files by type
             for name in names:
-                s = re.search(r"-([a-zA-Z]+)\.", name)
+                s = re.search(r"-([a-zA-Z_]+)\.", name)
                 if s is not None:
                     identifier = s.group(1)
                     copy_path = download_path / identifier
