@@ -242,7 +242,7 @@ pyzmq==23.1.0
     #   jupyter-client
     #   jupyter-server
     #   notebook
-requests==2.27.1
+requests==2.28.0
     # via
     #   folium
     #   jupyterlab-server
