@@ -101,7 +101,7 @@ jsonschema==4.6.0
     # via
     #   jupyterlab-server
     #   nbformat
-jupyter-client==7.3.2
+jupyter-client==7.3.4
     # via
     #   ipykernel
     #   jupyter-server
