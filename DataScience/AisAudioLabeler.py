@@ -267,6 +267,9 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             raise Exception("More than one MMSI found in group")
         else:
             mmsi = mmsi[0]
+        if ais_g.shape[0] < 3:
+            logger.info(f"Group {group[0]} has fewer than three reports: skipping")
+            continue
 
         # Initialize SHP dictionary for tracking ship counts and
         # status intervals for each ship
