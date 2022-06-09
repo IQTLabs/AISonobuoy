@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 import logging
 import math
+import os
 from pathlib import Path
 import time
 
@@ -646,6 +647,8 @@ def main():
 
             # Export audio with no source present, if it exists
             if src_max_stop_t < hyd_min_stop_t:
+                if not (Path(args.clip_home) / "no-boat").exists():
+                    os.makedirs(Path(args.clip_home) / "no-boat", exist_ok=True)
                 lu.export_audio_clip(
                     audio,
                     src_max_stop_t,
