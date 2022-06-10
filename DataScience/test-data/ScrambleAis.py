@@ -13,8 +13,8 @@ def _offset_information(df):
 
     # Apply id and offset
     df = df.assign(mmsi=id)
-    df["lat"] = df["lat"].apply(lambda x: x + lat_offset)
-    df["lon"] = df["lon"].apply(lambda x: x + lon_offset)
+    df["lat"] = df["lat"] + lat_offset
+    df["lon"] = df["lon"] + lon_offset
     return df
 
 def scramble_data(ais):
