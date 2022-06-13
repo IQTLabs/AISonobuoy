@@ -127,7 +127,7 @@ jupyterlab-pygments==0.2.2
     # via nbconvert
 jupyterlab-server==2.14.0
     # via jupyterlab
-kiwisolver==1.4.2
+kiwisolver==1.4.3
     # via matplotlib
 lxml==4.9.0
     # via -r requirements.in
