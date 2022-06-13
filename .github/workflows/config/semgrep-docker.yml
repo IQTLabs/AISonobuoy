@@ -1,0 +1,641 @@
+rules:
+- id: prefer-copy-over-add
+  languages:
+  - dockerfile
+  message: The ADD command will accept and include files from a URL and automatically
+    extract archives. This potentially exposes the container to a man-in-the-middle
+    attack or other attacks if a malicious actor can tamper with the source archive.
+    Since ADD can have this and other unexpected side effects, the use of the more
+    explicit COPY command is preferred.
+  metadata:
+    category: best-practice
+    references:
+    - https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: 'ADD $FROM $TO
+
+      '
+  - metavariable-regex:
+      metavariable: $FROM
+      regex: (^[A-Za-z]+:\/\/|.*[.](gz|bz2|zip|tar)$)
+  - focus-metavariable: $FROM
+  severity: INFO
+- id: avoid-latest-version
+  languages:
+  - dockerfile
+  message: Images should be tagged with an explicit version to produce deterministic
+    container images. The 'latest' tag may change the base container without warning.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3007
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3007
+    technology:
+    - dockerfile
+  pattern: FROM $FROM:latest
+  severity: WARNING
+- id: missing-no-install-recommends
+  languages:
+  - dockerfile
+  message: This 'apt-get install' is missing '--no-install-recommends'. This prevents
+    unnecessary packages from being installed, thereby reducing image size. Add '--no-install-recommends'.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3015
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3015
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: 'RUN apt-get install ...
+
+      '
+  - pattern-not: RUN apt-get install ... --no-install-recommends ...
+  severity: INFO
+- fix: SHELL ["$SHELL", "-c"]
+  id: use-shell-instruction
+  languages:
+  - dockerfile
+  message: Use the SHELL instruction to set the default shell instead of overwriting
+    '/bin/sh'.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL4005
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL4005
+    technology:
+    - dockerfile
+  pattern: 'RUN ln ... $SHELL /bin/sh
+
+    '
+  severity: WARNING
+- id: prefer-apt-get
+  languages:
+  - dockerfile
+  message: '''apt-get'' is preferred as an unattended tool for stability. ''apt''
+    is discouraged.'
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3027
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3027
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: RUN apt ...
+  - pattern-not: RUN apt-get ...
+  severity: INFO
+- id: avoid-zypper-update
+  languages:
+  - dockerfile
+  message: Packages in base images should be up-to-date, removing the need for 'zypper
+    update'. If packages are out-of-date, consider contacting the base image maintainer.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3035
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3035
+    technology:
+    - dockerfile
+  pattern: zypper update ...
+  severity: INFO
+- id: missing-yum-assume-yes-switch
+  languages:
+  - dockerfile
+  message: This 'yum install' is missing the '-y' switch. This might stall builds
+    because it requires human intervention. Add the '-y' switch.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3030
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3030
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: 'RUN ... yum install ...
+
+      '
+  - pattern-not: 'RUN ... yum install ... -y ...
+
+      '
+  - pattern-not: 'RUN ... yum ... --assumeyes ...
+
+      '
+  severity: WARNING
+- id: use-workdir
+  languages:
+  - dockerfile
+  message: Use 'WORKDIR' instead of 'RUN cd ...'. Using 'RUN cd ...' may not work
+    as expected in a conatiner.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3003
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3003
+    technology:
+    - dockerfile
+  pattern: RUN ... cd $DIR
+  severity: WARNING
+- id: avoid-apk-upgrade
+  languages:
+  - dockerfile
+  message: Packages in base images should be up-to-date, removing the need for 'apk
+    upgrade'. If packages are out-of-date, consider contacting the base image maintainer.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3017
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3017
+    technology:
+    - dockerfile
+  pattern: RUN ... apk upgrade ...
+  severity: INFO
+- id: missing-pip-no-cache-dir
+  languages:
+  - dockerfile
+  message: This '$PIP install' is missing '--no-cache-dir'. This flag prevents package
+    archives from being kept around, thereby reducing image size. Add '--no-cache-dir'.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3042
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3042
+    technology:
+    - dockerfile
+  patterns:
+  - patterns:
+    - pattern: 'RUN ... $PIP install ...
+
+        '
+    - pattern-not-inside: 'RUN ... $PIP install ... --no-cache-dir ...
+
+        '
+    - pattern-not-inside: 'RUN ... $PIP install . ...
+
+        '
+    - pattern-not-inside: 'ENV ... PIP_NO_CACHE_DIR=$BOOL ...
+
+        ...
+
+        RUN ... $PIP install ...
+
+        '
+    - pattern-not-inside: 'ENV ... PIP_NO_CACHE_DIR ...
+
+        ...
+
+        RUN ... $PIP install ...
+
+        '
+  - metavariable-regex:
+      metavariable: $PIP
+      regex: (pip|pip2|pip3|python -m pip|python3 -m pip)
+  severity: INFO
+- id: use-either-wget-or-curl
+  languages:
+  - dockerfile
+  message: '''wget'' and ''curl'' are similar tools. Choose one and do not install
+    the other to decrease image size.'
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL4001
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL4001
+    technology:
+    - dockerfile
+  pattern-either:
+  - pattern: 'RUN wget ...
+
+      ...
+
+      RUN curl ...
+
+      '
+  - pattern: 'RUN curl ...
+
+      ...
+
+      RUN wget ...
+
+      '
+  severity: INFO
+- id: missing-image-version
+  languages:
+  - dockerfile
+  message: Images should be tagged with an explicit version to produce deterministic
+    container images.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3006
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3006
+    technology:
+    - dockerfile
+  patterns:
+  - pattern-either:
+    - pattern: FROM $IMAGE
+  - pattern-not: FROM $IMAGE:$VERSION
+  - pattern-not: FROM $IMAGE@$DIGEST
+  - pattern-not: FROM $IMAGE:$VERSION@$DIGEST
+  - pattern-not: FROM scratch
+  severity: WARNING
+- fix: '# MAINTAINER $NAME'
+  id: maintainer-is-deprecated
+  languages:
+  - dockerfile
+  message: MAINTAINER has been deprecated.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL4000
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL4000
+    technology:
+    - dockerfile
+  pattern: MAINTAINER $NAME
+  severity: INFO
+- id: set-pipefail
+  languages:
+  - dockerfile
+  message: Only the exit code from the final command in this RUN instruction will
+    be evaluated unless 'pipefail' is set. If you want to fail the command at any
+    stage in the pipe, set 'pipefail' by including 'SHELL ["/bin/bash", "-o", "pipefail",
+    "-c"] before the command. If you're using alpine and don't have bash installed,
+    communicate this explicitly with `SHELL ["/bin/ash"]`.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL4006
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL4006
+    technology:
+    - dockerfile
+  patterns:
+  - pattern-either:
+    - pattern: RUN ... | ...
+    - pattern: RUN ... || ...
+  - pattern-not-inside: 'SHELL [..., "pipefail", ...]
+
+      ...
+
+      RUN ... | ...
+
+      '
+  - pattern-not-inside: 'SHELL ["/bin/ash", ...]
+
+      ...
+
+      RUN ... | ...
+
+      '
+  severity: WARNING
+- id: remove-package-cache
+  languages:
+  - dockerfile
+  message: The package cache was not deleted after running 'apt-get update', which
+    increases the size of the image. Remove the package cache by appending '&& apt-get
+    clean' at the end of apt-get command chain.
+  metadata:
+    category: best-practice
+    license: Commons Clause License Condition v1.0[LGPL-2.1-only]
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3009
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3009
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: RUN ... apt-get update ...
+  - pattern-not: RUN ... && apt-get clean ...
+  severity: WARNING
+- id: missing-dnf-assume-yes-switch
+  languages:
+  - dockerfile
+  message: This 'dnf install' is missing the '-y' switch. This might stall builds
+    because it requires human intervention. Add the '-y' switch.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3038
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3038
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: 'RUN ... dnf install ...
+
+      '
+  - pattern-not-inside: 'RUN ... dnf install ... -y ...
+
+      '
+  - pattern-not-inside: 'RUN ... dnf ... --assumeyes ...
+
+      '
+  severity: WARNING
+- id: avoid-yum-update
+  languages:
+  - dockerfile
+  message: Packages in base images should be up-to-date, removing the need for 'yum
+    update'. If packages are out-of-date, consider contacting the base image maintainer.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3031
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3031
+    technology:
+    - dockerfile
+  pattern: yum update
+  severity: INFO
+- id: missing-apk-no-cache
+  languages:
+  - dockerfile
+  message: This apk command is missing '--no-cache'. This forces apk to use a package
+    index instead of a local package cache, removing the need for '--update' and the
+    deletion of '/var/cache/apk/*'. Add '--no-cache' to your apk command.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3019
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3019
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: 'RUN apk $COMMAND ...
+
+      '
+  - pattern-not: 'RUN apk $CMD ... --no-cache ...
+
+      '
+  severity: INFO
+- id: missing-dnf-clean-all
+  languages:
+  - dockerfile
+  message: This dnf command does not end with '&& dnf clean all'. Running 'dnf clean
+    all' will remove cached data and reduce package size. (This must be performed
+    in the same RUN step.)
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3038
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3038
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: RUN ... dnf ...
+  - pattern-not-inside: RUN ... && dnf clean all
+  - pattern-not-inside: RUN ... && \ dnf clean all
+  severity: WARNING
+- id: avoid-apt-get-upgrade
+  languages:
+  - dockerfile
+  message: Packages in base containers should be up-to-date, removing the need to
+    upgrade or dist-upgrade. If a package is out of date, contact the maintainers.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3005
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3005
+    technology:
+    - dockerfile
+  pattern-either:
+  - pattern: RUN ... apt-get upgrade ...
+  - pattern: RUN ... apt-get dist-upgrade ...
+  severity: WARNING
+- id: nonsensical-command
+  languages:
+  - dockerfile
+  message: Some commands such as `$CMD` do not make sense in a container. Do not use
+    these.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3001
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3001
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: RUN $CMD ...
+  - metavariable-regex:
+      metavariable: $CMD
+      regex: (shutdown|service|ps|free|top|kill|mount|ifconfig|nano|vim)
+  severity: WARNING
+- id: prefer-json-notation
+  languages:
+  - dockerfile
+  message: Prefer JSON notation when using CMD or ENTRYPOINT. This allows signals
+    to be passed from the OS.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3025
+    - https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#cmd
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3025
+    technology:
+    - dockerfile
+  pattern-either:
+  - patterns:
+    - pattern: CMD $WORD ...
+    - pattern-not-inside: CMD [...]
+  - patterns:
+    - pattern: ENTRYPOINT $WORD ...
+    - pattern-not-inside: ENTRYPOINT [...]
+  severity: INFO
+- id: missing-zypper-clean
+  languages:
+  - dockerfile
+  message: This zypper command does not end with '&& zypper clean'. Running 'zypper
+    clean' will remove cached data and reduce package size. (This must be performed
+    in the same RUN step.)
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3036
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3036
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: RUN ... zypper $COMMAND ...
+  - pattern-not-inside: RUN ... zypper clean
+  - pattern-not-inside: RUN ... zypper clean
+  severity: WARNING
+- id: avoid-platform-with-from
+  languages:
+  - dockerfile
+  message: Using '--platform' with FROM restricts the image to build on a single platform.
+    Further, this must be the same as the build platform. If you intended to specify
+    the target platform, use the utility 'docker buildx --platform=' instead.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3029
+    - https://docs.docker.com/buildx/working-with-buildx/
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3029
+    technology:
+    - dockerfile
+  pattern: FROM --platform=$PLATFORM $IMAGE
+  severity: INFO
+- id: avoid-dnf-update
+  languages:
+  - dockerfile
+  message: Packages in base images should be up-to-date, removing the need for 'dnf
+    update'. If packages are out-of-date, consider contacting the base image maintainer.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3039
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3039
+    technology:
+    - dockerfile
+  pattern: dnf update
+  severity: INFO
+- id: remove-package-lists
+  languages:
+  - dockerfile
+  message: The package lists were not deleted after running 'apt-get update', which
+    increases the size of the image. Remove the package lists by appending '&& rm
+    -rf /var/lib/apt/lists/*' at the end of apt-get command chain.
+  metadata:
+    category: best-practice
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3009
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3009
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: RUN apt-get update ...
+  - pattern-not: RUN ... rm -rf /var/lib/apt/lists/*
+  severity: WARNING
+- id: missing-user
+  languages:
+  - dockerfile
+  message: By not specifying a USER, a program in the container may run as 'root'.
+    This is a security hazard. If an attacker can control a process running as root,
+    they may have control over the container. Ensure that the last USER in a Dockerfile
+    is a USER other than 'root'.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    technology:
+    - dockerfile
+  patterns:
+  - pattern-either:
+    - pattern: CMD ...
+    - pattern: ENTRYPOINT ...
+  - pattern-not-inside: 'USER $USER
+
+      ...
+
+      '
+  severity: ERROR
+- id: last-user-is-root
+  languages:
+  - dockerfile
+  message: The last user in the container is 'root'. This is a security hazard because
+    if an attacker gains control of the container they will have root access. Switch
+    back to another user after running commands as 'root'.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3002
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3002
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: USER root
+  - pattern-not-inside: 'USER root
+
+      ...
+
+      USER $USER
+
+      '
+  severity: ERROR
+- id: multiple-entrypoint-instructions
+  languages:
+  - dockerfile
+  message: Multiple ENTRYPOINT instructions were found. Only the last one will take
+    effect.
+  metadata:
+    category: correctness
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL4004
+    - https://kapeli.com/cheat_sheets/Dockerfile.docset/Contents/Resources/Documents/index#//dash_ref_Instructions/Entry/ENTRYPOINT/0
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL4004
+    technology:
+    - dockerfile
+  pattern: 'ENTRYPOINT ...
+
+    ...
+
+    ENTRYPOINT ...
+
+    '
+  severity: ERROR
+- id: invalid-port
+  languages:
+  - dockerfile
+  message: Detected an invalid port number. Valid ports are 0 through 65535.
+  metadata:
+    category: correctness
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3011
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3011
+    technology:
+    - dockerfile
+  pattern-either:
+  - patterns:
+    - pattern: EXPOSE $PORT
+    - metavariable-comparison:
+        comparison: int($PORT) > 65535
+        metavariable: $PORT
+  severity: ERROR
+- id: missing-assume-yes-switch
+  languages:
+  - dockerfile
+  message: This 'apt-get install' is missing the '-y' switch. This might stall builds
+    because it requires human intervention. Add the '-y' switch.
+  metadata:
+    category: correctness
+    references:
+    - https://github.com/hadolint/hadolint/wiki/DL3014
+    source-rule-url: https://github.com/hadolint/hadolint/wiki/DL3014
+    technology:
+    - dockerfile
+  patterns:
+  - pattern: 'RUN ... apt-get install ...
+
+      '
+  - pattern-not: 'RUN ... apt-get install ... -y ...
+
+      '
+  - pattern-not: 'RUN ... apt-get install ... --assume-yes ...
+
+      '
+  - pattern-not: 'RUN ... apt-get install ... --yes ...
+
+      '
+  severity: WARNING
+- fix: FROM $IMAGE:$VERSION@sha256:$HASH
+  id: dockerfile-source-not-pinned
+  languages:
+  - dockerfile
+  message: To ensure reproducible builds, pin Dockerfile `FROM` commands to a specific
+    hash. You can find the hash by running `docker pull $IMAGE` and then  specify
+    it with `$IMAGE:$VERSION@sha256:<hash goes here>`
+  metadata:
+    category: best-practice
+    references:
+    - https://stackoverflow.com/a/33511811/4965
+    technology:
+    - docker
+  patterns:
+  - pattern-either:
+    - patterns:
+      - pattern: FROM $IMAGE:$VERSION@$HASH
+      - metavariable-regex:
+          metavariable: $HASH
+          regex: (?!sha256:)
+    - patterns:
+      - pattern: FROM $IMAGE
+      - pattern: FROM $IMAGE:$VERSION
+      - pattern-not-inside: FROM $IMAGE:$VERSION@$HASH
+  severity: ERROR
