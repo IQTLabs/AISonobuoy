@@ -28,9 +28,9 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.24.6
+boto3==1.24.7
     # via -r requirements.in
-botocore==1.27.6
+botocore==1.27.7
     # via
     #   boto3
     #   s3transfer
@@ -127,7 +127,7 @@ jupyterlab-pygments==0.2.2
     # via nbconvert
 jupyterlab-server==2.14.0
     # via jupyterlab
-kiwisolver==1.4.2
+kiwisolver==1.4.3
     # via matplotlib
 lxml==4.9.0
     # via -r requirements.in
