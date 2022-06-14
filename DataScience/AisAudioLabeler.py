@@ -177,13 +177,10 @@ def get_hydrophone_metadata(inp_path):
 
         # Identify start timestamp from audio file name
         s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
-        """
         if s is not None:
             start_timestamp = s.group(1)
         else:
             start_timestamp = s.group(1)
-        """
-        start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
     hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
@@ -283,14 +280,12 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         for status in ais_g["status"].unique():
             logger.info(f"Processing status {status} for group {group[0]}")
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
-            # if status in ["UnderWayUsingEngine"]:
-            #     timestamp_diff = 10  # [s]
-            # elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-            #     timestamp_diff = 180  # [s]
-            # else:
-            #     timestamp_diff = 180  # [s]
-            # Usless if
-            timestamp_diff = 180  # [s]
+            if status in ["UnderWayUsingEngine"]:
+                timestamp_diff = 10  # [s]
+            elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
+                timestamp_diff = 180  # [s]
+            else:
+                timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
             ais_s = ais_g[ais_g["status"] == status]

@@ -165,7 +165,7 @@ class Telemetry:
             self.ais_records = sum(1 for line in open(self.ais_file, encoding='utf-8'))
             return True
         # file already exists, check if there's new records
-        num_lines = sum(1 for line in open(self.ais_file, encoidng='utf-8'))
+        num_lines = sum(1 for line in open(self.ais_file, encoding='utf-8'))
         if num_lines > self.ais_records:
             self.ais_records = num_lines
             return True

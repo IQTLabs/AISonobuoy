@@ -148,6 +148,7 @@ else:  # 2.x
     from collections import MutableMapping as DictMixin
     unicode = unicode
     json_loads = json_lds
+    # nosemgrep:github.workflows.config.exec-detected
     exec(compile('def _raise(*a): raise a[0], a[1], a[2]', '<py3fix>', 'exec'))
 
 # Some helpers for string/byte handling
@@ -1355,6 +1356,7 @@ class BaseRequest(object):
             body.write(part)
             body_size += len(part)
             if not is_temp_file and body_size > self.MEMFILE_MAX:
+                # nosemgrep:github.workflows.config.open-never-closed
                 body, tmp = TemporaryFile(mode='w+b'), body
                 body.write(tmp.getvalue())
                 del tmp
@@ -3621,6 +3623,7 @@ def load(target, **namespace):
     if target.isalnum(): return getattr(sys.modules[module], target)
     package_name = module.split('.')[0]
     namespace[package_name] = sys.modules[package_name]
+    # nosemgrep:github.workflows.config.eval-detected
     return eval('%s.%s' % (module, target), namespace)
 
 
@@ -3680,6 +3683,7 @@ def run(app=None,
                 environ = os.environ.copy()
                 environ['BOTTLE_CHILD'] = 'true'
                 environ['BOTTLE_LOCKFILE'] = lockfile
+                # nosemgrep:github.workflows.config.dangerous-subprocess-use
                 p = subprocess.Popen(args, env=environ)
                 while p.poll() is None:  # Busy wait...
                     os.utime(lockfile, None)  # I am alive!
@@ -3891,8 +3895,10 @@ class MakoTemplate(BaseTemplate):
         options.setdefault('format_exceptions', bool(DEBUG))
         lookup = TemplateLookup(directories=self.lookup, **options)
         if self.source:
+            # nosemgrep:github.workflows.config.mako-templates-detected
             self.tpl = Template(self.source, lookup=lookup, **options)
         else:
+            # nosemgrep:github.workflows.config.mako-templates-detected
             self.tpl = Template(uri=self.name,
                                 filename=self.filename,
                                 lookup=lookup, **options)
@@ -3929,6 +3935,7 @@ class CheetahTemplate(BaseTemplate):
 class Jinja2Template(BaseTemplate):
     def prepare(self, filters=None, tests=None, globals={}, **kwargs):
         from jinja2 import Environment, FunctionLoader
+        # nosemgrep:github.workflows.config.direct-use-of-jinja2
         self.env = Environment(loader=FunctionLoader(self.loader), **kwargs, autoescape=True)
         if filters: self.env.filters.update(filters)
         if tests: self.env.tests.update(tests)
@@ -4012,6 +4019,7 @@ class SimpleTemplate(BaseTemplate):
             'setdefault': env.setdefault,
             'defined': env.__contains__
         })
+        # nosemgrep:github.workflows.config.exec-detected
         exec(self.co, env)
         if env.get('_rebase'):
             subtpl, rargs = env.pop('_rebase')

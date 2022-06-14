@@ -23,6 +23,7 @@ def run_cmd(args, env=None):
     print(f'running {args}')
     ret = -1
     try:
+        # nosemgrep:github.workflows.config.dangerous-subprocess-use
         ret = subprocess.check_call(args)
         print('%s returned %d' % (' '.join(args), ret))
     except subprocess.CalledProcessError as err:
