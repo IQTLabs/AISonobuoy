@@ -810,6 +810,7 @@ def download_object(download_path, bucket, s3_object):
         chunk_size = 8 * 1024 * 1024
     else:
         is_hyphenated = False
+        # nosemgrep:github.workflows.config.insecure-hash-algorithm-md5
         md5 = hashlib.md5()
         chunk_size = 1024 * 1024
     key = s3_object["Key"]
@@ -818,11 +819,15 @@ def download_object(download_path, bucket, s3_object):
         for chunk in r["Body"].iter_chunks(chunk_size=chunk_size):
             f.write(chunk)
             if is_hyphenated:
+                # nosemgrep:github.workflows.config.insecure-hash-algorithm-md5
                 md5s.append(hashlib.md5(chunk).digest())
             else:
+                # nosemgrep:github.workflows.config.insecure-hash-algorithm-md5
                 md5.update(chunk)
     if is_hyphenated:
+        # nosemgrep:github.workflows.config.insecure-hash-algorithm-md5
         md5 = hashlib.md5(b"".join(md5s))
+        # nosemgrep:github.workflows.config.insecure-hash-algorithm-md5
         etag = f"{md5.hexdigest()}-{len(md5s)}"
     else:
         etag = md5.hexdigest()

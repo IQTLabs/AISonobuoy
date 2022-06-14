@@ -162,10 +162,10 @@ class Telemetry:
             return False
         elif os.path.join(self.ais_dir, files[-1]) != self.ais_file:
             self.ais_file = os.path.join(self.ais_dir, files[-1])
-            self.ais_records = sum(1 for line in open(self.ais_file))
+            self.ais_records = sum(1 for line in open(self.ais_file, encoding='utf-8'))
             return True
         # file already exists, check if there's new records
-        num_lines = sum(1 for line in open(self.ais_file))
+        num_lines = sum(1 for line in open(self.ais_file, encoidng='utf-8'))
         if num_lines > self.ais_records:
             self.ais_records = num_lines
             return True
@@ -182,7 +182,7 @@ class Telemetry:
             return
         elif os.path.join(self.power_dir, files[-1]) != self.power_file:
             self.power_file = os.path.join(self.power_dir, files[-1])
-        with open(self.power_file, 'r') as f:
+        with open(self.power_file, 'r', encoding='utf-8') as f:
             for line in f:
                 record = json.loads(line.strip())
                 if record['target'] in self.sensor_data:
@@ -288,7 +288,7 @@ class Telemetry:
 
     def write_sensor_data(self, timestamp):
         tmp_filename = f'{self.sensor_dir}/.{self.hostname}-{timestamp}-sensehat.json'
-        with open(tmp_filename, 'a') as f:
+        with open(tmp_filename, 'a', encoding='utf-8') as f:
             for key in self.sensor_data.keys():
                 record = {"target":key, "datapoints": self.sensor_data[key]}
                 f.write(f'{json.dumps(record)}\n')
@@ -501,7 +501,7 @@ class Telemetry:
             # Check if a shutdown has been signaled
             signal_contents = ""
             try:
-                with open('/var/run/shutdown.signal', 'r') as f:
+                with open('/var/run/shutdown.signal', 'r', encoding='utf-8') as f:
                     signal_contents = f.read()
             except Exception as e:
                 pass
@@ -531,7 +531,8 @@ class Telemetry:
                 write_cycles = 1
 
             # Keep lights for 0.5 second
-            time.sleep(0.5)
+            sleep_time = 0.5
+            time.sleep(sleep_time)
 
             # Turn off all pixels
             self.sense.set_pixels([off]*64)

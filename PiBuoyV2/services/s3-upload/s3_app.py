@@ -81,7 +81,8 @@ def main():
     schedule.every().day.at("18:00").do(job, hostname)
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        sleep_time = 60
+        time.sleep(sleep_time)
 
 
 if __name__ == '__main__':

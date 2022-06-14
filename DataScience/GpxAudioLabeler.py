@@ -390,7 +390,8 @@ def slice_source_audio_by_cluster(
                         axs.set_xlabel("east [m]")
                         axs.set_ylabel("north [m]")
                         plt.show()
-                        time.sleep(1)
+                        sleep_time = 1
+                        time.sleep(sleep_time)
 
 
 def slice_source_audio_by_condition(
@@ -565,7 +566,8 @@ def slice_source_audio_by_condition(
         axs.set_xlabel("east [m]")
         axs.set_ylabel("north [m]")
         plt.show()
-        time.sleep(1)
+        sleep_time = 1
+        time.sleep(sleep_time)
 
 
 def main():

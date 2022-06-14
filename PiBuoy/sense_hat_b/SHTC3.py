@@ -45,7 +45,7 @@ if __name__ == "__main__":
     f_dir = f'/flash/telemetry/sensors'
     os.makedirs(f_dir, exist_ok=True)
 
-    with open(f'{f_dir}/{hostname}-{timestamp}-shtc3.json', 'w') as f:
+    with open(f'{f_dir}/{hostname}-{timestamp}-shtc3.json', 'w', encoding='utf-8') as f:
         for key in sensor_data.keys():
             record = {"target":key, "datapoints": sensor_data[key]}
             f.write(f'{json.dumps(record)}\n')

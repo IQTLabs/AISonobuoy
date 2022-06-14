@@ -68,7 +68,7 @@ class SleepyidTestCase(unittest.TestCase):
     def test_parse_args(self):
         with tempfile.TemporaryDirectory() as test_dir:
             argjson_file = os.path.join(test_dir, 'asgjson.txt')
-            with open(argjson_file, 'w') as f:
+            with open(argjson_file, 'w', encoding='utf-8') as f:
                 argsjson_txt = json.dumps({'shutdowncurrent': 123})
                 f.write(argsjson_txt)
 

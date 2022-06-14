@@ -126,7 +126,7 @@ def load_ais_files(inp_path):
     n_positions = 0
     n_mmsis = 0
     for name in names:
-        with open(inp_path / name, "r") as f:
+        with open(inp_path / name, "r", encoding='utf-8') as f:
             for line in f:
                 n_lines += 1
                 sample = json.loads(line)
@@ -177,10 +177,13 @@ def get_hydrophone_metadata(inp_path):
 
         # Identify start timestamp from audio file name
         s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
+        """
         if s is not None:
             start_timestamp = s.group(1)
         else:
             start_timestamp = s.group(1)
+        """
+        start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
     hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
@@ -280,12 +283,14 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         for status in ais_g["status"].unique():
             logger.info(f"Processing status {status} for group {group[0]}")
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
-            if status in ["UnderWayUsingEngine"]:
-                timestamp_diff = 10  # [s]
-            elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-                timestamp_diff = 180  # [s]
-            else:
-                timestamp_diff = 180  # [s]
+            # if status in ["UnderWayUsingEngine"]:
+            #     timestamp_diff = 10  # [s]
+            # elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
+            #     timestamp_diff = 180  # [s]
+            # else:
+            #     timestamp_diff = 180  # [s]
+            # Usless if
+            timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
             ais_s = ais_g[ais_g["status"] == status]
@@ -422,13 +427,13 @@ def get_shp_dictionary(data_home, source, force=False, shp=None):
     shp_json = data_home / source["name"] / "shp.json"
     if shp_json.exists() and not force:
         logger.info("Reading SHP JSON")
-        with open(shp_json, "r") as f:
+        with open(shp_json, "r", encoding='utf-8') as f:
             shp = json.load(f)
     else:
         if shp is None:
             raise Exception("Must provide SHP dataframe")
         logger.info("Writing SHP JSON")
-        with open(shp_json, "w") as f:
+        with open(shp_json, "w", encoding='utf-8') as f:
             json.dump(shp, f)
     return shp
 
