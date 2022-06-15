@@ -171,16 +171,15 @@ def get_hydrophone_metadata(inp_path):
         entry = lu.probe_audio_file(inp_path / name)
         if not req_keys.issubset(set(entry.keys())):
             continue
+        # Identify start timestamp from audio file name
+        s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
+        if s is None:
+            continue
         entry["sample_rate"] = int(entry["sample_rate"])
         entry["duration"] = float(entry["duration"])
         entry["name"] = name
-
-        # Identify start timestamp from audio file name
-        s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
-        if s is not None:
-            start_timestamp = s.group(1)
-        else:
-            start_timestamp = s.group(1)
+            
+        start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
     hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
@@ -282,8 +281,6 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
             if status in ["UnderWayUsingEngine"]:
                 timestamp_diff = 10  # [s]
-            elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-                timestamp_diff = 180  # [s]
             else:
                 timestamp_diff = 180  # [s]
 
@@ -305,14 +302,9 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
                 # Update ship counts
-                if status in ["UnderWayUsingEngine"]:
+                if status in ["UnderWayUsingEngine", "AtAnchor", "Moored", "NotUnderCommand"]:
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
-                        lambda x: x.append(mmsi)
-                    )
-                elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
-                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
 
