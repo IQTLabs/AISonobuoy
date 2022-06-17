@@ -6,6 +6,7 @@ matplotlib
 numpy
 pandas
 pyarrow
+pytest
 pydub
 scikit-learn
 scikit-learn-extra

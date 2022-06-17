@@ -19,7 +19,9 @@ argon2-cffi-bindings==21.2.0
 asttokens==2.0.5
     # via stack-data
 attrs==21.4.0
-    # via jsonschema
+    # via
+    #   jsonschema
+    #   pytest
 babel==2.10.3
     # via jupyterlab-server
 backcall==0.2.0
@@ -70,6 +72,8 @@ importlib-metadata==4.11.4
     # via jupyterlab-server
 importlib-resources==5.8.0
     # via jsonschema
+iniconfig==1.1.1
+    # via pytest
 ipykernel==6.15.0
     # via notebook
 ipython==8.4.0
@@ -185,6 +189,7 @@ packaging==21.3
     #   jupyterlab-server
     #   matplotlib
     #   nbconvert
+    #   pytest
 pandas==1.4.2
     # via -r requirements.in
 pandocfilters==1.5.0
@@ -197,6 +202,8 @@ pickleshare==0.7.5
     # via ipython
 pillow==9.1.1
     # via matplotlib
+pluggy==1.0.0
+    # via pytest
 prometheus-client==0.14.1
     # via
     #   jupyter-server
@@ -211,6 +218,8 @@ ptyprocess==0.7.0
     #   terminado
 pure-eval==0.2.2
     # via stack-data
+py==1.11.0
+    # via pytest
 pyarrow==8.0.0
     # via -r requirements.in
 pycparser==2.21
@@ -227,6 +236,8 @@ pyparsing==3.0.9
     #   packaging
 pyrsistent==0.18.1
     # via jsonschema
+pytest==7.1.2
+    # via -r requirements.in
 python-dateutil==2.8.2
     # via
     #   botocore
@@ -239,6 +250,7 @@ pytz==2022.1
     #   pandas
 pyzmq==23.1.0
     # via
+    #   ipykernel
     #   jupyter-client
     #   jupyter-server
     #   notebook
@@ -281,6 +293,8 @@ threadpoolctl==3.1.0
     # via scikit-learn
 tinycss2==1.1.1
     # via nbconvert
+tomli==2.0.1
+    # via pytest
 tornado==6.1
     # via
     #   ipykernel

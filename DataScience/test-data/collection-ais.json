@@ -1,0 +1,19 @@
+{
+    "sources": [
+        {
+            "type": "bucket",
+            "name": "test-data",
+            "prefix": "compressed"
+        }
+    ],
+    "hydrophones": [
+        {
+            "type": "bucket",
+            "name": "test-data",
+            "prefix": "compressed",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0
+        }
+    ]
+}
