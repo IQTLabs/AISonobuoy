@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from datetime import datetime
 import json
 import logging
 import os
@@ -684,6 +685,36 @@ def export_audio_clips(
         n_clips += 1
 
 
+def upload_audio_clips(upload_path, bucket, prefix=None):
+    """Upload all audio clips found on the upload path to the bucket
+    with the prefix.
+
+    Parameters
+    ----------
+    upload_path : pathlib.Path()
+        The local path from which to upload audio clips
+    bucket : str
+        The AWS S3 bucket
+    prefix : str
+        The AWS S3 prefix designating the object in the bucket
+
+    Returns
+    -------
+    None
+
+    """
+    for root, dirnames, filenames in os.walk(upload_path):
+        for filename in filenames:
+            filepath = Path(root) / filename
+            if filepath.suffix == ".wav":
+                if prefix is not None:
+                    key = "/".join([prefix, filepath.name])
+                else:
+                    key = filepath.name
+                with open(filepath, "rb") as f:
+                    s3.put_object(f, bucket, key)
+
+
 def main():
     """Provide a command-line interface for the AisAudioLabeler module."""
     parser = ArgumentParser(description="Use AIS data to slice an audio file")
@@ -742,7 +773,7 @@ def main():
         help="do plot ship distance from hydrophone histogram",
     )
     parser.add_argument(
-        "--export-clips",
+        "--export-audio-clips",
         action="store_true",
         help="do export audio clips",
     )
@@ -751,6 +782,11 @@ def main():
         "--clip-home",
         default=str(Path("~").expanduser() / "Datasets" / "AISonobuoy"),
         help="the directory containing clip WAV files",
+    )
+    parser.add_argument(
+        "--upload-audio-clips",
+        action="store_true",
+        help="do upload audio clips",
     )
     args = parser.parse_args()
     data_home = Path(args.data_home)
@@ -787,7 +823,7 @@ def main():
             )
         download_buoy_objects(
             data_home / source["name"] / source["label"],
-            source["name"],
+            source["name"],  # bucket
             source["prefix"],
             source["label"],
             force=args.force_download,
@@ -819,11 +855,14 @@ def main():
 
         # Export audio clips from AIS intervals during which two ships are
         # underway. Label the audio clip using the attributes of the ship
-        # closest to the hydrophone.
-        if args.export_clips:
+        # closest to the hydrophone. Always delete exiting audio clips.
+        if args.export_audio_clips:
             clip_home = Path(args.clip_home) / case["output_dir"]
             if not clip_home.exists():
-                clip_home.mkdir(parents=True)
+                clip_home.mkdir(parents=True)  # Make the directory
+            else:
+                for p in clip_home.iterdir():  # Or remove all files
+                    p.unlink()
             export_audio_clips(
                 ais,
                 hmd,
@@ -833,6 +872,19 @@ def main():
                 clip_home,
                 case["max_n_ships"],
                 case["max_distance"],
+            )
+
+        # Upload all audio clips found on the upload path to the
+        # bucket with the prefix set a concatenation of "products" and
+        # the current date
+        if args.upload_audio_clips:
+            clip_home = Path(args.clip_home) / case["output_dir"]
+            if not clip_home.exists():
+                raise Exception(f"Clip home {clip_home} does not exist")
+            upload_audio_clips(
+                clip_home,
+                source["name"],  # bucket
+                prefix="/".join(["products", datetime.now().strftime("%Y-%m-%d")]),
             )
 
     return ais, hmd, shp
