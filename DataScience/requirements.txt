@@ -248,7 +248,7 @@ pytz==2022.1
     # via
     #   babel
     #   pandas
-pyzmq==23.1.0
+pyzmq==23.2.0
     # via
     #   ipykernel
     #   jupyter-client
