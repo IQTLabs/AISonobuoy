@@ -1,0 +1,21 @@
+{
+    "sources": [
+        {
+            "type": "bucket",
+            "name": "aisonobuoy-pibuoy-v2",
+            "prefix": "compressed",
+            "label": "v2-mk2-3"
+        }
+    ],
+    "hydrophones": [
+        {
+            "type": "bucket",
+            "name": "aisonobuoy-pibuoy-v2",
+            "prefix": "compressed",
+            "label": "v2-mk2-3",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0
+        }
+    ]
+}
