@@ -30,9 +30,9 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.0
     # via nbconvert
-boto3==1.24.13
+boto3==1.24.16
     # via -r requirements.in
-botocore==1.27.13
+botocore==1.27.16
     # via
     #   boto3
     #   s3transfer
@@ -119,7 +119,7 @@ jupyter-core==4.10.0
     #   nbconvert
     #   nbformat
     #   notebook
-jupyter-server==1.17.1
+jupyter-server==1.18.0
     # via
     #   jupyterlab
     #   jupyterlab-server
@@ -171,7 +171,7 @@ notebook==6.4.12
     # via nbclassic
 notebook-shim==0.1.0
     # via nbclassic
-numpy==1.22.4
+numpy==1.23.0
     # via
     #   -r requirements.in
     #   folium
@@ -190,7 +190,7 @@ packaging==21.3
     #   matplotlib
     #   nbconvert
     #   pytest
-pandas==1.4.2
+pandas==1.4.3
     # via -r requirements.in
 pandocfilters==1.5.0
     # via nbconvert
