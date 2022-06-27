@@ -227,7 +227,7 @@ def get_hydrophone_metadata(inp_path):
         entry["sample_rate"] = int(entry["sample_rate"])
         entry["duration"] = float(entry["duration"])
         entry["name"] = name
-            
+
         start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
