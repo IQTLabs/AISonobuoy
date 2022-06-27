@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from datetime import datetime
 import logging
 import math
+import os
 from pathlib import Path
 import time
 
@@ -635,7 +636,7 @@ def main():
         if source["type"] != "file":
             raise Exception("Unexpected source type")
         gpx_path = Path(args.data_home) / source["name"]
-        gpx, vld_lambda, vld_varphi, vld_h, vld_t = parse_source_gpx_file(
+        gpx, vld_t, vld_lambda, vld_varphi, vld_h = parse_source_gpx_file(
             gpx_path, source
         )
 
@@ -648,6 +649,8 @@ def main():
 
             # Export audio with no source present, if it exists
             if src_max_stop_t < hyd_min_stop_t:
+                if not (Path(args.clip_home) / "no-boat").exists():
+                    os.makedirs(Path(args.clip_home) / "no-boat", exist_ok=True)
                 lu.export_audio_clip(
                     audio,
                     src_max_stop_t,

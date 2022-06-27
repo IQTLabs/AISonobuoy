@@ -29,11 +29,12 @@ logger.setLevel(logging.INFO)
 
 
 def download_buoy_objects(
-    download_path, bucket, prefix=None, force=False, decompress=False
+    download_path, bucket, prefix=None, label=None, force=False, decompress=False
 ):
-    """Download all objects, optionally identified by their prefix, in
-    an AWS S3 bucket to a local path. Check the ETag. Optionally
-    decompress and, if appropriate, move extracted files by type.
+    """Download all objects, optionally identified by their prefix and
+    label, in an AWS S3 bucket to a local path. Check the
+    ETag. Optionally decompress and, if appropriate, move extracted
+    files by type.
 
     Parameters
     ----------
@@ -43,6 +44,8 @@ def download_buoy_objects(
         The AWS S3 bucket
     prefix : str
         The AWS S3 prefix designating the object in the bucket
+    label : str
+        The label string contained in the object key
     force : boolean
         Force download
     decompress : boolean
@@ -66,8 +69,16 @@ def download_buoy_objects(
     for s3_object in s3_objects:
         key = s3_object["Key"]
 
+        # Skip objects for which the key does not contain the label
+        if label is not None and label not in key:
+            continue
+
         # Download the object if the corresponding file does not
         # exist, or forced
+        if prefix is not None:
+            os.makedirs(download_path / prefix, exist_ok=True)
+        else:
+            os.makedirs(download_path, exist_ok=True)
         if not (download_path / key).exists() or force:
             etag = s3.download_object(download_path, bucket, s3_object)
             logger.info(f"File {key} downloaded")
@@ -89,7 +100,7 @@ def download_buoy_objects(
 
             # Move files by type
             for name in names:
-                s = re.search(r"-([a-zA-Z]+)\.", name)
+                s = re.search(r"-([a-zA-Z_]+)\.", name)
                 if s is not None:
                     identifier = s.group(1)
                     copy_path = download_path / identifier
@@ -117,14 +128,17 @@ def load_ais_files(inp_path):
         AIS position samples with ship type
 
     """
+    if not inp_path.exists():
+        logger.error(f"Path {inp_path} does not exist")
+        return
     positions = []
     position_keys = set(["mmsi", "status", "timestamp", "speed", "lat", "lon"])
     types = {}
     type_keys = set(["mmsi", "shiptype"])
-    names = os.listdir(inp_path)
     n_lines = 0
     n_positions = 0
     n_mmsis = 0
+    names = os.listdir(inp_path)
     for name in names:
         with open(inp_path / name, "r", encoding='utf-8') as f:
             for line in f:
@@ -252,6 +266,9 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             raise Exception("More than one MMSI found in group")
         else:
             mmsi = mmsi[0]
+        if ais_g.shape[0] < 3:
+            logger.info(f"Group {group[0]} has fewer than three reports: skipping")
+            continue
 
         # Initialize SHP dictionary for tracking ship counts and
         # status intervals for each ship
@@ -343,11 +360,11 @@ def get_ais_dataframe(data_home, source, force=False, ais=None):
         AIS position samples with ship type
 
     """
-    ais_parquet = data_home / source["name"] / "ais.parquet"
+    ais_parquet = data_home / source["name"] / source["label"] / "ais.parquet"
     if not ais_parquet.exists() or force:
         if ais is None:
             logger.info("Loading all AIS files")
-            ais = load_ais_files(data_home / source["name"] / "ais")
+            ais = load_ais_files(data_home / source["name"] / source["label"] / "ais")
         logger.info("Writing AIS parquet")
         ais.to_parquet(ais_parquet)
     else:
@@ -375,11 +392,13 @@ def get_hmd_dataframe(data_home, hydrophone, force=False, hmd=None):
         Hydrophone metadata
 
     """
-    hmd_parquet = data_home / hydrophone["name"] / "hmd.parquet"
+    hmd_parquet = data_home / hydrophone["name"] / hydrophone["label"] / "hmd.parquet"
     if not hmd_parquet.exists() or force:
         if hmd is None:
             logger.info("Getting hydrophone metadata")
-            hmd = get_hydrophone_metadata(data_home / hydrophone["name"] / "hydrophone")
+            hmd = get_hydrophone_metadata(
+                data_home / hydrophone["name"] / hydrophone["label"] / "hydrophone"
+            )
         logger.info("Writing hydrophone metadata parquet")
         hmd.to_parquet(hmd_parquet)
     else:
@@ -411,7 +430,7 @@ def get_shp_dictionary(data_home, source, force=False, shp=None):
         interval
 
     """
-    shp_json = data_home / source["name"] / "shp.json"
+    shp_json = data_home / source["name"] / source["label"] / "shp.json"
     if shp_json.exists() and not force:
         logger.info("Reading SHP JSON")
         with open(shp_json, "r", encoding='utf-8') as f:
@@ -635,7 +654,7 @@ def export_audio_clips(
         row_1 = hmd.loc[hmd["start_timestamp"] < start_timestamp_1, hmd_columns].iloc[
             -1
         ]
-        inp_path = data_home / hydrophone["name"] / "hydrophone"
+        inp_path = data_home / hydrophone["name"] / hydrophone["label"] / "hydrophone"
         if row_0["start_timestamp"] == row_1["start_timestamp"]:
             # Get one audio file
             audio = lu.get_audio_file(inp_path / row_0["name"])
@@ -732,11 +751,11 @@ def main():
     collection_path = Path(args.data_home) / args.collection_filename
     collection = lu.load_json_file(collection_path)
 
-    # For now, assume a single source and hydrophone
-    if len(collection["sources"]) > 1 or len(collection["hydrophones"]) > 1:
-        raise Exception("Only one source and one hydrophone expected")
-    source = collection["sources"][0]
-    hydrophone = collection["hydrophones"][0]
+    # For now, assume strict source and hydrophone pairs
+    if len(collection["sources"]) != len(collection["hydrophones"]):
+        raise Exception("Strict source and hydrophone pairs expected")
+    sources = collection["sources"]
+    hydrophones = collection["hydrophones"]
 
     # Load file describing sampling cases
     sampling = lu.load_json_file(args.sampling_filepath)
@@ -746,59 +765,67 @@ def main():
         raise Exception("Only one sampling case expected")
     case = sampling[0]
 
-    # Download all source files
-    if source["name"] != hydrophone["name"] or source["prefix"] != hydrophone["prefix"]:
-        raise Exception(
-            "Source and hydrophone expected using the same prefix from the same bucket"
+    # Handle each source and hydrophone pair
+    for source, hydrophone in zip(sources, hydrophones):
+
+        # Download all source files
+        if (
+            source["name"] != hydrophone["name"]
+            or source["prefix"] != hydrophone["prefix"]
+            or source["label"] != hydrophone["label"]
+        ):
+            raise Exception(
+                "Source and hydrophone expected using the same name, prefix, and label"
+            )
+        download_buoy_objects(
+            data_home / source["name"] / source["label"],
+            source["name"],
+            source["prefix"],
+            source["label"],
+            force=args.force_download,
+            decompress=args.decompress,
         )
-    download_buoy_objects(
-        data_home / source["name"],
-        source["name"],
-        source["prefix"],
-        force=args.force_download,
-        decompress=args.decompress,
-    )
 
-    # Get AIS data, hydrophone metadata, and augment AIS data with
-    # distance, speed, and ship counts, if needed. Get corresponding
-    # SHP data.
-    ais = get_ais_dataframe(data_home, source, force=args.force_ais_parquet)
-    hmd = get_hmd_dataframe(data_home, hydrophone, force=args.force_hmd_parquet)
-    if "shipcount_uw" not in ais.columns or args.force_shp_json:
-        ais, hmd, shp = augment_ais_data(source, hydrophone, ais, hmd)
-        ais = get_ais_dataframe(data_home, source, force=True, ais=ais)
-        shp = get_shp_dictionary(data_home, source, force=True, shp=shp)
+        # Get AIS data, hydrophone metadata, and augment AIS data with
+        # distance, speed, and ship counts, if needed. Get corresponding
+        # SHP data.
+        ais = get_ais_dataframe(data_home, source, force=args.force_ais_parquet)
+        hmd = get_hmd_dataframe(data_home, hydrophone, force=args.force_hmd_parquet)
+        if "shipcount_uw" not in ais.columns or args.force_shp_json:
+            ais, hmd, shp = augment_ais_data(source, hydrophone, ais, hmd)
+            ais = get_ais_dataframe(data_home, source, force=True, ais=ais)
+            shp = get_shp_dictionary(data_home, source, force=True, shp=shp)
 
-    else:
-        shp = get_shp_dictionary(data_home, source)
+        else:
+            shp = get_shp_dictionary(data_home, source)
 
-    # Plot ship status and hydrophone recording intervals
-    if args.plot_intervals:
-        plot_intervals(shp, hmd)
+        # Plot ship status and hydrophone recording intervals
+        if args.plot_intervals:
+            plot_intervals(shp, hmd)
 
-    # Plot histogram of distance for times at which at most a
-    # specified maximum number of ships are reporting their status as
-    # underway.
-    if args.plot_histogram:
-        plot_histogram(ais, case["max_n_ships"])
+        # Plot histogram of distance for times at which at most a
+        # specified maximum number of ships are reporting their status as
+        # underway.
+        if args.plot_histogram:
+            plot_histogram(ais, case["max_n_ships"])
 
-    # Export audio clips from AIS intervals during which two ships are
-    # underway. Label the audio clip using the attributes of the ship
-    # closest to the hydrophone.
-    if args.export_clips:
-        clip_home = Path(args.clip_home) / case["output_dir"]
-        if not clip_home.exists():
-            clip_home.mkdir(parents=True)
-        export_audio_clips(
-            ais,
-            hmd,
-            shp,
-            data_home,
-            hydrophone,
-            clip_home,
-            case["max_n_ships"],
-            case["max_distance"],
-        )
+        # Export audio clips from AIS intervals during which two ships are
+        # underway. Label the audio clip using the attributes of the ship
+        # closest to the hydrophone.
+        if args.export_clips:
+            clip_home = Path(args.clip_home) / case["output_dir"]
+            if not clip_home.exists():
+                clip_home.mkdir(parents=True)
+            export_audio_clips(
+                ais,
+                hmd,
+                shp,
+                data_home,
+                hydrophone,
+                clip_home,
+                case["max_n_ships"],
+                case["max_distance"],
+            )
 
     return ais, hmd, shp
 
