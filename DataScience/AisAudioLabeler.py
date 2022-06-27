@@ -111,7 +111,7 @@ def download_buoy_objects(
                     shutil.move(str(download_path / name), str(copy_path / name))
 
 
-def load_ais_files(inp_path):
+def load_ais_files(inp_path, speed_threshold=5.0):
     """Load all AIS files residing on the input path containing
     required keys.
 
@@ -122,6 +122,9 @@ def load_ais_files(inp_path):
     ----------
     inp_path : pathlib.Path()
         Path to directory containing JSON files
+    speed_threshold : float
+        Threshold below which the ship is not under way using engine
+        [knots]
 
     Returns
     -------
@@ -145,6 +148,37 @@ def load_ais_files(inp_path):
             for line in f:
                 n_lines += 1
                 sample = json.loads(line)
+
+                # Handle relevant AIS message types
+                # See: https://www.e-navigation.nl/system-messages or
+                # docs/ais directory
+                if sample["type"] == 1:
+                    # Scheduled position report; (Class A shipborne
+                    # mobile equipment)
+                    pass
+                elif sample["type"] == 3:
+                    # Special position report, response to
+                    # interrogation; (Class A shipborne mobile
+                    # equipment)
+                    pass
+                elif sample["type"] == 5:
+                    # Scheduled static and voyage related vessel data
+                    # report; (Class A shipborne mobile equipment)
+                    pass
+                elif sample["type"] == 18:
+                    # Standard position report for Class B shipborne
+                    # mobile equipment to be used instead of Message
+                    # 1, 2 or 3
+                    if float(sample["speed"]) < speed_threshold:
+                        sample["status"] = "NotUnderWayUsingEngine"
+                    else:
+                        sample["status"] = "UnderWayUsingEngine"
+                elif sample["type"] == 24:
+                    # Additionan data assigned to a MMSI Part A: Name
+                    # Part B: Static Data
+                    sample["shiptype"] = "ClassB"
+
+                # Collect either position or static data
                 if position_keys.issubset(set(sample.keys())):
                     # Collect samples containing position
                     n_positions += 1
