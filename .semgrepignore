@@ -1,1 +1,4 @@
 .github/*
+Hydrophone/Arduino/boat-detector_inferencing/src/edge-impulse-sdk/*
+FeatherBuoy/arduino-m0-lora/libraries/Adafruit_GFX_Library/*
+

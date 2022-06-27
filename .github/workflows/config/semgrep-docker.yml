@@ -524,7 +524,7 @@ rules:
       ...
 
       '
-  severity: ERROR
+  severity: WARNING
 - id: last-user-is-root
   languages:
   - dockerfile
@@ -638,4 +638,4 @@ rules:
       - pattern: FROM $IMAGE
       - pattern: FROM $IMAGE:$VERSION
       - pattern-not-inside: FROM $IMAGE:$VERSION@$HASH
-  severity: ERROR
+  severity: WARNING

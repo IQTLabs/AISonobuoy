@@ -120,7 +120,7 @@ jobs:
         cd ${GITHUB_WORKSPACE}/ && \
         semgrep --config=.github/workflows/config/semgrep-c.yml  --json -o /home/runner/reports/semgrep.out \
         --severity ERROR ./ && \
-        echo "## Validation Issues Found (c) :snake: " >> /home/runner/reports/c-msg && \
+        echo "## Validation Issues Found (c) :no_mouth: " >> /home/runner/reports/c-msg && \
         cat /home/runner/reports/semgrep.out | jq -r --arg ws "$GITHUB_WORKSPACE" --arg url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA" '.results[] | "**File:** [\(.path | sub($ws; "."; "g"))](\(.path | sub($ws; $url; "g"))#L\(.start.line)) \n**Line Number:** \(.start.line) \n**Statement(s):** \n``` \n\(.extra.lines) \n``` \n**Rule:** \n\(.extra.message)\n\n"' >> /home/runner/reports/python-msg && \
         echo "::set-output name=c-found-count::$(cat /home/runner/reports/semgrep.out | jq '.results | length')"
     - name: Fail if found
@@ -145,52 +145,6 @@ jobs:
       with:
         name: semgrep-c-report
         path: /home/runner/reports/semgrep.out
-  bash_scan:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        ref: ${{ github.event.pull_request.head.ref }}
-    - name: scan
-      id: bash_scan
-      run: |
-        export DEBIAN_FRONTEND=noninteractive && \
-        echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections && \
-        sudo apt-get update && \
-        sudo apt install jq && \
-        python3 -m pip install --upgrade pip && \
-        python3 -m pip install semgrep && \
-        python3 -m pip install --upgrade urllib3 && \
-        mkdir -p /home/runner/reports/ && \
-        cd ${GITHUB_WORKSPACE}/ && \
-        semgrep --config=.github/workflows/config/semgrep-c.yml  --json -o /home/runner/reports/semgrep.out \
-        --severity ERROR ./ && \
-        echo "## Validation Issues Found (bash) :snake: " >> /home/runner/reports/bash-msg && \
-        cat /home/runner/reports/semgrep.out | jq -r --arg ws "$GITHUB_WORKSPACE" --arg url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA" '.results[] | "**File:** [\(.path | sub($ws; "."; "g"))](\(.path | sub($ws; $url; "g"))#L\(.start.line)) \n**Line Number:** \(.start.line) \n**Statement(s):** \n``` \n\(.extra.lines) \n``` \n**Rule:** \n\(.extra.message)\n\n"' >> /home/runner/reports/python-msg && \
-        echo "::set-output name=bash-found-count::$(cat /home/runner/reports/semgrep.out | jq '.results | length')"
-    - name: Fail if found
-      if: steps.bash_scan.outputs.bash-found-count > 0
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
-        script: |
-          const fs = require('fs')
-          var msg = fs.readFileSync('/home/runner/reports/bash-msg', 'utf8');
-          console.log('${{steps.bash_scan.outputs.bash-found-count}} errors found in bash files');
-          github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: msg
-            });
-          core.setFailed('Semgrep found errors in bash files. Please check the uploaded report');
-    - name: Upload scan reports
-      uses: actions/upload-artifact@v2.3.1
-      if: failure()
-      with:
-        name: semgrep-bash-report
-        path: /home/runner/reports/semgrep.out
   javascript_scan:
     runs-on: ubuntu-latest
     steps:
@@ -210,9 +164,9 @@ jobs:
         python3 -m pip install --upgrade urllib3 && \
         mkdir -p /home/runner/reports/ && \
         cd ${GITHUB_WORKSPACE}/ && \
-        semgrep --config=.github/workflows/config/semgrep-c.yml  --json -o /home/runner/reports/semgrep.out \
+        semgrep --config=.github/workflows/config/semgrep-javascript.yml  --json -o /home/runner/reports/semgrep.out \
         --severity ERROR ./ && \
-        echo "## Validation Issues Found (javascript) :snake: " >> /home/runner/reports/javascript-msg && \
+        echo "## Validation Issues Found (javascript) :atom_symbol: " >> /home/runner/reports/javascript-msg && \
         cat /home/runner/reports/semgrep.out | jq -r --arg ws "$GITHUB_WORKSPACE" --arg url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA" '.results[] | "**File:** [\(.path | sub($ws; "."; "g"))](\(.path | sub($ws; $url; "g"))#L\(.start.line)) \n**Line Number:** \(.start.line) \n**Statement(s):** \n``` \n\(.extra.lines) \n``` \n**Rule:** \n\(.extra.message)\n\n"' >> /home/runner/reports/python-msg && \
         echo "::set-output name=javascript-found-count::$(cat /home/runner/reports/semgrep.out | jq '.results | length')"
     - name: Fail if found
