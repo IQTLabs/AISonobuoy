@@ -45,7 +45,7 @@ def load_json_file(inp_path):
 
     """
     logger.info(f"Loading {inp_path}")
-    with open(inp_path, "r") as f:
+    with open(inp_path, "r", encoding='utf-8') as f:
         data = json.load(f)
     return data
 

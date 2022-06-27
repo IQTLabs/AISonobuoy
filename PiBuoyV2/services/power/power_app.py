@@ -31,7 +31,7 @@ class Power:
     def write_data(self, data):
         timestamp = self.time_sec()
         tmp_filename = f'{self.data_dir}/.{self.hostname}-{timestamp}-power.json'
-        with open(tmp_filename, 'a') as f:
+        with open(tmp_filename, 'a', encoding='utf-8') as f:
             for key in data.keys():
                 record = {"target":key, "datapoints": data[key]}
                 f.write(f'{json.dumps(record)}\n')
@@ -96,7 +96,8 @@ class Power:
 
 
     def poll_wait(self):
-        time.sleep(60)
+        sleep_time = 60
+        time.sleep(sleep_time)
 
 
     def main(self, get_pijuice=None, poll_wait=None):
@@ -121,7 +122,8 @@ class Power:
         data = self.init_data()
 
         while not os.path.exists(self.root_path('dev/i2c-1')):
-            time.sleep(0.1)
+            sleep_time = 0.1
+            time.sleep(sleep_time)
 
         pj = pijuice.PiJuice(1, 0x14)
 

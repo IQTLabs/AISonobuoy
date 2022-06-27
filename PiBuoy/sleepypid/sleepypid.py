@@ -31,12 +31,12 @@ class SerialException(Exception):
 
 def get_temp():
     """Return CPU temperature."""
-    return float(open('/sys/class/thermal/thermal_zone0/temp').read()) / 1e3
+    return float(open('/sys/class/thermal/thermal_zone0/temp', encoding='utf-8').read()) / 1e3
 
 
 def get_uptime():
     """Return uptime in seconds."""
-    with open('/proc/uptime') as uptime:
+    with open('/proc/uptime', encoding='utf-8') as uptime:
         return float(uptime.read().split()[0])
 
 
@@ -153,7 +153,7 @@ def log_grafana(grafana, grafana_path, obj, write_results):
     if write_results:
         hostname = socket.gethostname()
         os.makedirs(grafana_path, exist_ok=True)
-        with open(f'{grafana_path}/{hostname}-{timestamp}-sleepypi.json', 'w') as f:
+        with open(f'{grafana_path}/{hostname}-{timestamp}-sleepypi.json', 'w', encoding='utf-8') as f:
             for key in sensor_data.keys():
                 record = {"target":key, "datapoints": sensor_data[key]}
                 f.write(f'{json.dumps(record)}\n')
@@ -179,7 +179,7 @@ def log_json(log, grafana, grafana_path, obj, rollover=900, iterations=0):
         'uptime': get_uptime(),
         'cputempc': get_temp(),
     })
-    with open(log_path, 'a') as logfile:
+    with open(log_path, 'a', encoding='utf-8') as logfile:
         logfile.write(json.dumps(obj) + '\n')
 
     write_results = False
@@ -309,7 +309,7 @@ def parse_args():
 
 def override_args(main_args):
     if main_args.argjson:
-        with open(main_args.argjson) as f:
+        with open(main_args.argjson, encoding='utf-8') as f:
             argjson = json.loads(f.read())
             for k, v in argjson.items():
                 if hasattr(main_args, k):

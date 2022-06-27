@@ -144,7 +144,7 @@ def load_ais_files(inp_path, speed_threshold=5.0):
     n_mmsis = 0
     names = os.listdir(inp_path)
     for name in names:
-        with open(inp_path / name, "r") as f:
+        with open(inp_path / name, "r", encoding='utf-8') as f:
             for line in f:
                 n_lines += 1
                 sample = json.loads(line)
@@ -220,16 +220,15 @@ def get_hydrophone_metadata(inp_path):
         entry = lu.probe_audio_file(inp_path / name)
         if not req_keys.issubset(set(entry.keys())):
             continue
+        # Identify start timestamp from audio file name
+        s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
+        if s is None:
+            continue
         entry["sample_rate"] = int(entry["sample_rate"])
         entry["duration"] = float(entry["duration"])
         entry["name"] = name
 
-        # Identify start timestamp from audio file name
-        s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
-        if s is not None:
-            start_timestamp = s.group(1)
-        else:
-            start_timestamp = s.group(1)
+        start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
     hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
@@ -334,8 +333,6 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
             if status in ["UnderWayUsingEngine"]:
                 timestamp_diff = 10  # [s]
-            elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-                timestamp_diff = 180  # [s]
             else:
                 timestamp_diff = 180  # [s]
 
@@ -357,14 +354,9 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
                 # Update ship counts
-                if status in ["UnderWayUsingEngine"]:
+                if status in ["UnderWayUsingEngine", "AtAnchor", "Moored", "NotUnderCommand"]:
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
-                        lambda x: x.append(mmsi)
-                    )
-                elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
-                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
 
@@ -476,13 +468,13 @@ def get_shp_dictionary(data_home, source, force=False, shp=None):
     shp_json = data_home / source["name"] / source["label"] / "shp.json"
     if shp_json.exists() and not force:
         logger.info("Reading SHP JSON")
-        with open(shp_json, "r") as f:
+        with open(shp_json, "r", encoding='utf-8') as f:
             shp = json.load(f)
     else:
         if shp is None:
             raise Exception("Must provide SHP dataframe")
         logger.info("Writing SHP JSON")
-        with open(shp_json, "w") as f:
+        with open(shp_json, "w", encoding='utf-8') as f:
             json.dump(shp, f)
     return shp
 
