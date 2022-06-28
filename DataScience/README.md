@@ -1,7 +1,7 @@
-# Datascience
+# DataScience
 
 The DataScience directory contains Python modules and Jupyter
-Notebooks for creating labeled audio files from simultaneious audio
+Notebooks for creating labeled audio files from simultaneous audio
 recordings and GPS or AIS data collections.
 
 The GpxAudioLabeler module provides methods and a command-line
@@ -16,7 +16,8 @@ AWS S3.
 
 ## GpxAudioLabeler
 
-The GpxAudioLabeler provide methods and a command-line interface for:
+The GpxAudioLabeler module provides methods and a command-line
+interface for:
 
 * Parsing a GPX file produced with a specified structure
 
@@ -26,7 +27,8 @@ The GpxAudioLabeler provide methods and a command-line interface for:
 * Plot source track and label the intersection of the heading, heading
   first derivative, distance, and speed groups
 
-The command line interface has the following usage and optional arguments:
+The command line interface has the following usage and optional
+arguments:
 
     Usage: GpxAudioLabeler.py [-h] [-D DATA_HOME] [-c COLLECTION_FILENAME] [-s SAMPLING_FILEPATH] [-C CLIP_HOME]
                               [-p] [-P]
@@ -67,6 +69,7 @@ Format:
         ],
         "hydrophones": [
             {
+                "type": "file",
                 "name": "unit.wav",
                 "lat": 0.0,
                 "lon": 0.0,
@@ -88,14 +91,14 @@ If "clusters", the samples are all placed in the specified output
 directory, and labeled with the start and stop times, and the
 distance, heading, heading rate, and speed cluster averages.
 
-If "conditionals", the samples are all placed in the output
-directory and labeled with the start and stop times, and the
-distance, heading, heading rate, and speed limits. Multiple
-entries with the "conditionals" method will result in samples in a
-set of labeled directories.
+If "conditionals", the samples are all placed in the output directory
+and labeled with the start and stop times, and the distance, heading,
+heading rate, and speed limits. Multiple entries with the
+"conditionals" method will result in samples in a set of labeled
+directories.
 
-The maximum time delta between positions used to define a
-contiguous audio sample is in seconds.
+The maximum time delta between positions used to define a contiguous
+audio sample is in seconds.
 
 Format:
 
@@ -156,17 +159,74 @@ interface for:
   reporting their status as underway, and labeling the audio clip
   using the attributes of the ship closest to the hydrophone
 
+* Uploading all audio clips found on the upload path to a bucket with
+  a prefix
+
 * Plotting ship status and hydrophone recording intervals
 
 * Plotting histogram of distance for times at which at most a
   specified maximum number of ships are reporting their status as
   underway
 
-The command line interface has the following usage and optional arguments:
+The [Automatic Identification System
+(AIS)](https://www.navcen.uscg.gov/automatic-identification-system-overview)
+is a ship-to-ship collision avoidance system that allows for
+communication of position, speed, and other ship data via a VHF
+virtual data link (VDL) network. Mariners worldwide use AIS to ensure
+safety at sea.
+
+[AIS message reporting
+requirements](https://www.navcen.uscg.gov/ais-requirements) depend on
+to which of two vessel classes, A and B, a vessel belongs. Class A
+vessels meet at least one of the following requirements:
+
+* A self-propelled vessel of 65 feet or more in length, engaged in
+  commercial service
+
+* A towing vessel of 26 feet or more in length and more than 600
+  horsepower, engaged in commercial service
+
+* A self-propelled vessel that is certificated to carry more than 150
+  passengers
+
+* A self-propelled vessel engaged in dredging operations in or near a
+  commercial channel or shipping fairway
+
+* A self-propelled vessel engaged in the movement of –
+
+  + Certain dangerous cargo, or
+
+  + Flammable or combustible liquid cargo in bulk
+
+Class B vessels meet at least one of the following requirements:
+
+* Fishing industry vessels
+
+* Vessels certificated to carry less than 150 passengers and that–
+
+  + Do not operate in a Vessel Traffic Service (VTS) or Vessel
+  Movement Reporting System (VMRS) area
+
+  + Do not operate at speeds in excess of 14 knots
+
+* Vessels engaged in dredging operations not in or near a commercial
+  channel or shipping fairway
+
+AIS messages include [position and static
+data](https://www.navcen.uscg.gov/ais-messages) reports. The
+AisAudioLabeler module processes Class A position [Message IDs 1, 2,
+and 3](https://www.navcen.uscg.gov/ais-class-a-reports) and static
+data [Message ID
+5](https://www.navcen.uscg.gov/ais-class-a-static-voyage-message-5)
+reports, and Class B position and static data [Message ID 18, and
+24](https://www.navcen.uscg.gov/ais-class-b-reports) reports.
+
+The command line interface has the following usage and optional
+arguments:
 
     Usage: AisAudioLabeler.py [-h] [-D DATA_HOME] [-c COLLECTION_FILENAME] [-s SAMPLING_FILEPATH] [-C CLIP_HOME]
                               [-d] [--force-download] [--force-ais-parquet] [--force-hmd-parquet] [--force-shp-json]
-                              [--export-clips] [--plot-intervals] [--plot-histogram]
+                              [--export-clips] [--upload-audio-clips] [--plot-intervals] [--plot-histogram]
 
     Optional arguments:
       -h, --help            Show this help message and exit
@@ -184,6 +244,7 @@ The command line interface has the following usage and optional arguments:
       --force-hmd-parquet   Force hydrophone metadata parquet creation
       --force-shp-json      Force SHP JSON creation
       --export-clips        Do export audio clips
+      --upload-audio-clips  Do upload audio clips
       --plot-intervals      Do plot ship status and hydrophone recording intervals
       --plot-histogram      Do plot ship distance from hydrophone histogram
 
@@ -202,7 +263,8 @@ Format:
             {
                 "type": "bucket",
                 "name": "aisonobuoy-pibuoy-v2",
-                "prefix": "compressed"
+                "prefix": "compressed",
+                "label": "v2-mk2-3"
             }
         ],
         "hydrophones": [
@@ -210,6 +272,7 @@ Format:
                 "type": "bucket",
                 "name": "aisonobuoy-pibuoy-v2",
                 "prefix": "compressed",
+                "label": "v2-mk2-3",
                 "lat": 0.0,
                 "lon": 0.0,
                 "ele": 0.0
@@ -223,7 +286,7 @@ The sample JSON document contains entries in the following format
 which describe the method, and its parameters, used in creating
 labeled samples from the collection.
 
-The distance is in meters.
+The maximum distance is in meters.
 
 Format:
 
