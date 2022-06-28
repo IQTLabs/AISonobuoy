@@ -18,12 +18,9 @@ AWS S3.
 
 The GpxAudioLabeler module provides methods and a command-line
 interface for:
-
 * Parsing a GPX file produced with a specified structure
-
 * Exporting audio clips by heading, heading first derivative,
   distance, and speed clusters or limits
-
 * Plot source track and label the intersection of the heading, heading
   first derivative, distance, and speed groups
 
@@ -132,10 +129,8 @@ Format:
     ]
 
 Where:
-
 * `delta_t_max` specifies the maximum time delta between positions in
   seconds used to define a contiguous audio sample
-
 * `n_clips_max` specifies the maximum number of clips exported in each
   segment
 
@@ -143,27 +138,19 @@ Where:
 
 The AisAudioLabeler module provides methods and a command-line
 interface for:
-
 * Downloading, validating, and decompressing all objects, optionally
   identified by their prefix, in an AWS S3 bucket to a local path
-
 * Loading all AIS files
-
 * Probing all audio files using ffprobe
-
 * Augmenting AIS data with distance from the hydrophone, speed, and
   ship counts when underway, or not underway
-
 * Exporting audio clips from AIS intervals during which a specified
   maximum number of ships at a specified maximum distance are
   reporting their status as underway, and labeling the audio clip
   using the attributes of the ship closest to the hydrophone
-
 * Uploading all audio clips found on the upload path to a bucket with
   a prefix
-
 * Plotting ship status and hydrophone recording intervals
-
 * Plotting histogram of distance for times at which at most a
   specified maximum number of ships are reporting their status as
   underway
@@ -179,36 +166,24 @@ safety at sea.
 requirements](https://www.navcen.uscg.gov/ais-requirements) depend on
 to which of two vessel classes, A and B, a vessel belongs. Class A
 vessels meet at least one of the following requirements:
-
 * A self-propelled vessel of 65 feet or more in length, engaged in
   commercial service
-
 * A towing vessel of 26 feet or more in length and more than 600
   horsepower, engaged in commercial service
-
 * A self-propelled vessel that is certificated to carry more than 150
   passengers
-
 * A self-propelled vessel engaged in dredging operations in or near a
   commercial channel or shipping fairway
-
 * A self-propelled vessel engaged in the movement of –
-
   + Certain dangerous cargo, or
-
   + Flammable or combustible liquid cargo in bulk
 
 Class B vessels meet at least one of the following requirements:
-
 * Fishing industry vessels
-
 * Vessels certificated to carry less than 150 passengers and that–
-
   + Do not operate in a Vessel Traffic Service (VTS) or Vessel
   Movement Reporting System (VMRS) area
-
   + Do not operate at speeds in excess of 14 knots
-
 * Vessels engaged in dredging operations not in or near a commercial
   channel or shipping fairway
 
@@ -300,30 +275,23 @@ Format:
     ]
 
 Where:
-
 * `max_n_ships` specifies the maximum number of ships underway
   simultaneously
-
 * `max_distance` specifies the maximum distance of ships underway
   simultaneously from the hydrophone
 
 ## LabelerUtilites
 
 The LabelerUtilites module provides methods for:
-
 * Computing the geocentric position given geodetic longitude and
   latitude, and elevation
-
 * Computing geocentric east, north, and zenith unit vectors at a given
   geodetic longitude and latitude, and the corresponding orthogonal
   transformation matrix from geocentric to topocentric coordinates
-
 * Computing the topocentric position and velocity of the source
   relative to the hydrophone, and corresponding heading, heading first
   derivative, distance, and speed
-
 * Computing clusters of distance, heading, heading first derivative,
   and speed
-
 * Plotting source track, and histograms of source distance, heading,
   heading first derivative, and speed
