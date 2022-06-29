@@ -328,7 +328,14 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
             if status in ["UnderWayUsingEngine"]:
                 timestamp_diff = 10  # [s]
-            else:
+            elif status in [
+                "NotUnderWayUsingEngine",
+                "AtAnchor",
+                "Moored",
+                "NotUnderCommand",
+            ]:  # Be explicit
+                timestamp_diff = 180  # [s]
+            else:  # Allow other status values to have a different default
                 timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
@@ -348,15 +355,22 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 # Collect status intervals for each ship
                 shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
-                # Update ship counts
-                if status in [
-                    "UnderWayUsingEngine",
+                # Update ship counts ...
+                if status in ["UnderWayUsingEngine"]:
+                    # ... when underway
+                    shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
+                    shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
+                        lambda x: x.append(mmsi)
+                    )
+                elif status in [
+                    "NotUnderWayUsingEngine",
                     "AtAnchor",
                     "Moored",
                     "NotUnderCommand",
-                ]:
-                    shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
-                    shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
+                ]:  # Be explicit
+                    # ... when not underway
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
 
