@@ -212,17 +212,20 @@ def get_hydrophone_metadata(inp_path):
         entry = lu.probe_audio_file(inp_path / name)
         if not req_keys.issubset(set(entry.keys())):
             continue
+
         # Identify start timestamp from audio file name
         s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
         if s is None:
             continue
+        start_timestamp = s.group(1)
+
+        # All values present, so convert and append
         entry["sample_rate"] = int(entry["sample_rate"])
         entry["duration"] = float(entry["duration"])
         entry["name"] = name
-
-        start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
+
     hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
 
     return hmd
