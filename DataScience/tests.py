@@ -2,35 +2,36 @@ import pytest
 import os
 import json
 import pandas as pd
-import DataScience.LabelerUtilities as lu
-import DataScience.AisAudioLabeler as aal
+import LabelerUtilities as lu
+import AisAudioLabeler as aal
 from pathlib import Path
 
 
 @pytest.fixture
 def ais_test_data():
-    ais_parquet_path = f"{os.getcwd()}/test-data/ais.parquet"
+    print(os.getcwd())
+    ais_parquet_path = f"{os.getcwd()}/test-data/v1-test/ais.parquet"
     ais = pd.read_parquet(ais_parquet_path)
     return ais
 
 
 @pytest.fixture
 def ais_forced_status_test_data():
-    ais_parquet_path = f"{os.getcwd()}/test-data/forced_status_ais.parquet"
+    ais_parquet_path = f"{os.getcwd()}/test-data/v1-test/forced_status_ais.parquet"
     ais = pd.read_parquet(ais_parquet_path)
     return ais
 
 
 @pytest.fixture
 def hmd_test_data():
-    hmd_parquet_path = f"{os.getcwd()}/test-data/hmd.parquet"
+    hmd_parquet_path = f"{os.getcwd()}/test-data/v1-test/hmd.parquet"
     hmd = pd.read_parquet(hmd_parquet_path)
     return hmd
 
 
 @pytest.fixture
 def shp_test_data():
-    shp_json_path = f"{os.getcwd()}/test-data/shp.json"
+    shp_json_path = f"{os.getcwd()}/test-data/v1-test/shp.json"
     with open(shp_json_path, "r") as f:
         shp = json.load(f)
     return shp
