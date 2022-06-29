@@ -75,7 +75,7 @@ class TestAisAudioLabeler:
         self, source, hydrophone, ais_test_data, hmd_test_data, shp_test_data
     ):
         ais, hmd, _shp = aal.augment_ais_data(
-            source, hydrophone, ais_test_data, hmd_test_data
+            source, hydrophone, ais_test_data.copy(), hmd_test_data.copy()
         )
 
         # TODO: Understand why this is needed: int64 conversion?
@@ -92,7 +92,7 @@ class TestAisAudioLabeler:
         self, source, hydrophone, ais_forced_status_test_data, hmd_test_data
     ):
         ais, hmd, shp = aal.augment_ais_data(
-            source, hydrophone, ais_forced_status_test_data, hmd_test_data
+            source, hydrophone, ais_forced_status_test_data.copy(), hmd_test_data.copy()
         )
         shp_expected = {
             "17261435f7264540b3f640b0cb95b0b5": {
