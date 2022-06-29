@@ -9,7 +9,6 @@ from pathlib import Path
 
 @pytest.fixture
 def ais_test_data():
-    print(os.getcwd())
     ais_parquet_path = f"{os.getcwd()}/test-data/v1-test/ais.parquet"
     ais = pd.read_parquet(ais_parquet_path)
     return ais
