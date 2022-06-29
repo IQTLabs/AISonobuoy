@@ -3,7 +3,14 @@
         {
             "type": "bucket",
             "name": "test-data",
-            "prefix": "compressed"
+            "prefix": "compressed",
+            "label": "v1-test"
+        },
+        {
+            "type": "bucket",
+            "name": "test-data",
+            "prefix": "compressed",
+            "label": "v1-test"
         }
     ],
     "hydrophones": [
@@ -11,6 +18,16 @@
             "type": "bucket",
             "name": "test-data",
             "prefix": "compressed",
+            "label": "v1-test",
+            "lat": 0.0,
+            "lon": 0.0,
+            "ele": 0.0
+        },
+        {
+            "type": "bucket",
+            "name": "test-data",
+            "prefix": "compressed",
+            "label": "v1-test",
             "lat": 0.0,
             "lon": 0.0,
             "ele": 0.0
