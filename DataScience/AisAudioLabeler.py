@@ -134,7 +134,7 @@ def load_ais_files(inp_path, speed_threshold=5.0):
     """
     if not inp_path.exists():
         logger.error(f"Path {inp_path} does not exist")
-        return
+        return None
     positions = []
     position_keys = set(["mmsi", "status", "timestamp", "speed", "lat", "lon"])
     types = {}
@@ -144,38 +144,30 @@ def load_ais_files(inp_path, speed_threshold=5.0):
     n_mmsis = 0
     names = os.listdir(inp_path)
     for name in names:
-        with open(inp_path / name, "r", encoding='utf-8') as f:
+        with open(inp_path / name, "r", encoding="utf-8") as f:
             for line in f:
                 n_lines += 1
                 sample = json.loads(line)
 
                 # Handle relevant AIS message types
-                # See: https://www.e-navigation.nl/system-messages or
-                # docs/ais directory
-                if sample["type"] == 1:
-                    # Scheduled position report; (Class A shipborne
-                    # mobile equipment)
+                # See: https://www.navcen.uscg.gov/ais-messages
+                if sample["type"] == 1 or sample["type"] == 2 or sample["type"] == 3:
+                    # Class A Position Report
                     pass
-                elif sample["type"] == 3:
-                    # Special position report, response to
-                    # interrogation; (Class A shipborne mobile
-                    # equipment)
-                    pass
+
                 elif sample["type"] == 5:
-                    # Scheduled static and voyage related vessel data
-                    # report; (Class A shipborne mobile equipment)
+                    # Class A Ship Static and Voyage Related Data
                     pass
+
                 elif sample["type"] == 18:
-                    # Standard position report for Class B shipborne
-                    # mobile equipment to be used instead of Message
-                    # 1, 2 or 3
+                    # Class B Standard Equipment Position Report
                     if float(sample["speed"]) < speed_threshold:
                         sample["status"] = "NotUnderWayUsingEngine"
                     else:
                         sample["status"] = "UnderWayUsingEngine"
+
                 elif sample["type"] == 24:
-                    # Additionan data assigned to a MMSI Part A: Name
-                    # Part B: Static Data
+                    # Class B Static Data Report
                     sample["shiptype"] = "ClassB"
 
                 # Collect either position or static data
@@ -220,17 +212,20 @@ def get_hydrophone_metadata(inp_path):
         entry = lu.probe_audio_file(inp_path / name)
         if not req_keys.issubset(set(entry.keys())):
             continue
+
         # Identify start timestamp from audio file name
         s = re.search(r"-([0-9]+)-[a-zA-Z]+\.", name)
         if s is None:
             continue
+        start_timestamp = s.group(1)
+
+        # All values present, so convert and append
         entry["sample_rate"] = int(entry["sample_rate"])
         entry["duration"] = float(entry["duration"])
         entry["name"] = name
-
-        start_timestamp = s.group(1)
         entry["start_timestamp"] = int(start_timestamp)
         entries.append(entry)
+
     hmd = pd.DataFrame(entries).sort_values(by=["start_timestamp"], ignore_index=True)
 
     return hmd
@@ -333,7 +328,14 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
             if status in ["UnderWayUsingEngine"]:
                 timestamp_diff = 10  # [s]
-            else:
+            elif status in [
+                "NotUnderWayUsingEngine",
+                "AtAnchor",
+                "Moored",
+                "NotUnderCommand",
+            ]:  # Be explicit
+                timestamp_diff = 180  # [s]
+            else:  # Allow other status values to have a different default
                 timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
@@ -353,10 +355,22 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 # Collect status intervals for each ship
                 shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
-                # Update ship counts
-                if status in ["UnderWayUsingEngine", "AtAnchor", "Moored", "NotUnderCommand"]:
+                # Update ship counts ...
+                if status in ["UnderWayUsingEngine"]:
+                    # ... when underway
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
+                        lambda x: x.append(mmsi)
+                    )
+                elif status in [
+                    "NotUnderWayUsingEngine",
+                    "AtAnchor",
+                    "Moored",
+                    "NotUnderCommand",
+                ]:  # Be explicit
+                    # ... when not underway
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
 
@@ -468,13 +482,13 @@ def get_shp_dictionary(data_home, source, force=False, shp=None):
     shp_json = data_home / source["name"] / source["label"] / "shp.json"
     if shp_json.exists() and not force:
         logger.info("Reading SHP JSON")
-        with open(shp_json, "r", encoding='utf-8') as f:
+        with open(shp_json, "r", encoding="utf-8") as f:
             shp = json.load(f)
     else:
         if shp is None:
             raise Exception("Must provide SHP dataframe")
         logger.info("Writing SHP JSON")
-        with open(shp_json, "w", encoding='utf-8') as f:
+        with open(shp_json, "w", encoding="utf-8") as f:
             json.dump(shp, f)
     return shp
 
