@@ -129,7 +129,7 @@ jupyterlab==3.4.3
     # via -r requirements.in
 jupyterlab-pygments==0.2.2
     # via nbconvert
-jupyterlab-server==2.14.0
+jupyterlab-server==2.15.0
     # via jupyterlab
 kiwisolver==1.4.3
     # via matplotlib
