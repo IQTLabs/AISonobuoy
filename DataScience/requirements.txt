@@ -13,7 +13,7 @@ appnope==0.1.3
 argon2-cffi==21.3.0
     # via
     #   jupyter-server
-    #   notebook
+    #   nbclassic
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
 asttokens==2.0.5
@@ -30,9 +30,9 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.1
     # via nbconvert
-boto3==1.24.21
+boto3==1.24.23
     # via -r requirements.in
-botocore==1.27.21
+botocore==1.27.23
     # via
     #   boto3
     #   s3transfer
@@ -62,7 +62,7 @@ fastjsonschema==2.15.3
     # via nbformat
 folium==0.12.1.post1
     # via -r requirements.in
-fonttools==4.33.3
+fonttools==4.34.0
     # via matplotlib
 idna==3.3
     # via
@@ -75,13 +75,13 @@ importlib-resources==5.8.0
 iniconfig==1.1.1
     # via pytest
 ipykernel==6.15.0
-    # via notebook
+    # via nbclassic
 ipython==8.4.0
     # via
     #   ipykernel
     #   jupyterlab
 ipython-genutils==0.2.0
-    # via notebook
+    # via nbclassic
 jedi==0.18.1
     # via ipython
 jinja2==3.1.2
@@ -91,8 +91,8 @@ jinja2==3.1.2
     #   jupyter-server
     #   jupyterlab
     #   jupyterlab-server
+    #   nbclassic
     #   nbconvert
-    #   notebook
 jmespath==1.0.1
     # via
     #   boto3
@@ -109,17 +109,17 @@ jupyter-client==7.3.4
     # via
     #   ipykernel
     #   jupyter-server
+    #   nbclassic
     #   nbclient
-    #   notebook
 jupyter-core==4.10.0
     # via
     #   jupyter-client
     #   jupyter-server
     #   jupyterlab
+    #   nbclassic
     #   nbconvert
     #   nbformat
-    #   notebook
-jupyter-server==1.18.0
+jupyter-server==1.18.1
     # via
     #   jupyterlab
     #   jupyterlab-server
@@ -129,11 +129,11 @@ jupyterlab==3.4.3
     # via -r requirements.in
 jupyterlab-pygments==0.2.2
     # via nbconvert
-jupyterlab-server==2.14.0
+jupyterlab-server==2.15.0
     # via jupyterlab
 kiwisolver==1.4.3
     # via matplotlib
-lxml==4.9.0
+lxml==4.9.1
     # via -r requirements.in
 markupsafe==2.1.1
     # via
@@ -147,28 +147,26 @@ matplotlib-inline==0.1.3
     #   ipython
 mistune==0.8.4
     # via nbconvert
-nbclassic==0.3.7
+nbclassic==0.4.0
     # via jupyterlab
-nbclient==0.6.5
+nbclient==0.6.6
     # via nbconvert
 nbconvert==6.5.0
     # via
     #   jupyter-server
-    #   notebook
+    #   nbclassic
 nbformat==5.4.0
     # via
     #   jupyter-server
+    #   nbclassic
     #   nbclient
     #   nbconvert
-    #   notebook
 nest-asyncio==1.5.5
     # via
     #   ipykernel
     #   jupyter-client
+    #   nbclassic
     #   nbclient
-    #   notebook
-notebook==6.4.12
-    # via nbclassic
 notebook-shim==0.1.0
     # via nbclassic
 numpy==1.23.0
@@ -200,14 +198,14 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==9.1.1
+pillow==9.2.0
     # via matplotlib
 pluggy==1.0.0
     # via pytest
 prometheus-client==0.14.1
     # via
     #   jupyter-server
-    #   notebook
+    #   nbclassic
 prompt-toolkit==3.0.30
     # via ipython
 psutil==5.9.1
@@ -253,7 +251,7 @@ pyzmq==23.2.0
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
-    #   notebook
+    #   nbclassic
 requests==2.28.1
     # via
     #   folium
@@ -273,7 +271,7 @@ scipy==1.8.1
 send2trash==1.8.0
     # via
     #   jupyter-server
-    #   notebook
+    #   nbclassic
 six==1.16.0
     # via
     #   asttokens
@@ -288,20 +286,20 @@ stack-data==0.3.0
 terminado==0.15.0
     # via
     #   jupyter-server
-    #   notebook
+    #   nbclassic
 threadpoolctl==3.1.0
     # via scikit-learn
 tinycss2==1.1.1
     # via nbconvert
 tomli==2.0.1
     # via pytest
-tornado==6.1
+tornado==6.2
     # via
     #   ipykernel
     #   jupyter-client
     #   jupyter-server
     #   jupyterlab
-    #   notebook
+    #   nbclassic
     #   terminado
 traitlets==5.3.0
     # via
@@ -311,10 +309,10 @@ traitlets==5.3.0
     #   jupyter-core
     #   jupyter-server
     #   matplotlib-inline
+    #   nbclassic
     #   nbclient
     #   nbconvert
     #   nbformat
-    #   notebook
 urllib3==1.26.9
     # via
     #   botocore
