@@ -295,7 +295,7 @@ tinycss2==1.1.1
     # via nbconvert
 tomli==2.0.1
     # via pytest
-tornado==6.1
+tornado==6.2
     # via
     #   ipykernel
     #   jupyter-client
