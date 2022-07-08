@@ -101,7 +101,7 @@ joblib==1.1.0
     # via scikit-learn
 json5==0.9.8
     # via jupyterlab-server
-jsonschema==4.6.1
+jsonschema==4.6.2
     # via
     #   jupyterlab-server
     #   nbformat
