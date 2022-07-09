@@ -111,7 +111,7 @@ jupyter-client==7.3.4
     #   jupyter-server
     #   nbclient
     #   notebook
-jupyter-core==4.10.0
+jupyter-core==4.11.1
     # via
     #   jupyter-client
     #   jupyter-server
