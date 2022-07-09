@@ -315,7 +315,7 @@ traitlets==5.3.0
     #   nbconvert
     #   nbformat
     #   notebook
-urllib3==1.26.9
+urllib3==1.26.10
     # via
     #   botocore
     #   requests
