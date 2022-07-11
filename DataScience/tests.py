@@ -10,6 +10,9 @@ from pathlib import Path
 def ais_fixed_data():
     ais_parquet_path = f"./test-data/v1-test/ais-fixed.parquet"
     ais = pd.read_parquet(ais_parquet_path)
+    ## Parquet loads as array, while augment_ais_data returns a list. Conversion for assertion
+    ais['mmsis_nuw'] = ais['mmsis_nuw'].apply(lambda x: x.tolist())
+    ais['mmsis_uw'] = ais['mmsis_uw'].apply(lambda x: x.tolist())
     return ais
 
 @pytest.fixture
