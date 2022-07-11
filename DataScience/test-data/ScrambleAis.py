@@ -1,5 +1,6 @@
 import uuid
 import random
+import json
 import pandas as pd
 
 def _offset_information(df):
@@ -99,6 +100,41 @@ def write_parquet(path, df):
    """
 
     df.to_parquet(path)
+
+
+def split_parquet(inpath, outpath):
+    """takes a parquet file and writes a file with split json. Note that this is not a true json file - each line is its own dict.
+
+   Parameters
+   ----------
+   inpath : str
+       String of path to read parquet
+   outpath : str
+       String of path to write parquet
+   """
+    df = pd.read_parquet(inpath)
+    for index, row in df.iterrows():
+        d = {
+            "type": row["type"],
+            "repeat": row["repeat"],
+            "mmsi": row["mmsi"],
+            "status": row["status"],
+            "turn": row["turn"],
+            "speed": row["speed"],
+            "accuracy": row["accuracy"],
+            "lon": row["lon"],
+            "lat": row["lat"],
+            "course": row["course"],
+            "heading": row["heading"],
+            "second": row["second"],
+            "maneuver": row["maneuver"],
+            "raim": row["raim"],
+            "radio": row["radio"],
+            "timestamp": row["timestamp"],
+        }
+        with open(outpath, 'a') as fp:
+            json.dump(d, fp)
+            fp.write("\n")
 
 
 def main():
