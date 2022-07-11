@@ -74,7 +74,7 @@ importlib-resources==5.8.0
     # via jsonschema
 iniconfig==1.1.1
     # via pytest
-ipykernel==6.15.0
+ipykernel==6.15.1
     # via notebook
 ipython==8.4.0
     # via
