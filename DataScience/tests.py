@@ -6,27 +6,30 @@ import LabelerUtilities as lu
 import AisAudioLabeler as aal
 from pathlib import Path
 
-
 @pytest.fixture
-def ais_test_data():
-    ais_parquet_path = f"./test-data/v1-test/ais.parquet"
+def ais_fixed_data():
+    ais_parquet_path = f"./test-data/v1-test/ais-fixed.parquet"
     ais = pd.read_parquet(ais_parquet_path)
+    ## Parquet loads as array, while augment_ais_data returns a list. Conversion for assertion
+    ais['mmsis_nuw'] = ais['mmsis_nuw'].apply(lambda x: x.tolist())
+    ais['mmsis_uw'] = ais['mmsis_uw'].apply(lambda x: x.tolist())
     return ais
 
-
 @pytest.fixture
-def ais_forced_status_test_data():
-    ais_parquet_path = f"./test-data/v1-test/forced_status_ais.parquet"
-    ais = pd.read_parquet(ais_parquet_path)
+def ais_test_data(data_home, source):
+    ais = aal.get_ais_dataframe(data_home, source, force=True)
     return ais
 
+@pytest.fixture
+def ais_forced_status_test_data(data_home, source_forced_status):
+    ais = aal.get_ais_dataframe(data_home, source_forced_status, force=True)
+    return ais
 
 @pytest.fixture
 def hmd_test_data():
     hmd_parquet_path = f"./test-data/v1-test/hmd.parquet"
     hmd = pd.read_parquet(hmd_parquet_path)
     return hmd
-
 
 @pytest.fixture
 def shp_test_data():
@@ -46,6 +49,10 @@ def collection_test_data():
 @pytest.fixture
 def source(collection_test_data):
     return collection_test_data["sources"][0]
+
+@pytest.fixture
+def source_forced_status(collection_test_data):
+    return collection_test_data["sources"][1]
 
 
 @pytest.fixture
@@ -72,7 +79,7 @@ class TestAisAudioLabeler:
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_consistency(
-        self, source, hydrophone, ais_test_data, hmd_test_data, shp_test_data
+        self, source, hydrophone, ais_test_data, ais_fixed_data, hmd_test_data, shp_test_data
     ):
         ais, hmd, _shp = aal.augment_ais_data(
             source, hydrophone, ais_test_data.copy(), hmd_test_data.copy()
@@ -85,7 +92,7 @@ class TestAisAudioLabeler:
             shp = json.load(f)
 
         assert shp == shp_test_data
-        assert ais.equals(ais_test_data)
+        assert ais_fixed_data.equals(ais)
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_status(
