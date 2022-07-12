@@ -129,7 +129,7 @@ class TestAisAudioLabeler:
             "shipcount_nuw",
             "mmsis_nuw",
         ]
-        assert ais_fixed_data[columns].equals(ais[columns])
+        assert ais_fixed_data[columns].equals(ais[columns]) == True
         # assert ais_fixed_data.loc[
         #     :, ~ais_fixed_data.columns.isin(["distance", "speed"])
         # ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
