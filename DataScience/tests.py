@@ -109,18 +109,11 @@ class TestAisAudioLabeler:
         assert ais_fixed_data.loc[
             :, ~ais_fixed_data.columns.isin(["distance", "speed"])
         ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
-        threshold = 1e-6  # Threshold for commparing floats across platforms
-        assert (
-            (
-                (ais_fixed_data["distance"] - ais["distance"])
-                / ais_fixed_data["distance"]
-            ).abs()
-            < threshold
-        ).all()
-        assert (
-            ((ais_fixed_data["speed"] - ais["speed"]) / ais_fixed_data["speed"]).abs()
-            < threshold
-        ).all()
+        # Compare distance and speed using an absolute threshold so
+        # that the threshold units are meaningful
+        threshold = 1e-6
+        assert ((ais_fixed_data["distance"] - ais["distance"]).abs() < threshold).all()
+        assert ((ais_fixed_data["speed"] - ais["speed"]).abs() < threshold).all()
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_status(
