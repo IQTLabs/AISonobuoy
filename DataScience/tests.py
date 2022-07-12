@@ -6,30 +6,35 @@ import LabelerUtilities as lu
 import AisAudioLabeler as aal
 from pathlib import Path
 
+
 @pytest.fixture
 def ais_fixed_data():
     ais_parquet_path = f"./test-data/v1-test/ais-fixed.parquet"
     ais = pd.read_parquet(ais_parquet_path)
     ## Parquet loads as array, while augment_ais_data returns a list. Conversion for assertion
-    ais['mmsis_nuw'] = ais['mmsis_nuw'].apply(lambda x: x.tolist())
-    ais['mmsis_uw'] = ais['mmsis_uw'].apply(lambda x: x.tolist())
+    ais["mmsis_nuw"] = ais["mmsis_nuw"].apply(lambda x: x.tolist())
+    ais["mmsis_uw"] = ais["mmsis_uw"].apply(lambda x: x.tolist())
     return ais
+
 
 @pytest.fixture
 def ais_test_data(data_home, source):
     ais = aal.get_ais_dataframe(data_home, source, force=True)
     return ais
 
+
 @pytest.fixture
 def ais_forced_status_test_data(data_home, source_forced_status):
     ais = aal.get_ais_dataframe(data_home, source_forced_status, force=True)
     return ais
+
 
 @pytest.fixture
 def hmd_test_data():
     hmd_parquet_path = f"./test-data/v1-test/hmd.parquet"
     hmd = pd.read_parquet(hmd_parquet_path)
     return hmd
+
 
 @pytest.fixture
 def shp_test_data():
@@ -49,6 +54,7 @@ def collection_test_data():
 @pytest.fixture
 def source(collection_test_data):
     return collection_test_data["sources"][0]
+
 
 @pytest.fixture
 def source_forced_status(collection_test_data):
@@ -79,7 +85,13 @@ class TestAisAudioLabeler:
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_consistency(
-        self, source, hydrophone, ais_test_data, ais_fixed_data, hmd_test_data, shp_test_data
+        self,
+        source,
+        hydrophone,
+        ais_test_data,
+        ais_fixed_data,
+        hmd_test_data,
+        shp_test_data,
     ):
         ais, hmd, _shp = aal.augment_ais_data(
             source, hydrophone, ais_test_data.copy(), hmd_test_data.copy()
@@ -92,30 +104,14 @@ class TestAisAudioLabeler:
             shp = json.load(f)
 
         assert shp == shp_test_data
-        # assert ais_fixed_data.equals(ais)
-        assert ais_fixed_data['type'].equals(ais['type'])
-        assert ais_fixed_data['repeat'].equals(ais['repeat'])
-        assert ais_fixed_data['mmsi'].equals(ais['mmsi'])
-        assert ais_fixed_data['status'].equals(ais['status'])
-        assert ais_fixed_data['turn'].equals(ais['turn'])
-        assert ais_fixed_data['accuracy'].equals(ais['accuracy'])
-        assert ais_fixed_data['lon'].equals(ais['lon'])
-        assert ais_fixed_data['lat'].equals(ais['lat'])
-        assert ais_fixed_data['course'].equals(ais['course'])
-        assert ais_fixed_data['heading'].equals(ais['heading'])
-        assert ais_fixed_data['second'].equals(ais['second'])
-        assert ais_fixed_data['maneuver'].equals(ais['maneuver'])
-        assert ais_fixed_data['raim'].equals(ais['raim'])
-        assert ais_fixed_data['radio'].equals(ais['radio'])
-        assert ais_fixed_data['timestamp'].equals(ais['timestamp'])
-        assert ais_fixed_data['shiptype'].equals(ais['shiptype'])
-        assert ais_fixed_data['h'].equals(ais['h'])
-        # assert ais_fixed_data['speed'].equals(ais['speed'])
-        # assert ais_fixed_data['distance'].equals(ais['distance'])
-        assert ais_fixed_data['shipcount_uw'].equals(ais['shipcount_uw'])
-        # assert ais_fixed_data['mmsis_uw'].equals(ais['mmsis_uw'])
-        # assert ais_fixed_data['shipcount_nuw'].equals(ais['shipcount_nuw'])
-        # assert ais_fixed_data['mmsis_nuw'].equals(ais['mmsis_nuw'])
+
+        assert ais_fixed_data.loc[
+            :, ~ais_fixed_data.columns.isin(["distance", "speed"])
+        ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
+
+        assert ((ais_fixed_data["distance"] - ais["distance"]).abs() < 1e-6).all()
+        assert ((ais_fixed_data["speed"] - ais["speed"]).abs() < 1e-6).all()
+
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_status(
