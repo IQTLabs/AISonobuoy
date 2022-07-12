@@ -109,8 +109,8 @@ class TestAisAudioLabeler:
         assert ais_fixed_data.loc[
             :, ~ais_fixed_data.columns.isin(["distance", "speed"])
         ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
-        # Compare distance and speed using an absolute threshold so
-        # that the threshold units are meaningful
+        # Compare distance and speed using an absolute threshold
+        # so that the threshold units are meaningful
         threshold = 1e-6
         assert ((ais_fixed_data["distance"] - ais["distance"]).abs() < threshold).all()
         assert ((ais_fixed_data["speed"] - ais["speed"]).abs() < threshold).all()
