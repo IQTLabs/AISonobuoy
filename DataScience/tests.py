@@ -106,14 +106,21 @@ class TestAisAudioLabeler:
             shp = json.load(f)
 
         assert shp == shp_test_data
-        assert ais_fixed_data.loc[
-            :, ~ais_fixed_data.columns.isin(["distance", "speed"])
-        ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
+        assert (
+            ais_fixed_data.loc[
+                :, ~ais_fixed_data.columns.isin(["distance", "speed"])
+            ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
+            == True
+        )
         # Compare distance and speed using an absolute threshold
         # so that the threshold units are meaningful
         threshold = 1e-6
-        assert ((ais_fixed_data["distance"] - ais["distance"]).abs() < threshold).all()
-        assert ((ais_fixed_data["speed"] - ais["speed"]).abs() < threshold).all()
+        assert (
+            (ais_fixed_data["distance"] - ais["distance"]).abs() < threshold
+        ).all() == True
+        assert (
+            (ais_fixed_data["speed"] - ais["speed"]).abs() < threshold
+        ).all() == True
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_status(

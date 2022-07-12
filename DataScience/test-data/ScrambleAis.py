@@ -113,7 +113,7 @@ def split_parquet(inpath, outpath):
        String of path to write parquet
    """
     df = pd.read_parquet(inpath)
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         d = {
             "type": row["type"],
             "repeat": row["repeat"],
