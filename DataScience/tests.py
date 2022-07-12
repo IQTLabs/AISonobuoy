@@ -31,6 +31,8 @@ def ais_forced_status_test_data(data_home, source_forced_status):
 
 @pytest.fixture
 def hmd_test_data():
+    # TODO: Consider adding force
+    # Note: Requires installing ffprobe on Ubuntu in workflow
     hmd_parquet_path = f"./test-data/v1-test/hmd.parquet"
     hmd = pd.read_parquet(hmd_parquet_path)
     return hmd
@@ -104,14 +106,12 @@ class TestAisAudioLabeler:
             shp = json.load(f)
 
         assert shp == shp_test_data
-
         assert ais_fixed_data.loc[
             :, ~ais_fixed_data.columns.isin(["distance", "speed"])
         ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
-
-        assert ((ais_fixed_data["distance"] - ais["distance"]).abs() < 1e-6).all()
-        assert ((ais_fixed_data["speed"] - ais["speed"]).abs() < 1e-6).all()
-
+        threshold = 1e-6  # Threshold for commparing floats across platforms
+        assert ((ais_fixed_data["distance"] - ais["distance"]).abs() < threshold).all()
+        assert ((ais_fixed_data["speed"] - ais["speed"]).abs() < threshold).all()
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_status(
