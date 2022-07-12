@@ -106,9 +106,33 @@ class TestAisAudioLabeler:
             shp = json.load(f)
 
         assert shp == shp_test_data
-        assert ais_fixed_data.loc[
-            :, ~ais_fixed_data.columns.isin(["distance", "speed"])
-        ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
+        columns = [
+            "type",
+            "repeat",
+            "mmsi",
+            "status",
+            "turn",
+            "accuracy",
+            "lon",
+            "lat",
+            "course",
+            "heading",
+            "second",
+            "maneuver",
+            "raim",
+            "radio",
+            "timestamp",
+            "shiptype",
+            "h",
+            "shipcount_uw",
+            "mmsis_uw",
+            "shipcount_nuw",
+            "mmsis_nuw",
+        ]
+        assert ais_fixed_data[columns].equals(ais[columns])
+        # assert ais_fixed_data.loc[
+        #     :, ~ais_fixed_data.columns.isin(["distance", "speed"])
+        # ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
         # Compare distance and speed using an absolute threshold
         # so that the threshold units are meaningful
         threshold = 1e-6
