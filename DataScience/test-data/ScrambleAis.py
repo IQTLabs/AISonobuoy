@@ -1,10 +1,12 @@
 import uuid
 import random
+import json
+import os
 import pandas as pd
 
 def _offset_information(df):
     # Create unique id
-    id = uuid.uuid4()
+    id = str(uuid.uuid4())
 
     # Get offset to random coordinate
     lat, lon = random.uniform(-90, 90), random.uniform(-180, 180)
@@ -37,15 +39,15 @@ def scramble_data(ais):
     return ais_scrambled
 
 
-def trim_ais_data(ais, shp_count=3):
-    """Trim ais data down to specified number of ships, by order of appearance.
+def trim_ais_data(ais, group_len=100):
+    """Trim ais data down by number of entries per ship.
 
     Parameters
     ----------
     ais : pd.DataFrame()
         AIS position samples with ship type
-    shp_count : int
-        Number of ships to trim ais data down
+    group_len : int
+        Cutoff for ship rows
 
     Returns
     -------
@@ -53,15 +55,7 @@ def trim_ais_data(ais, shp_count=3):
         AIS position samples with ship type and counts, with extra ship positions removed
 
     """
-    trimmed_ais = pd.DataFrame()
-    grouped_ais = ais.groupby("mmsi")
-    count = 0
-    for group in grouped_ais:
-        if count >= shp_count:
-            break
-        # Add ship to return value
-        trimmed_ais = trimmed_ais.append(group[1])
-        count += 1
+    trimmed_ais = ais.groupby("mmsi").filter(lambda x: len(x) < group_len)
 
     return trimmed_ais
 
@@ -101,16 +95,53 @@ def write_parquet(path, df):
     df.to_parquet(path)
 
 
+def split_parquet(inpath, outpath):
+    """takes a parquet file and writes a file with split json. Note that this is not a true json file - each line is its own dict.
+
+   Parameters
+   ----------
+   inpath : str
+       String of path to read parquet
+   outpath : str
+       String of path to write parquet
+   """
+    df = pd.read_parquet(inpath)
+    for _, row in df.iterrows():
+        d = {
+            "type": row["type"],
+            "repeat": row["repeat"],
+            "mmsi": row["mmsi"],
+            "status": row["status"],
+            "turn": row["turn"],
+            "speed": row["speed"],
+            "accuracy": row["accuracy"],
+            "lon": row["lon"],
+            "lat": row["lat"],
+            "course": row["course"],
+            "heading": row["heading"],
+            "second": row["second"],
+            "maneuver": row["maneuver"],
+            "raim": row["raim"],
+            "radio": row["radio"],
+            "timestamp": row["timestamp"],
+        }
+        with open(outpath, 'a') as fp:
+            json.dump(d, fp)
+            fp.write("\n")
+
+
 def main():
-    data_home = "/Users/williamspear/Data/AISonobuoy"
+    data_home = f"{os.path.expanduser('~')}/Data/AISonobuoy"
     ais_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais.parquet"
-    trimmed_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais_test.parquet"
+    trimmed_parquet_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais-test.parquet"
+    split_ais_path = f"{data_home}/aisonobuoy-pibuoy-v2/ais-test.json"
     ais = pd.read_parquet(ais_parquet_path)
 
     offset_ais = scramble_data(ais)
     trimmed_offset_ais = trim_ais_data(offset_ais)
 
     write_parquet(trimmed_parquet_path, trimmed_offset_ais)
+    split_parquet(trimmed_parquet_path, split_ais_path)
 
 if __name__ == "__main__":
     main()
