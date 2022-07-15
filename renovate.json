@@ -7,6 +7,12 @@
   "pip-compile": {
     "fileMatch": ["(^|/)requirements\\.in$"]
   },
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^boto"],
+      "groupName": "boto packages"
+    }
+  ],
   "timezone": "America/New_York",
   "schedule": [
     "after 10pm every weekday",
