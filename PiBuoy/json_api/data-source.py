@@ -76,7 +76,7 @@ def query():
     body = []
     counter = 0
     for sample in files:
-        with open(f'{DATA_DIR}/sensors/{sample}') as f:
+        with open(f'{DATA_DIR}/sensors/{sample}', encoding='utf-8') as f:
             for line in f:
                 record = json.loads(line)
                 if record['target'] not in requested_targets:

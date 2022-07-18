@@ -2,32 +2,32 @@
     "sources": [
         {
             "type": "bucket",
-            "name": "aisonobuoy-pibuoy-v2",
+            "name": "test-data",
             "prefix": "compressed",
-            "label": "v2-mk2-3"
+            "label": "v1-test"
         },
         {
             "type": "bucket",
-            "name": "aisonobuoy-pibuoy-v2",
+            "name": "test-data",
             "prefix": "compressed",
-            "label": "v2-mk3-3"
+            "label": "v1-test-forced-status"
         }
     ],
     "hydrophones": [
         {
             "type": "bucket",
-            "name": "aisonobuoy-pibuoy-v2",
+            "name": "test-data",
             "prefix": "compressed",
-            "label": "v2-mk2-3",
+            "label": "v1-test",
             "lat": 0.0,
             "lon": 0.0,
             "ele": 0.0
         },
         {
             "type": "bucket",
-            "name": "aisonobuoy-pibuoy-v2",
+            "name": "test-data",
             "prefix": "compressed",
-            "label": "v2-mk3-3",
+            "label": "v1-test-forced-status",
             "lat": 0.0,
             "lon": 0.0,
             "ele": 0.0

@@ -1,0 +1,364 @@
+rules:
+- id: insecure-use-strcat-fn
+  languages:
+  - c
+  message: Finding triggers whenever there is a strcat or strncat used. This is an
+    issue because strcat or strncat can lead to buffer overflow vulns. Fix this by
+    using strcat_s instead.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    references:
+    - https://nvd.nist.gov/vuln/detail/CVE-2019-12553
+    - https://techblog.mediaservice.net/2020/04/cve-2020-2851-stack-based-buffer-overflow-in-cde-libdtsvc/
+    technology:
+    - c
+  pattern-either:
+  - pattern: strcat(...)
+  - pattern: strncat(...)
+  severity: WARNING
+- id: insecure-use-string-copy-fn
+  languages:
+  - c
+  message: Finding triggers whenever there is a strcpy or strncpy used. This is an
+    issue because strcpy does not affirm the size of the destination array and strncpy
+    will not automatically NULL-terminate strings. This can lead to buffer overflows,
+    which can cause program crashes and potentially let an attacker inject code in
+    the program. Fix this by using strcpy_s instead (although note that strcpy_s is
+    an optional part of the C11 standard, and so may not be available).
+  metadata:
+    category: security
+    confidence: MEDIUM
+    references:
+    - https://cwe.mitre.org/data/definitions/676
+    - https://nvd.nist.gov/vuln/detail/CVE-2019-11365
+    technology:
+    - c
+  pattern-either:
+  - pattern: strcpy(...)
+  - pattern: strncpy(...)
+  severity: WARNING
+- id: random-fd-exhaustion
+  languages:
+  - c
+  message: Call to 'read()' without error checking is susceptible to file descriptor
+    exhaustion. Consider using the 'getrandom()' function.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    references:
+    - https://lwn.net/Articles/606141/
+    technology:
+    - c
+  pattern-either:
+  - patterns:
+    - pattern: '$FD = open("/dev/urandom", ...);
+
+        ...
+
+        read($FD, ...);
+
+        '
+    - pattern-not: '$FD = open("/dev/urandom", ...);
+
+        ...
+
+        $BYTES_READ = read($FD, ...);
+
+        '
+  - patterns:
+    - pattern: '$FD = open("/dev/random", ...);
+
+        ...
+
+        read($FD, ...);
+
+        '
+    - pattern-not: '$FD = open("/dev/random", ...);
+
+        ...
+
+        $BYTES_READ = read($FD, ...);
+
+        '
+  severity: WARNING
+- id: insecure-use-printf-fn
+  languages:
+  - c
+  message: Avoid using user-controlled format strings passed into 'sprintf', 'printf'
+    and 'vsprintf'. These functions put you at risk of buffer overflow vulnerabilities
+    through the use of format string exploits. Instead, use 'snprintf' and 'vsnprintf'.
+  metadata:
+    category: security
+    confidence: HIGH
+    references:
+    - https://doc.castsoftware.com/display/SBX/Never+use+sprintf%28%29+or+vsprintf%28%29+functions
+    - https://www.cvedetails.com/cwe-details/134/Uncontrolled-Format-String.html
+    technology:
+    - c
+  pattern-either:
+  - pattern: '$FUNC($BUFFER, argv[$NUM], ...);
+
+      ...
+
+      vsprintf(..., $BUFFER, ...);
+
+      '
+  - pattern: vsprintf(..., argv[$NUM], ...)
+  - pattern: '$FUNC($BUFFER, argv[$NUM], ...);
+
+      ...
+
+      sprintf(..., $BUFFER, ...);
+
+      '
+  - pattern: sprintf(...,argv[$NUM],...)
+  - pattern: '$FUNC($BUFFER, argv[$NUM], ...);
+
+      ...
+
+      printf(..., $BUFFER, ...);
+
+      '
+  - pattern: printf(...,argv[$NUM],...)
+  severity: WARNING
+- id: double-free
+  languages:
+  - c
+  message: Variable '$VAR' was freed twice. This can lead to undefined behavior.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    cwe: 'CWE-415: Double Free'
+    references:
+    - https://cwe.mitre.org/data/definitions/415.html
+    - https://owasp.org/www-community/vulnerabilities/Doubly_freeing_memory
+    technology:
+    - c
+  patterns:
+  - pattern: 'free($VAR);
+
+      ...
+
+      free($VAR);
+
+      '
+  - pattern-not: 'free($VAR);
+
+      ...
+
+      $VAR = NULL;
+
+      ...
+
+      free($VAR);
+
+      '
+  - pattern-not: 'free($VAR);
+
+      ...
+
+      $VAR = malloc(...);
+
+      ...
+
+      free($VAR);
+
+      '
+  severity: ERROR
+- id: use-after-free
+  languages:
+  - c
+  message: Variable '$VAR' was used after being freed. This can lead to undefined
+    behavior.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    cwe: 'CWE-416: Use After Free'
+    references:
+    - https://cwe.mitre.org/data/definitions/416.html
+    - https://ctf-wiki.github.io/ctf-wiki/pwn/linux/glibc-heap/use_after_free/
+    technology:
+    - c
+  pattern-either:
+  - patterns:
+    - pattern: 'free($VAR);
+
+        ...
+
+        $VAR->$FUNC(...);
+
+        '
+    - pattern-not: 'free($VAR);
+
+        ...
+
+        $VAR = NULL;
+
+        ...
+
+        $VAR->$FUNC(...);
+
+        '
+  - patterns:
+    - pattern: 'free($VAR);
+
+        ...
+
+        $FUNC(..., $VAR->$MEMBER, ...);
+
+        '
+    - pattern-not: 'free($VAR);
+
+        ...
+
+        $VAR = NULL;
+
+        ...
+
+        $FUNC(..., $VAR->$MEMBER, ...);
+
+        '
+  severity: WARNING
+- id: insecure-use-memset
+  languages:
+  - c
+  message: Using memset and then deleting that data can cause sensitive information
+    to still be in the buffer. Use **memset_s()** instead.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    cwe: 'CWE-14: Compiler Removal of Code to Clear Buffers'
+    owasp:
+    - A04:2021 – Insecure Design
+    references:
+    - https://cwe.mitre.org/data/definitions/14.html
+    - https://owasp.org/Top10/A02_2021-Cryptographic_Failures/
+    technology:
+    - c
+  pattern: memset($VAR,...)
+  severity: WARNING
+- id: info-leak-on-non-formated-string
+  languages:
+  - c
+  message: Use %s, %d, %c... to format your variables, otherwise this could leak information.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    references:
+    - http://nebelwelt.net/files/13PPREW.pdf
+    technology:
+    - c
+  pattern: printf(argv[$NUM]);
+  severity: WARNING
+- id: insecure-use-strtok-fn
+  languages:
+  - c
+  message: Avoid using 'strtok()'. This function directly modifies the first argument
+    buffer, permanently erasing the delimiter character. Use 'strtok_r()' instead.
+  metadata:
+    category: security
+    confidence: MEDIUM
+    references:
+    - https://wiki.sei.cmu.edu/confluence/display/c/STR06-C.+Do+not+assume+that+strtok%28%29+leaves+the+parse+string+unchanged
+    - https://man7.org/linux/man-pages/man3/strtok.3.html#BUGS
+    - https://stackoverflow.com/a/40335556
+    technology:
+    - c
+  pattern: strtok(...)
+  severity: WARNING
+- id: insecure-use-gets-fn
+  languages:
+  - c
+  message: Avoid 'gets()'. This function does not consider buffer boundaries and can
+    lead to buffer overflows. Use 'fgets()' or 'gets_s()' instead.
+  metadata:
+    category: security
+    confidence: HIGH
+    references:
+    - https://us-cert.cisa.gov/bsi/articles/knowledge/coding-practices/fgets-and-gets_s
+    technology:
+    - c
+  pattern: gets(...)
+  severity: ERROR
+- id: insecure-use-scanf-fn
+  languages:
+  - c
+  message: Avoid using 'scanf()'. This function, when used improperly, does not consider
+    buffer boundaries and can lead to buffer overflows. Use 'fgets()' instead for
+    reading input.
+  metadata:
+    category: security
+    confidence: HIGH
+    references:
+    - http://sekrit.de/webdocs/c/beginners-guide-away-from-scanf.html
+    technology:
+    - c
+  pattern: scanf(...)
+  severity: WARNING
+- id: incorrect-use-ato-fn
+  languages:
+  - c
+  message: Avoid the 'ato*()' family of functions. Their use can lead to undefined
+    behavior, integer overflows, and lack of appropriate error handling. Instead prefer
+    the 'strtol*()' family of functions.
+  metadata:
+    category: correctness
+    references:
+    - https://stackoverflow.com/q/38393162
+    - https://stackoverflow.com/q/14176123
+    technology:
+    - c
+  pattern-either:
+  - pattern: atoi(...)
+  - pattern: atol(...)
+  - pattern: atoll(...)
+  severity: WARNING
+- fix: strcmp($X, $Y) == 0
+  id: c-string-equality
+  languages:
+  - c
+  message: Using == on char* performs pointer comparison, use strcmp instead
+  metadata:
+    category: correctness
+    technology:
+    - c
+  patterns:
+  - pattern: (char *$X) == (char *$Y)
+  - metavariable-comparison:
+      comparison: $X != 0
+      metavariable: $X
+  - metavariable-comparison:
+      comparison: $Y != 0
+      metavariable: $Y
+  severity: ERROR
+- id: incorrect-use-sscanf-fn
+  languages:
+  - c
+  message: Avoid 'sscanf()' for number conversions. Its use can lead to undefined
+    behavior, slow processing, and integer overflows. Instead prefer the 'strto*()'
+    family of functions.
+  metadata:
+    category: correctness
+    references:
+    - https://stackoverflow.com/q/22865622
+    - https://stackoverflow.com/q/7021725
+    - https://www.mattkeeter.com/blog/2021-03-01-happen/
+    technology:
+    - c
+  patterns:
+  - pattern: sscanf($STR, $FMT, $PTR);
+  - metavariable-regex:
+      metavariable: $FMT
+      regex: '"%(l{0,2}|L)([fegEa]|[dDiouxX])"'
+  severity: WARNING
+- id: double_goto
+  languages:
+  - c
+  message: The second goto statement will always be executed.
+  metadata:
+    category: correctness
+    technology:
+    - c
+  pattern: "if ($COND)\n  goto $FAIL;\n  goto $FAIL;\n"
+  severity: WARNING
