@@ -18,6 +18,7 @@ The Particle Tracker Buoy was designed to use low-cost and easily accessible com
 - Adafruit lithium ion 6600mAh battery
 - 4in PVC pipe components
 - 3D Printed chassis ([STL Files](stl-files))
+- [Aquarian H2A Hydrophone](https://www.aquarianaudio.com/h2a-hydrophone.html)
 
 <img src="media/AISonobuoy-explode.png" alt="" height="400px" title="">
 
