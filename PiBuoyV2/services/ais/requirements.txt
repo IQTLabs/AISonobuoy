@@ -1,2 +1,2 @@
-pyais==2.1.4
+pyais==1.5.0
 pyserial==3.5
