@@ -1,4 +1,3 @@
-
 {
   "extends": [
     "config:base"
@@ -10,7 +9,7 @@
   "packageRules": [
     {
       "matchPackagePatterns": ["^boto"],
-      "groupName": "boto packages"
+      "groupName": "Update dependency botocore and boto3"
     }
   ],
   "timezone": "America/New_York",
