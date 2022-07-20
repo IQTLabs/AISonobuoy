@@ -1,4 +1,3 @@
-
 {
   "extends": [
     "config:base"
@@ -7,6 +6,12 @@
   "pip-compile": {
     "fileMatch": ["(^|/)requirements\\.in$"]
   },
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^boto"],
+      "groupName": "Update dependency botocore and boto3"
+    }
+  ],
   "timezone": "America/New_York",
   "schedule": [
     "after 10pm every weekday",
