@@ -513,7 +513,7 @@ def plot_intervals(shp, hmd):
     None
 
     """
-    _, axs = plt.subplots(figsize=(10,9), dpi=100)
+    fig, axs = plt.subplots(figsize=(10,9), dpi=100)
 
     # Consider each ship
     n_ship = 0
