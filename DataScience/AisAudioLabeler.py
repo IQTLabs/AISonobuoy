@@ -513,7 +513,7 @@ def plot_intervals(shp, hmd):
     None
 
     """
-    fig, axs = plt.subplots(figsize=(10,9), dpi=100)
+    _, axs = plt.subplots(figsize=(10,9), dpi=100)
 
     # Consider each ship
     n_ship = 0
@@ -524,7 +524,7 @@ def plot_intervals(shp, hmd):
         # Consider each status for the current ship
         for status, intervals in statuses.items():
             if status in ["UnderWayUsingEngine"]:
-                color = CB_color_cycle[0] # orange 
+                color = CB_color_cycle[0] # orange
                 label = "UnderWay Using Engine"
             elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
                 color = CB_color_cycle[1] # blue
@@ -536,11 +536,11 @@ def plot_intervals(shp, hmd):
             # Plot each interval for the current ship and status
             for interval in intervals:
                 if label not in label_set:
-                    label_set.add(label)    
+                    label_set.add(label)
                 else:
                     label = ""
                 axs.plot(interval, [n_ship, n_ship], color, label=label)
-                
+
 
     # Consider each hydrophone metadta entry
     xlim = axs.get_xlim()
@@ -557,7 +557,7 @@ def plot_intervals(shp, hmd):
     # Label axes and show plot
     axs.set_xlabel("Timestamp [s]")
     axs.set_ylabel("Group")
-    plt.legend(bbox_to_anchor=(1,0), loc="lower right", 
+    plt.legend(bbox_to_anchor=(1,0), loc="lower right",
                 bbox_transform=fig.transFigure, ncol=2)
     plt.title('Recorded Ships with AIS Status')
     plt.show()
@@ -580,16 +580,16 @@ def plot_histogram(ais, max_n_ships, bins=100):
     None
 
     """
-    fig, axs = plt.subplots(figsize=(10,9), dpi=100)
-    underway_dists = ais.loc[(ais["shipcount_uw"] <= max_n_ships) & (ais["shipcount_uw"] > 0)]["distance"] 
+    _, axs = plt.subplots(figsize=(10,9), dpi=100)
+    underway_dists = ais.loc[(ais["shipcount_uw"] <= max_n_ships) & (ais["shipcount_uw"] > 0)]["distance"]
     axs.hist(
         underway_dists.to_numpy(), bins=bins
     )
     axs.set_title("Count of Ships Reporting Underway by Distance")
     axs.set_xlabel("distance [m]")
     axs.set_ylabel("counts")
-    if len(underway_dists) > bins: 
-        plt.yscale("log")  
+    if len(underway_dists) > bins:
+        plt.yscale("log")
     plt.show()
 
 
