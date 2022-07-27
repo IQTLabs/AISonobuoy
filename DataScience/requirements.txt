@@ -305,7 +305,7 @@ traitlets==5.3.0
     #   nbclient
     #   nbconvert
     #   nbformat
-urllib3==1.26.10
+urllib3==1.26.11
     # via
     #   botocore
     #   requests
