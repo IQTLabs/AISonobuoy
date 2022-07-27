@@ -52,7 +52,7 @@ entrypoints==0.4
     # via
     #   jupyter-client
     #   nbconvert
-executing==0.8.3
+executing==0.9.1
     # via stack-data
 fastjsonschema==2.16.1
     # via nbformat
