@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from cProfile import label
 from datetime import datetime
 import json
 import logging
@@ -30,9 +29,18 @@ logger = logging.getLogger("AisAudioLabeler")
 logger.setLevel(logging.INFO)
 
 # color-blind accessible color palette, https://gist.github.com/thriveth/8560036
-CB_color_cycle = ['#ff7f00', '#377eb8', '#4daf4a',
-                  '#f781bf', '#a65628', '#984ea3',
-                  '#999999', '#e41a1c', '#dede00']
+CB_color_cycle = [
+    "#ff7f00",
+    "#377eb8",
+    "#4daf4a",
+    "#f781bf",
+    "#a65628",
+    "#984ea3",
+    "#999999",
+    "#e41a1c",
+    "#dede00",
+]
+
 
 def download_buoy_objects(
     download_path, bucket, prefix=None, label=None, force=False, decompress=False
@@ -514,32 +522,27 @@ def plot_intervals(shp, hmd):
     None
 
     """
-    fig, axs = plt.subplots(figsize=(10,9), dpi=100)
+    fig, axs = plt.subplots(figsize=(10, 9), dpi=100)
 
     # Consider each ship
     n_ship = 0
-    label_set = set()
-    for mmsi, statuses in shp.items():
+    for _, statuses in shp.items():
         n_ship += 1
 
         # Consider each status for the current ship
         for status, intervals in statuses.items():
             if status in ["UnderWayUsingEngine"]:
-                color = CB_color_cycle[0] # orange
+                color = CB_color_cycle[0]  # orange
                 label = "UnderWay Using Engine"
             elif status in ["AtAnchor", "Moored", "NotUnderCommand"]:
-                color = CB_color_cycle[1] # blue
+                color = CB_color_cycle[1]  # blue
                 label = "Anchored/Moored/Not Under Command"
             else:
-                color = CB_color_cycle[2] # green
+                color = CB_color_cycle[2]  # green
                 label = "Other"
 
             # Plot each interval for the current ship and status
             for interval in intervals:
-                # if label not in label_set:
-                #     label_set.add(label)
-                # else:
-                #     label = ""
                 axs.plot(interval, [n_ship, n_ship], color=color, label=label)
 
     # Consider each hydrophone metadta entry
@@ -557,9 +560,16 @@ def plot_intervals(shp, hmd):
     # Label axes and show plot
     axs.set_xlabel("Timestamp [s]")
     axs.set_ylabel("Group")
-    plt.legend(*[*zip(*{l:h for h,l in zip(*axs.get_legend_handles_labels())}.items())][::-1], bbox_to_anchor=(1,0), loc="lower right",
-                bbox_transform=fig.transFigure, ncol=2)
-    plt.title('Recorded Ships with AIS Status')
+    plt.legend(
+        *[*zip(*{l: h for h, l in zip(*axs.get_legend_handles_labels())}.items())][
+            ::-1
+        ],
+        bbox_to_anchor=(1, 0),
+        loc="lower right",
+        bbox_transform=fig.transFigure,
+        ncol=2,
+    )
+    plt.title("Recorded Ships with AIS Status")
     plt.show()
 
 
@@ -580,11 +590,11 @@ def plot_histogram(ais, max_n_ships, bins=100):
     None
 
     """
-    _, axs = plt.subplots(figsize=(10,9), dpi=100)
-    underway_dists = ais.loc[(ais["shipcount_uw"] <= max_n_ships) & (ais["shipcount_uw"] > 0)]["distance"]
-    axs.hist(
-        underway_dists.to_numpy(), bins=bins
-    )
+    _, axs = plt.subplots(figsize=(10, 9), dpi=100)
+    underway_dists = ais.loc[
+        (ais["shipcount_uw"] <= max_n_ships) & (ais["shipcount_uw"] > 0)
+    ]["distance"]
+    axs.hist(underway_dists.to_numpy(), bins=bins)
     axs.set_title("Count of Ships Reporting Underway by Distance")
     axs.set_xlabel("distance [m]")
     axs.set_ylabel("counts")
