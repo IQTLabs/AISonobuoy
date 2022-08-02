@@ -271,7 +271,7 @@ scikit-learn==1.1.1
     #   scikit-learn-extra
 scikit-learn-extra==0.2.0
     # via -r requirements.in
-scipy==1.8.1
+scipy==1.9.0
     # via
     #   scikit-learn
     #   scikit-learn-extra
