@@ -15,7 +15,7 @@ argon2-cffi-bindings==21.2.0
     # via argon2-cffi
 asttokens==2.0.5
     # via stack-data
-attrs==21.4.0
+attrs==22.1.0
     # via
     #   jsonschema
     #   pytest
