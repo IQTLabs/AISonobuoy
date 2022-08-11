@@ -224,7 +224,7 @@ pure-eval==0.2.2
     # via stack-data
 py==1.11.0
     # via pytest
-pyarrow==8.0.0
+pyarrow==9.0.0
     # via -r requirements.in
 pycparser==2.21
     # via cffi
