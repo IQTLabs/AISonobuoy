@@ -27,9 +27,9 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.1
     # via nbconvert
-boto3==1.24.49
+boto3==1.24.50
     # via -r requirements.in
-botocore==1.27.49
+botocore==1.27.50
     # via
     #   boto3
     #   s3transfer
