@@ -13,7 +13,7 @@ argon2-cffi==21.3.0
     #   notebook
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
-asttokens==2.0.5
+asttokens==2.0.7
     # via stack-data
 attrs==22.1.0
     # via
@@ -27,9 +27,9 @@ beautifulsoup4==4.11.1
     # via nbconvert
 bleach==5.0.1
     # via nbconvert
-boto3==1.24.44
+boto3==1.24.49
     # via -r requirements.in
-botocore==1.27.44
+botocore==1.27.49
     # via
     #   boto3
     #   s3transfer
@@ -99,7 +99,7 @@ joblib==1.1.0
     # via scikit-learn
 json5==0.9.9
     # via jupyterlab-server
-jsonschema==4.9.0
+jsonschema==4.9.1
     # via
     #   jupyterlab-server
     #   nbformat
@@ -125,7 +125,7 @@ jupyter-server==1.18.1
     #   jupyterlab-server
     #   nbclassic
     #   notebook-shim
-jupyterlab==3.4.4
+jupyterlab==3.4.5
     # via -r requirements.in
 jupyterlab-pygments==0.2.2
     # via nbconvert
@@ -134,12 +134,14 @@ jupyterlab-server==2.15.0
 kiwisolver==1.4.4
     # via matplotlib
 lxml==4.9.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   nbconvert
 markupsafe==2.1.1
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.5.2
+matplotlib==3.5.3
     # via -r requirements.in
 matplotlib-inline==0.1.3
     # via
@@ -151,7 +153,7 @@ nbclassic==0.4.3
     # via jupyterlab
 nbclient==0.6.6
     # via nbconvert
-nbconvert==6.5.0
+nbconvert==6.5.3
     # via
     #   jupyter-server
     #   nbclassic
@@ -224,7 +226,7 @@ pure-eval==0.2.2
     # via stack-data
 py==1.11.0
     # via pytest
-pyarrow==8.0.0
+pyarrow==9.0.0
     # via -r requirements.in
 pycparser==2.21
     # via cffi
@@ -265,7 +267,7 @@ requests==2.28.1
     #   jupyterlab-server
 s3transfer==0.6.0
     # via boto3
-scikit-learn==1.1.1
+scikit-learn==1.1.2
     # via
     #   -r requirements.in
     #   scikit-learn-extra
