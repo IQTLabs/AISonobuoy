@@ -265,7 +265,7 @@ requests==2.28.1
     #   jupyterlab-server
 s3transfer==0.6.0
     # via boto3
-scikit-learn==1.1.1
+scikit-learn==1.1.2
     # via
     #   -r requirements.in
     #   scikit-learn-extra
