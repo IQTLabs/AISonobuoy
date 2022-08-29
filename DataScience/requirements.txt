@@ -176,7 +176,7 @@ notebook==6.4.12
     # via jupyterlab
 notebook-shim==0.1.0
     # via nbclassic
-numpy==1.23.1
+numpy==1.23.2
     # via
     #   -r requirements.in
     #   folium
