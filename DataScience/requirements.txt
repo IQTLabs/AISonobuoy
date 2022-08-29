@@ -13,7 +13,7 @@ argon2-cffi==21.3.0
     #   notebook
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
-asttokens==2.0.7
+asttokens==2.0.8
     # via stack-data
 attrs==22.1.0
     # via
