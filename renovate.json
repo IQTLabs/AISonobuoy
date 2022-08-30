@@ -2,7 +2,7 @@
   "extends": [
     "config:base"
   ],
-  "ignorePaths": [],
+  "ignorePaths": ["**/DataScience/requirements.txt"],
   "pip-compile": {
     "fileMatch": ["(^|/)requirements\\.in$"]
   },
