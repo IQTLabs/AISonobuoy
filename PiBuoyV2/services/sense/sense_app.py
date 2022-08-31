@@ -41,9 +41,9 @@ class Telemetry:
         self.s3_dir = '/flash/s3'
         self.ais_file = os.path.join(self.ais_dir, 'false')
         self.ais_records = 0
-        self.hydrophone_file = None
+        self.hydrophone_file = os.path.join(self.hydrophone_dir, 'false')
         self.hydrophone_size = 0
-        self.power_file = None
+        self.power_file = os.path.join(self.power_dir, 'false')
         self.sense = None
         self.sensor_data = None
         self.alerts = {}
@@ -178,7 +178,7 @@ class Telemetry:
         files = self.reorder_dots(files)
 
         if not files:
-            self.power_file = None
+            self.power_file = os.path.join(self.power_dir, 'false')
             return
         elif os.path.join(self.power_dir, files[-1]) != self.power_file:
             self.power_file = os.path.join(self.power_dir, files[-1])
@@ -196,7 +196,7 @@ class Telemetry:
 
         # no files
         if not files:
-            self.hydrophone_file = None
+            self.hydrophone_file = os.path.join(self.hydrophone_dir, 'false')
             self.hydrophone_size = 0
             return False
         # found a new file
