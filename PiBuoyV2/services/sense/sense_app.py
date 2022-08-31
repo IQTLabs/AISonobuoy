@@ -39,7 +39,7 @@ class Telemetry:
         self.hydrophone_dir = os.path.join(base_dir, 'hydrophone')
         self.power_dir = os.path.join(base_dir, 'power')
         self.s3_dir = '/flash/s3'
-        self.ais_file = None
+        self.ais_file = os.path.join(self.ais_dir, 'false')
         self.ais_records = 0
         self.hydrophone_file = None
         self.hydrophone_size = 0
@@ -157,7 +157,7 @@ class Telemetry:
         files = self.reorder_dots(files)
 
         if not files:
-            self.ais_file = None
+            self.ais_file = os.path.join(self.ais_dir, 'false')
             self.ais_records = 0
             return False
         elif os.path.join(self.ais_dir, files[-1]) != self.ais_file:
