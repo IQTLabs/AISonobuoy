@@ -157,14 +157,14 @@ def test_main():
         for test_dir in ('dev/i2c-1', 'var/lib/pijuice', 'home/pi'):
             os.makedirs(os.path.join(tmpdir, test_dir), exist_ok=True)
         for test_file in ('pijuice_config.JSON', 'shutdown.sh'):
-            with open(os.path.join(tmpdir, test_file), 'w') as f:
+            with open(os.path.join(tmpdir, test_file), 'w', encoding='utf-8') as f:
                 f.write('test')
         def poll_wait():
             raise KeyboardInterrupt
         pw.main(get_pijuice=fakepj_factory, poll_wait=poll_wait)
         results = glob.glob(os.path.join(pw.data_dir, '*json'))
         assert len(results) == 1
-        with open(results[0]) as f:
+        with open(results[0], encoding='utf-8') as f:
             json_results = [json.loads(line.strip()) for line in f.readlines()]
             assert json_results == [
                 {'target': 'battery_charge', 'datapoints': [[0, 1000]]},

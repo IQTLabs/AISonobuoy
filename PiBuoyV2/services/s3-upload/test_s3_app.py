@@ -14,7 +14,7 @@ class apptest(unittest.TestCase):
             test_dir = os.path.join(tmpdir, 'test')
             os.mkdir(test_dir)
             tar_file = os.path.join(test_dir, 'test.tar')
-            with open(tar_file, 'w') as f:
+            with open(tar_file, 'w', encoding='utf-8') as f:
                 f.write('test')
             # upload failed
             s3_copy(test_dir, aws='/bin/false')
@@ -30,7 +30,7 @@ class apptest(unittest.TestCase):
             ignored_file = os.path.join(telem_dir, '.ignored_json')
             os.mkdir(telem_dir)
             for test_file in (telem_file, ignored_file):
-                with open(test_file, 'w') as f:
+                with open(test_file, 'w', encoding='utf-8') as f:
                     f.write(test_file)
             tar_dir(telem_dir, tar_file, xz=True)
             self.assertTrue(os.path.exists, tar_file)

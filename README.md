@@ -1,41 +1,78 @@
 # AISonobuoy
+
 Maritime Situational Awareness: An Exploration
 
 # About
-TODO
 
-# Configurations
+The AI Sonobuoy project is intended to demonstrate the process and design methodology for developing an AI-enabled hydrophone. We are building an integrated system that detects ship propellers using hydrophones. Data is collected, stored, and processed locally using onboard microprocessors. Onboard detection algorithms trigger remote alerts when objects of interest are detected.
 
-## PiBuoy
+# The Life Cycle of AI at the Edge Systems
 
-A buoy designed to run an 8GB Raspberry Pi4 with poower management that can do collection of audio via a hydrophone. It can be equipped with an AIS reciever and other sensors such as GPS, LTE, temperature and a 9-axis gryoscope. The form factor is designed to support 2 solar panels and a 30Ah battery.
+## Sensor to Solution
 
-See [PiBuoy/README.md](PiBuoy/README.md)
+Our Sensor to Solution methodology for this project involves a Collection system to record hydrophone audio, AIS data, and other environmental telemetry. An Analysis process automatically labels the audio data and trains a machine learning (ML) model. The ML model is then deployed on a low-power Detection device which can trigger remote alerts for detection events.
 
-## FeatherBuoy
+```mermaid 
+graph LR
+    A(Collection) --> B(Analysis) --> C(Detection)
+```
 
-A buoy designed to support the Adafruit [FeatherWing Tripler](https://www.adafruit.com/product/3417) base board which supports Feather MCU's (Particle, Arduino M0, etc)​ and accessories. Buoy form factor is based on the [MakerBuoy](https://github.com/wjpavalko/Maker-Buoy) design.
+Reference implementations for each of the Sensor to Solution functions can be seen below.
 
-See [FeatherBuoy/README.md](FeatherBuoy/README.md)
+## Collection
 
-## ParticleTrackerBuoy
+### PiBuoy
 
-A buoy built around the [Particle.io Tracker SOM Evaluation Board](https://docs.particle.io/datasheets/asset-tracking/tracker-som-eval-board/). The Tracker Eval board is connected to a [Adafruit Quad 2x2 FeatherWing](https://www.adafruit.com/product/4253) via the i2c port to allow Feather form factor devices and sensors to be connected. The electronics are housed in a 4in schedule 40 PVC pipe. Ballast is added to the bottom of the pipe for appropriate floatation orientation
+A buoy designed to run an Raspberry Pi with power management that can do continuous collection of hydrophone audio. It is equipped with an AIS receiver and other sensors such as GPS, LTE, temperature, and a 9-axis gyroscope.
 
-<img src="ParticleTrackerBuoy/media/AISonobuoy.png" alt="particle-tracker-buoy" height="400px" title="particle-tracker-buoy">
+<img src="./PiBuoyV2/media/pibuoy2-hydrophone-solar.png" alt="pibuoy" height="400px" title="pibuoy">
 
-See [ParticleTrackerBuoy](ParticleTrackerBuoy)
+See [PiBuoyV2/README.md](PiBuoyV2/README.md)
 
-# Deployments
+## Analysis
 
-## PiBuoy
+### Manual Labeling
 
-Having deployed the first buoy, PiBuoy v1 Mark I, that was designed from the ground up (several learnings were integrated from the [Maker Buoy](https://www.makerbuoy.com/)) for data collection for this project before replicating the buildout of it proved more difficult than expected. Recently, while trying to remotely replicate the Mark I, there was difficulty in making the [Sixfab 3G-4G/LTE Base HAT](https://sixfab.com/product/raspberry-pi-4g-lte-modem-kit/) (the data connection for the buoy) work with the cell network provider we had chosen despite having seemingly configured everything correctly.
+The simplest method for getting started with analysis is to manually label the audio data.  We use [Audacity](https://www.audacityteam.org) to label segments of boat/no\_boat in our audio files.
 
-<img src="/docs/img/sixfab_buoy.jpg" height="300" alt="Sixfab HAT on top of a RaspberryPi, additional wiring in the configuration for the buoy"/>
+<img src="./DataScience/img/audacity_sample.png" alt="pibuoy" height="200px" title="audacity">
 
-Not having a spare SIM card attached to a network provider to reproduce the setup locally proved difficult at first, until the idea of leveraging the work from [Daedalus]( https://github.com/IQTLabs/Daedalus) came to mind. With Daedalus, one can provision their own SIM card with whatever APN and settings they’d like and connect devices using a software-defined radio (SDR) to create a private 4G LTE/5G network that provides a data connection over the network connection of the machine running Daedalus. Using the [Daedalus tool]( https://github.com/IQTLabs/Daedalus/blob/main/blue/README.md), we were able to demonstrate the settings on the Sixfab and modem were configured correctly which greatly reduced the amount of remote debugging that was needed.
+### Edge Impulse
 
-<img src="/docs/img/sixfab_bladerf.jpg" height="300" alt="Sixfab with SIM card on top of a RaspberryPi next to the BladeRF SDR"/>
+With a set of labels in hand, we create a machine learning model using [Edge Impulse](https://www.edgeimpulse.com) that can easily be deployed to the edge.  We use spectrogram features to build a binary classifier for boat/no\_boat:
 
-In this case, the issue ended up being extremely poor signal inside of an office building, that once cleanly started in an environment that had a clear signal the connection worked as expected.
+<img src="./DataScience/img/binary_model.png" alt="pibuoy" height="300px" title="ei_model">
+
+### Bootstrapping Labels
+
+For more sophisticated models, bootstrapping labels from the data collect is preferable to manual labeling.  We can use GPS tracks or [AIS](https://en.wikipedia.org/wiki/Automatic_identification_system) data to determine vessel speed and distance from the hydrophone.  This allows use to build a 5-class audio classifier with classes: no\_boat, near\_slow, near\_fast, far\_slow, far\_fast. Below we show the far\_slow portion of a particular test run.
+
+<img src="./DataScience/img/tracks.png" alt="pibuoy" height="300px" title="tracks">
+
+Below we show the results of a 5-class Edge Impulse model.
+
+<img src="./DataScience/img/5class_model.png" alt="pibuoy" height="400px" title="ei_model">
+
+See [DataScience](./DataScience/README.md) for further details.
+
+## Detection
+
+### ParticleTrackerBuoy
+
+A buoy built around the [Particle.io Tracker SOM Evaluation Board](https://docs.particle.io/datasheets/asset-tracking/tracker-som-eval-board/). The Tracker Eval board is connected to a [Adafruit Quad 2x2 FeatherWing](https://www.adafruit.com/product/4253) via the i2c port to allow Feather form factor devices and sensors to be connected. An optional [Myriota Module](https://myriota.com/) can be used to enable satellite communications. The electronics are housed in a 4in schedule 40 PVC pipe. Ballast is added to the bottom of the pipe for appropriate floatation orientation. 
+
+<img src="./ParticleTrackerBuoy/media/AISonobuoy.png" alt="particle-tracker-buoy" height="400px" title="particle-tracker-buoy">
+
+See [ParticleTrackerBuoy/README](ParticleTrackerBuoy/README.md)
+
+# Data Visualization
+
+[Dashboards](https://alper.datav.is/assets/publications/dashboards/dashboards-preprint.pdf) and data visualizations are a key component of modern sensor collection systems, providing greater data visibility, transparency, and a common operating picture.
+
+As part of the AI Sonobuoy project, we are developing a series of visualizations (shown below with locations masked) to help users with a wide range of real-time monitoring and operational decision-making tasks.
+
+|Cloud IoT Visualizations|React Dashboard (Telemetry Data)|React Dashboard (Map View)|
+|:--:|:--:|:--:|
+|<img width="1648" alt="Thumbnail 1" src="https://user-images.githubusercontent.com/45634754/169581508-2c91493a-1be3-45bd-b5bb-57e37cbc247d.png">|<img width="1648" alt="Thumbnail 2" src="https://user-images.githubusercontent.com/45634754/168862811-990d6597-0221-4688-a56c-5bdabea1a61c.png">|<img width="1648" alt="Thumbnail 3" src="https://user-images.githubusercontent.com/45634754/169570594-33c2c161-a055-4bc6-b72a-e939f3eebec3.png">|
+
+This visualization prototyping effort is a work-in-process focused on displaying the AI Sonobuoy's location, temperature (°F), humidity, and state of charge. However, future extensions might visualize different types of data and/or adopt different data encoding strategies. For more details, please see the `aisonobouy-react-dashboards` repository (currently internal-only).

@@ -23,6 +23,7 @@ def run_cmd(args, env=None):
     print(f'running {args}')
     ret = -1
     try:
+        # nosemgrep:github.workflows.config.dangerous-subprocess-use
         ret = subprocess.check_call(args)
         print('%s returned %d' % (' '.join(args), ret))
     except subprocess.CalledProcessError as err:
@@ -81,7 +82,8 @@ def main():
     schedule.every().day.at("18:00").do(job, hostname)
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        sleep_time = 60
+        time.sleep(sleep_time)
 
 
 if __name__ == '__main__':

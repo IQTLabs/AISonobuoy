@@ -8,5 +8,6 @@ __pycache__
 .dir-locals.el
 .idea
 .ipynb_checkpoints
+.pre-commit-config.yaml
 .requirements.txt
 .tern-port

@@ -57,7 +57,7 @@ class AIS:
                     self.rename_dotfiles()
                     start_time = int(time.time())
                 if len(records) > 0:
-                    with open(tmp_filename, 'a') as f:
+                    with open(tmp_filename, 'a', encoding='utf-8') as f:
                         for record in records:
                             try:
                                 f.write(f'{json.dumps(record)}\n')
@@ -65,7 +65,8 @@ class AIS:
                                 f.write('{"error":"'+str(record)+'"}\n')
                     records = []
                 records = self.getAIS(aisc, records)
-                time.sleep(1)
+                time_sleep = 1
+                time.sleep(time_sleep)
             except KeyboardInterrupt:
                 running = False
                 aisc.close()

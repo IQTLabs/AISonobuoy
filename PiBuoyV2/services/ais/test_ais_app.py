@@ -31,7 +31,7 @@ def test_main():
         a.rename_dotfiles()
         json_files = glob.glob(os.path.join(tmpdir, '*json'))
         assert len(json_files) == 1
-        with open(json_files[0]) as f:
+        with open(json_files[0], encoding='utf-8') as f:
             record = json.load(f)
         del record['timestamp']
         assert record == {

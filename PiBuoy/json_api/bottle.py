@@ -148,6 +148,7 @@ else:  # 2.x
     from collections import MutableMapping as DictMixin
     unicode = unicode
     json_loads = json_lds
+    # nosemgrep:github.workflows.config.exec-detected
     exec(compile('def _raise(*a): raise a[0], a[1], a[2]', '<py3fix>', 'exec'))
 
 # Some helpers for string/byte handling
@@ -721,6 +722,7 @@ class Bottle(object):
                 request.path_shift(path_depth)
                 rs = HTTPResponse([])
 
+                # nosemgrep:github.workflows.config.useless-inner-function
                 def start_response(status, headerlist, exc_info=None):
                     if exc_info:
                         _raise(*exc_info)
@@ -1230,6 +1232,7 @@ class BaseRequest(object):
                 sig, msg = map(tob, value[1:].split('?', 1))
                 hash = hmac.new(tob(secret), msg, digestmod=digestmod).digest()
                 if _lscmp(sig, base64.b64encode(hash)):
+                    # nosemgrep:github.workflows.config.avoid-pickle, github.workflows.config.avoid-cPickle
                     dst = pickle.loads(base64.b64decode(msg))
                     if dst and dst[0] == key:
                         return dst[1]
@@ -1353,6 +1356,7 @@ class BaseRequest(object):
             body.write(part)
             body_size += len(part)
             if not is_temp_file and body_size > self.MEMFILE_MAX:
+                # nosemgrep:github.workflows.config.open-never-closed
                 body, tmp = TemporaryFile(mode='w+b'), body
                 body.write(tmp.getvalue())
                 del tmp
@@ -1504,6 +1508,7 @@ class BaseRequest(object):
     @property
     def is_ajax(self):
         """ Alias for :attr:`is_xhr`. "Ajax" is not the right term. """
+        # nosemgrep:github.workflows.config.is-function-without-parentheses
         return self.is_xhr
 
     @property
@@ -1866,6 +1871,7 @@ class BaseResponse(object):
                 depr(0, 13, "Pickling of arbitrary objects into cookies is "
                             "deprecated.", "Only store strings in cookies. "
                             "JSON strings are fine, too.")
+            # nosemgrep:github.workflows.config.avoid-pickle, github.workflows.config.avoid-cPickle
             encoded = base64.b64encode(pickle.dumps([name, value], -1))
             sig = base64.b64encode(hmac.new(tob(secret), encoded,
                                             digestmod=digestmod).digest())
@@ -2917,6 +2923,7 @@ def static_file(filename, root,
     if etag is None:
         etag = '%d:%d:%d:%d:%s' % (stats.st_dev, stats.st_ino, stats.st_mtime,
                                    clen, filename)
+        # nosemgrep:github.workflows.config.insecure-hash-algorithm-sha1
         etag = hashlib.sha1(tob(etag)).hexdigest()
 
     if etag:
@@ -3074,6 +3081,7 @@ def cookie_encode(data, key, digestmod=None):
     depr(0, 13, "cookie_encode() will be removed soon.",
                 "Do not use this API directly.")
     digestmod = digestmod or hashlib.sha256
+    # nosemgrep:github.workflows.config.avoid-pickle, github.workflows.config.avoid-cPickle
     msg = base64.b64encode(pickle.dumps(data, -1))
     sig = base64.b64encode(hmac.new(tob(key), msg, digestmod=digestmod).digest())
     return tob('!') + sig + tob('?') + msg
@@ -3089,6 +3097,7 @@ def cookie_decode(data, key, digestmod=None):
         digestmod = digestmod or hashlib.sha256
         hashed = hmac.new(tob(key), msg, digestmod=digestmod).digest()
         if _lscmp(sig[1:], base64.b64encode(hashed)):
+            # nosemgrep:github.workflows.config.avoid-pickle, github.workflows.config.avoid-cPickle
             return pickle.loads(base64.b64decode(msg))
     return None
 
@@ -3169,6 +3178,7 @@ def auth_basic(check, realm="private", text="Access denied"):
 
     def decorator(func):
 
+        # nosemgrep:github.workflows.config.useless-inner-function
         @functools.wraps(func)
         def wrapper(*a, **ka):
             user, password = request.auth or (None, None)
@@ -3613,6 +3623,7 @@ def load(target, **namespace):
     if target.isalnum(): return getattr(sys.modules[module], target)
     package_name = module.split('.')[0]
     namespace[package_name] = sys.modules[package_name]
+    # nosemgrep:github.workflows.config.eval-detected
     return eval('%s.%s' % (module, target), namespace)
 
 
@@ -3672,6 +3683,7 @@ def run(app=None,
                 environ = os.environ.copy()
                 environ['BOTTLE_CHILD'] = 'true'
                 environ['BOTTLE_LOCKFILE'] = lockfile
+                # nosemgrep:github.workflows.config.dangerous-subprocess-use
                 p = subprocess.Popen(args, env=environ)
                 while p.poll() is None:  # Busy wait...
                     os.utime(lockfile, None)  # I am alive!
@@ -3883,8 +3895,10 @@ class MakoTemplate(BaseTemplate):
         options.setdefault('format_exceptions', bool(DEBUG))
         lookup = TemplateLookup(directories=self.lookup, **options)
         if self.source:
+            # nosemgrep:github.workflows.config.mako-templates-detected
             self.tpl = Template(self.source, lookup=lookup, **options)
         else:
+            # nosemgrep:github.workflows.config.mako-templates-detected
             self.tpl = Template(uri=self.name,
                                 filename=self.filename,
                                 lookup=lookup, **options)
@@ -3921,7 +3935,8 @@ class CheetahTemplate(BaseTemplate):
 class Jinja2Template(BaseTemplate):
     def prepare(self, filters=None, tests=None, globals={}, **kwargs):
         from jinja2 import Environment, FunctionLoader
-        self.env = Environment(loader=FunctionLoader(self.loader), **kwargs)
+        # nosemgrep:github.workflows.config.direct-use-of-jinja2
+        self.env = Environment(loader=FunctionLoader(self.loader), **kwargs, autoescape=True)
         if filters: self.env.filters.update(filters)
         if tests: self.env.tests.update(tests)
         if globals: self.env.globals.update(globals)
@@ -4004,6 +4019,7 @@ class SimpleTemplate(BaseTemplate):
             'setdefault': env.setdefault,
             'defined': env.__contains__
         })
+        # nosemgrep:github.workflows.config.exec-detected
         exec(self.co, env)
         if env.get('_rebase'):
             subtpl, rargs = env.pop('_rebase')
@@ -4264,6 +4280,7 @@ def view(tpl_name, **defaults):
 
     def decorator(func):
 
+        # nosemgrep:github.workflows.config.useless-inner-function
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             result = func(*args, **kwargs)

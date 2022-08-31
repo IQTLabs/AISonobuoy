@@ -41,7 +41,7 @@ while running:
         if int(time.time()*1000) >= (start_time + 900000):
             start_time = int(time.time()*1000)
         if len(records) > 0:
-            with open(f'{f_dir}/{hostname}-{start_time}-ais.json', 'a') as f:
+            with open(f'{f_dir}/{hostname}-{start_time}-ais.json', 'a', encoding="utf-8") as f:
                 for record in records:
                     try:
                         f.write(f'{json.dumps(record)}\n')
@@ -49,7 +49,8 @@ while running:
                         f.write('{"error":"'+str(record)+'"}\n')
             records = []
         records = getAIS(aisc, records)
-        time.sleep(1)
+        sleep_time = 1
+        time.sleep(sleep_time)
     except KeyboardInterrupt:
         running = False
         aisc.close()

@@ -2,5 +2,20 @@
   "extends": [
     "config:base"
   ],
-  "ignorePaths": []
+  "ignorePaths": ["**/DataScience/requirements.txt"],
+  "pip-compile": {
+    "fileMatch": ["(^|/)requirements\\.in$"]
+  },
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^boto"],
+      "groupName": "all boto dependencies"
+    }
+  ],
+  "timezone": "America/New_York",
+  "schedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ]
 }

@@ -1,0 +1,12 @@
+boto3
+folium
+jupyterlab
+lxml
+matplotlib
+numpy
+pandas
+pyarrow
+pytest
+pydub
+scikit-learn
+scikit-learn-extra
