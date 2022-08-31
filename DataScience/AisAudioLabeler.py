@@ -163,7 +163,7 @@ def load_ais_files(inp_path, speed_threshold=5.0):
                 try:
                     sample = json.loads(
                         line
-                    )  # to temporarily handle null bytes at EOF bug
+                    )  # TODO: to temporarily handle null bytes at EOF bug
                 except json.decoder.JSONDecodeError:
                     print(f"JSON file w/ Error: {inp_path / name}")
                     continue
@@ -309,7 +309,7 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         # Assign AIS dataframe
         ais_g = (
             group[1].copy().reset_index()
-        )  # groups are tupes with (groupedbyval, group)
+        )  # groups are tupels with (groupedbyval, group)
         mmsi = ais_g["mmsi"].unique()
 
         assert mmsi.size == 1, "More than one MMSI found in group"
