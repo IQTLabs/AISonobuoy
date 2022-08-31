@@ -2,14 +2,14 @@
   "extends": [
     "config:base"
   ],
-  "ignorePaths": [],
+  "ignorePaths": ["**/DataScience/requirements.txt"],
   "pip-compile": {
     "fileMatch": ["(^|/)requirements\\.in$"]
   },
   "packageRules": [
     {
       "matchPackagePatterns": ["^boto"],
-      "groupName": "Update dependency botocore and boto3"
+      "groupName": "all boto dependencies"
     }
   ],
   "timezone": "America/New_York",

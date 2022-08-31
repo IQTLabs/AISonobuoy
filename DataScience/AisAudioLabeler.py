@@ -537,7 +537,7 @@ def plot_intervals(shp, hmd):
 
     # Consider each ship
     n_ship = 0
-    label_set = set()
+
     for _, statuses in shp.items():
         n_ship += 1
 
@@ -555,11 +555,7 @@ def plot_intervals(shp, hmd):
 
             # Plot each interval for the current ship and status
             for interval in intervals:
-                if label not in label_set:
-                    label_set.add(label)
-                else:
-                    label = ""
-                axs.plot(interval, [n_ship, n_ship], color, label=label)
+                axs.plot(interval, [n_ship, n_ship], color=color, label=label)
 
     # Consider each hydrophone metadta entry
     xlim = axs.get_xlim()
@@ -577,7 +573,13 @@ def plot_intervals(shp, hmd):
     axs.set_xlabel("Timestamp [s]")
     axs.set_ylabel("Group")
     plt.legend(
-        bbox_to_anchor=(1, 0), loc="lower right", bbox_transform=fig.transFigure, ncol=2
+        *[*zip(*{l: h for h, l in zip(*axs.get_legend_handles_labels())}.items())][
+            ::-1
+        ],
+        bbox_to_anchor=(1, 0),
+        loc="lower right",
+        bbox_transform=fig.transFigure,
+        ncol=2,
     )
     plt.title("Recorded Ships with AIS Status")
     plt.show()
