@@ -2,6 +2,7 @@ import pytest
 import os
 import json
 import pandas as pd
+import numpy as np
 import LabelerUtilities as lu
 import AisAudioLabeler as aal
 from pathlib import Path
@@ -104,7 +105,6 @@ class TestAisAudioLabeler:
             json.dump(_shp, f)
         with open("test-data/_shp.json", "r") as f:
             shp = json.load(f)
-
         assert shp == shp_test_data
         assert ais_fixed_data.loc[
             :, ~ais_fixed_data.columns.isin(["distance", "speed"])
@@ -112,14 +112,14 @@ class TestAisAudioLabeler:
         # Compare distance and speed using an absolute threshold
         # so that the threshold units are meaningful
         threshold = 1e-6
-        assert ((ais_fixed_data["distance"] - ais["distance"]).abs() < threshold).all()
-        assert ((ais_fixed_data["speed"] - ais["speed"]).abs() < threshold).all()
+        assert np.allclose(ais_fixed_data["distance"], ais["distance"], atol=threshold)
+        assert np.allclose(ais_fixed_data["speed"], ais["speed"], atol=threshold)
         assert hmd.equals(hmd_test_data)
 
     def test_augment_ais_data_status(
         self, source, hydrophone, ais_forced_status_test_data, hmd_test_data
     ):
-        ais, hmd, shp = aal.augment_ais_data(
+        ais, _, shp = aal.augment_ais_data(
             source, hydrophone, ais_forced_status_test_data.copy(), hmd_test_data.copy()
         )
 
@@ -167,7 +167,7 @@ class TestAisAudioLabeler:
                     (1645747037, 1645747046),
                 ],
                 "NotUnderCommand": [
-                    # (1645559247, 1645559247), 
+                    # (1645559247, 1645559247),
                     # (1645746926, 1645746926)
                 ],
             }
