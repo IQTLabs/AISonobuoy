@@ -312,10 +312,6 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         )  # groups are tupels with (groupedbyval, group)
         mmsi = ais_g["mmsi"].unique()
 
-        assert mmsi.size == 1, "More than one MMSI found in group"
-        assert (
-            not ais_g["timestamp"].duplicated().any()
-        ), "Multiple AIS records for the same timestamp"
         mmsi = mmsi[0]
 
         if len(ais_g) < 3:
@@ -373,7 +369,6 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 )  #TODO: is there any case this wouldn't be equal to timestamp_set[-1]
 
                 # Collect status intervals for each ship
-
                 if start_timestamp != stop_timestamp:
                     shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
@@ -407,9 +402,6 @@ def augment_ais_data(source, hydrophone, ais, hmd):
     logger.info("Assigning ship mmsis not underway")
     ais["mmsis_nuw"] = ais["timestamp"].apply(lambda x: shipcount_nuw.loc[x, "mmsis"])
 
-    assert (
-        not ais[["mmsi", "timestamp"]].duplicated().any()
-    ), "Multiple AIS records for the same mmsi + timestamp"
     return ais, hmd, shp
 
 
