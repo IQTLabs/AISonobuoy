@@ -362,34 +362,34 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             shp[mmsi][status] = []
             for timestamp_set in timestamp_sets:
                 start_timestamp = int(
-                    timestamp_set.min()
-                )  #TODO: is there any case this wouldn't be equal to timestamp_set[0]
+                    timestamp_set[0]
+                )
                 stop_timestamp = int(
-                    timestamp_set.max()
-                )  #TODO: is there any case this wouldn't be equal to timestamp_set[-1]
+                    timestamp_set[-1]
+                )
 
                 # Collect status intervals for each ship
                 if start_timestamp != stop_timestamp:
                     shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
-                    # Update ship counts ...
-                    if status in ["UnderWayUsingEngine"]:
-                        # ... when underway
-                        shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
-                        shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
-                            lambda x: x.append(mmsi)
-                        )
-                    elif status in [
-                        "NotUnderWayUsingEngine",
-                        "AtAnchor",
-                        "Moored",
-                        "NotUnderCommand",
-                    ]:  # Be explicit
-                        # ... when not underway
-                        shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
-                        shipcount_nuw.loc[
-                            start_timestamp:stop_timestamp, "mmsis"
-                        ].apply(lambda x: x.append(mmsi))
+                # Update ship counts ...
+                if status in ["UnderWayUsingEngine"]:
+                    # ... when underway
+                    shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
+                    shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
+                        lambda x: x.append(mmsi)
+                    )
+                elif status in [
+                    "NotUnderWayUsingEngine",
+                    "AtAnchor",
+                    "Moored",
+                    "NotUnderCommand",
+                ]:  # Be explicit
+                    # ... when not underway
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
+                    shipcount_nuw.loc[
+                        start_timestamp:stop_timestamp, "mmsis"
+                    ].apply(lambda x: x.append(mmsi))
     # Assign ship counts and mmsis when underway, and not underway
     logger.info("Assigning ship counts underway")
     ais["shipcount_uw"] = ais["timestamp"].apply(lambda x: shipcount_uw.loc[x, "count"])
