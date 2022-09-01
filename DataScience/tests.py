@@ -124,7 +124,7 @@ class TestAisAudioLabeler:
         )
 
         for mmsi_group in ais.groupby(["mmsi"], sort=False):
-            mmsi = mmsi_group["mmsi"].unique()
+            mmsi = mmsi_group[-1]["mmsi"].unique()
             assert mmsi.size == 1, "More than one MMSI found in group"
 
         assert (
