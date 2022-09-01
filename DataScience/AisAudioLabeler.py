@@ -163,7 +163,7 @@ def load_ais_files(inp_path, speed_threshold=5.0):
                 try:
                     sample = json.loads(
                         line
-                    )  # to temporarily handle null bytes at EOF bug
+                    )  # TODO: to temporarily handle null bytes at EOF bug
                 except json.decoder.JSONDecodeError:
                     print(f"JSON file w/ Error: {inp_path / name}")
                     continue
@@ -309,7 +309,7 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         # Assign AIS dataframe
         ais_g = (
             group[1].copy().reset_index()
-        )  # groups are tupes with (groupedbyval, group)
+        )  # groups are tupels with (groupedbyval, group)
         mmsi = ais_g["mmsi"].unique()
 
         mmsi = mmsi[0]
@@ -529,7 +529,7 @@ def plot_intervals(shp, hmd):
 
     # Consider each ship
     n_ship = 0
-    label_set = set()
+
     for _, statuses in shp.items():
         n_ship += 1
 
@@ -547,11 +547,7 @@ def plot_intervals(shp, hmd):
 
             # Plot each interval for the current ship and status
             for interval in intervals:
-                if label not in label_set:
-                    label_set.add(label)
-                else:
-                    label = ""
-                axs.plot(interval, [n_ship, n_ship], color, label=label)
+                axs.plot(interval, [n_ship, n_ship], color=color, label=label)
 
     # Consider each hydrophone metadta entry
     xlim = axs.get_xlim()
@@ -569,7 +565,13 @@ def plot_intervals(shp, hmd):
     axs.set_xlabel("Timestamp [s]")
     axs.set_ylabel("Group")
     plt.legend(
-        bbox_to_anchor=(1, 0), loc="lower right", bbox_transform=fig.transFigure, ncol=2
+        *[*zip(*{l: h for h, l in zip(*axs.get_legend_handles_labels())}.items())][
+            ::-1
+        ],
+        bbox_to_anchor=(1, 0),
+        loc="lower right",
+        bbox_transform=fig.transFigure,
+        ncol=2,
     )
     plt.title("Recorded Ships with AIS Status")
     plt.show()
