@@ -309,7 +309,7 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         # Assign AIS dataframe
         ais_g = (
             group[1].copy().reset_index()
-        )  # groups are tupels with (groupedbyval, group)
+        )  # groups are tuples with (groupedbyval, group)
         mmsi = ais_g["mmsi"].unique()
 
         mmsi = mmsi[0]
@@ -326,7 +326,7 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         vld_lambda = np.deg2rad(ais_g["lon"].to_numpy())  # [rad]
         vld_varphi = np.deg2rad(ais_g["lat"].to_numpy())  # [rad]
         vld_h = ais_g["h"].to_numpy()  # [m]
-        (distance, _, _, speed, _, _,) = lu.compute_source_metrics(
+        (distance, _heading, _heading_dot, speed, _r_s_h, _v_s_h,) = lu.compute_source_metrics(
             source, vld_t, vld_lambda, vld_varphi, vld_h, hydrophone
         )
         ais.loc[ais["mmsi"] == mmsi, "distance"] = distance
@@ -352,7 +352,8 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
-            timestamp = ais_g[ais_g["status"] == status]["timestamp"].to_numpy()
+            ais_s = ais_g[ais_g["status"] == status]
+            timestamp = ais_s["timestamp"].to_numpy()
 
             # Consider each interval during which the current ship has
             # the current status
