@@ -160,7 +160,13 @@ def load_ais_files(inp_path, speed_threshold=5.0):
         with open(inp_path / name, "r", encoding="utf-8") as f:
             for line in f:
                 n_lines += 1
-                sample = json.loads(line)
+                try:
+                    sample = json.loads(
+                        line
+                    )  # TODO: to temporarily handle null bytes at EOF bug
+                except json.decoder.JSONDecodeError:
+                    print(f"JSON file w/ Error: {inp_path / name}")
+                    continue
 
                 # Handle relevant AIS message types
                 # See: https://www.navcen.uscg.gov/ais-messages
@@ -296,40 +302,31 @@ def augment_ais_data(source, hydrophone, ais, hmd):
 
     # Consider each unique ship
     shp = {}
-    groupby = ais.groupby(["mmsi"])
-    n_group = 0
+    groupby = ais.groupby(["mmsi"], sort=False)
     for group in groupby:
-        n_group += 1
-        logger.info(f"Processing group {group[0]}")
+        logger.info(f"Processing ship with mmsi: {group[0]} AIS data records")
 
         # Assign AIS dataframe
-        ais_g = group[1].copy().reset_index()
+        ais_g = (
+            group[1].copy().reset_index()
+        )  # groups are tuples with (groupedbyval, group)
         mmsi = ais_g["mmsi"].unique()
-        if mmsi.size != 1:
-            raise Exception("More than one MMSI found in group")
-        else:
-            mmsi = mmsi[0]
-        if ais_g.shape[0] < 3:
+
+        mmsi = mmsi[0]
+
+        if len(ais_g) < 3:
             logger.info(f"Group {group[0]} has fewer than three reports: skipping")
             continue
 
-        # Initialize SHP dictionary for tracking ship counts and
-        # status intervals for each ship
-        shp[mmsi] = {}
+        # Initialize SHP dictionary for tracking ship counts and status intervals for each ship
+        shp[mmsi] = {}  # TODO: is a dictionary of dictionaries the best way to do this
 
         # Compute source metrics and assign
         vld_t = ais_g["timestamp"].to_numpy()  # [s]
         vld_lambda = np.deg2rad(ais_g["lon"].to_numpy())  # [rad]
         vld_varphi = np.deg2rad(ais_g["lat"].to_numpy())  # [rad]
         vld_h = ais_g["h"].to_numpy()  # [m]
-        (
-            distance,
-            heading,
-            heading_dot,
-            speed,
-            r_s_h,
-            v_s_h,
-        ) = lu.compute_source_metrics(
+        (distance, _heading, _heading_dot, speed, _r_s_h, _v_s_h,) = lu.compute_source_metrics(
             source, vld_t, vld_lambda, vld_varphi, vld_h, hydrophone
         )
         ais.loc[ais["mmsi"] == mmsi, "distance"] = distance
@@ -337,7 +334,10 @@ def augment_ais_data(source, hydrophone, ais, hmd):
 
         # Consider each unique status
         for status in ais_g["status"].unique():
-            logger.info(f"Processing status {status} for group {group[0]}")
+            # TODO: The problem is the assumption here is that we're getting every AIS message, which we may not be...
+            logger.info(
+                f"Processing status {status} records for ship with MMSI: {group[0]}"
+            )
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
             if status in ["UnderWayUsingEngine"]:
                 timestamp_diff = 10  # [s]
@@ -362,11 +362,16 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             )
             shp[mmsi][status] = []
             for timestamp_set in timestamp_sets:
-                start_timestamp = int(timestamp_set.min())
-                stop_timestamp = int(timestamp_set.max())
+                start_timestamp = int(
+                    timestamp_set[0]
+                )
+                stop_timestamp = int(
+                    timestamp_set[-1]
+                )
 
                 # Collect status intervals for each ship
-                shp[mmsi][status].append((start_timestamp, stop_timestamp))
+                if start_timestamp != stop_timestamp:
+                    shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
                 # Update ship counts ...
                 if status in ["UnderWayUsingEngine"]:
@@ -383,10 +388,9 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 ]:  # Be explicit
                     # ... when not underway
                     shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
-                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
-                        lambda x: x.append(mmsi)
-                    )
-
+                    shipcount_nuw.loc[
+                        start_timestamp:stop_timestamp, "mmsis"
+                    ].apply(lambda x: x.append(mmsi))
     # Assign ship counts and mmsis when underway, and not underway
     logger.info("Assigning ship counts underway")
     ais["shipcount_uw"] = ais["timestamp"].apply(lambda x: shipcount_uw.loc[x, "count"])
@@ -526,6 +530,7 @@ def plot_intervals(shp, hmd):
 
     # Consider each ship
     n_ship = 0
+
     for _, statuses in shp.items():
         n_ship += 1
 
@@ -661,7 +666,7 @@ def export_audio_clips(
     # Process each ship group
     n_clips = 0
     mmsis = []
-    for index, row_g in ais_g.iterrows():
+    for _, row_g in ais_g.iterrows():
         mmsis_g = row_g["mmsis_uw"]
 
         # Consider each ship
