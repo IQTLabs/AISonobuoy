@@ -1,5 +1,5 @@
 atcom==0.4.0
-awscli==1.25.84
+awscli==1.25.85
 gpsd-py3==0.3.0
 pyais==1.5.0
 pyserial==3.5
