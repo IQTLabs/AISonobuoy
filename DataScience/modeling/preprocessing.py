@@ -1,12 +1,13 @@
 import os
-from xml.dom import NotFoundErr
 import torchaudio
 import librosa
 import torch
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-import torch.nn as nn
+
+# import torch.nn as nn
+import torch.nn.functional as F
 
 SAMPLING_RATE = 16000
 FRAME_LENGTH = 1024 * 3 // 7
@@ -75,7 +76,7 @@ class PreProcess:
         self.class_counter = {}
 
     def process(self, idx):
-        input_feature = None # the pytorch hash function hashes objects not data 
+        input_feature = None  # the pytorch hash function hashes objects not data
         curr_file = self.files_ls[idx]
 
         data, curr_sampling_rate = torchaudio.load(curr_file)
@@ -88,9 +89,8 @@ class PreProcess:
                 assert len(snippet) / curr_sampling_rate == TARGET_WINDOW_SIZE_SECONDS
 
                 input_feature = self._create_feature_representation(snippet)
-                input_feature = nn.functional.pad(
-                    input_feature, (2, 2, 2, 2), "constant", 0
-                )
+                input_feature = F.pad(input_feature, (2, 2, 2, 2, 0, 0), "constant", 0)
+                input_feature = torch.squeeze(input_feature, -1)
                 for i, val in enumerate(self.class_files):
                     if self.class_dict:
                         if i not in self.class_dict.keys():
@@ -100,6 +100,7 @@ class PreProcess:
                     if curr_file in val:
                         label = i
                         break
+
                 self.save_ls.append(input_feature)
                 self._save_tensors(label, input_feature)
 
@@ -107,45 +108,46 @@ class PreProcess:
 
     def _create_feature_representation(self, signal):
         input_feature = self.transformation(signal)
+        input_feature = self._create_image_spectrogram(
+            input_feature, training_data=True
+        )
         return input_feature
 
     def _save_tensors(self, label, input_feature):
-        # save_path = os.path.join(
-        #     OUT_ROOT, self.class_dict[label], str(self.ctr) + ".pt"
-        # )
-
-        save_path = os.path.join(OUT_ROOT, self.class_dict[label], hex(hash(input_feature)) + '.pt')
-
+        save_path = os.path.join(
+            OUT_ROOT, self.class_dict[label], hex(hash(input_feature)) + ".pt"
+        )
         input_feature = torch.flatten(input_feature)
         torch.save(input_feature, save_path)
         self.ctr += 1
 
     ### DATA VISUALIZATION METHODS
 
-    def plot_spectrogram(
+    def _create_image_spectrogram(
         self,
-        specgram,
-        title=None,
-        ylabel="freq_bin",
-        out_filename="test_spectrogram.png",
+        specgram
     ):
+        sizes = np.shape(specgram)
         fig, axs = plt.subplots(1, 1)
-        axs.set_title(title or "Spectrogram (db)")
-        axs.set_ylabel(ylabel)
-        axs.set_xlabel("frame")
+        fig.set_size_inches(1.0 * sizes[0] / sizes[1], 1, forward=False)
         im = axs.imshow(librosa.power_to_db(specgram), origin="lower", aspect="auto")
-        fig.colorbar(im, ax=axs)
-        plt.savefig(out_filename)
+        arr = im.make_image(renderer=None, unsampled=True)[0]
+        arr = np.moveaxis(arr, -1, 0)
+        arr = torch.from_numpy(arr)
+        arr = arr[:3, :, :]
+        plt.close()
+        return arr
 
 
 if __name__ == "__main__":
-    # TODO: move to seperate file w/ pytest & add more tests
     preprocesser = PreProcess(
         data_dir="/home/achadda/tugboat_dataset",
         class_dir_names=["tugboat", "no_tugboat"],
     )
-
+    
     for idx in range(len(preprocesser.files_ls)):
         preprocesser.process(idx)
 
+    # TODO: move to seperate file w/ pytest & add more tests
     assert len(set(preprocesser.save_ls)) == len(preprocesser.save_ls)
+

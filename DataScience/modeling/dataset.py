@@ -1,6 +1,9 @@
 import os
+import sys
 import torch
 import logging
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 import torchvision.transforms as T
@@ -8,18 +11,14 @@ import torchvision.transforms as T
 import torchaudio
 import librosa
 
-RESNET_INPUT_SHAPE = (224, 224)
+RESNET_INPUT_SHAPE = (3, 224, 224)
+DATA_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_final_dataset/train"
+CLASS_DIRS_NAMES = ["tugboat", "no_tugboat"]
 
-# TODO: setup logging w/ Python logging module
 
 class BoatDataset(Dataset):
-    def __init__(
-        self,
-        data_dir="/home/achadda/sonobuoy_modeling/tugboat_dataset_compressed_specgrams",
-        class_dir_names=["tugboat", "no_tugboat"],
-    ):
+    def __init__(self, data_dir=DATA_ROOT, class_dir_names=CLASS_DIRS_NAMES):
         self.data_dir = data_dir
-        self.class_names = class_dir_names
         self.classes = class_dir_names
         self.class_files = []
         self.files_ls = []
@@ -46,6 +45,7 @@ class BoatDataset(Dataset):
 
         input_feature = torch.load(curr_file)
         input_feature = torch.reshape(input_feature, RESNET_INPUT_SHAPE)
+        label_tensor = torch.zeros([2]).type(torch.float32)
         for i, val in enumerate(self.class_files):
             if self.class_dict:
                 if i not in self.class_dict.keys():
@@ -53,12 +53,10 @@ class BoatDataset(Dataset):
             else:
                 self.class_dict[i] = self.classes[i]
             if curr_file in val:
-                label = i
+                label_tensor[i] = 1
                 break
 
-        return input_feature.type(torch.float32), torch.as_tensor(
-            label, dtype=torch.int8
-        )
+        return input_feature.type(torch.float32), label_tensor
 
     ### MAIN DATA MAINPULATION METHODS
 
@@ -122,7 +120,7 @@ if __name__ == "__main__":
     from torch.utils.data import DataLoader
 
     # constants
-    TUGBOAT_DATA_DIR = "/home/achadda/sonobuoy_modeling/tugboat_dataset_compressed_specgrams"
+    TUGBOAT_DATA_DIR = "/home/achadda/sonobuoy_modeling/tugboat_final_dataset/train"
     TUGBOAT_DS_CLASSES = ["tugboat", "no_tugboat"]
     TUGBOAT_FILEPATH = os.path.join(TUGBOAT_DATA_DIR, TUGBOAT_DS_CLASSES[0])
     NO_TUGBOAT_FILEPATH = os.path.join(TUGBOAT_DATA_DIR, TUGBOAT_DS_CLASSES[1])
@@ -143,6 +141,4 @@ if __name__ == "__main__":
     # __getitem__() test[s]
     dummy_dataloader = DataLoader(tugboat_ds, batch_size=1)
     X, y = next(iter(dummy_dataloader))
-    img = X.squeeze(0)
-    label = y.squeeze(0)
-    tugboat_ds.plot_spectrogram(img, SAMPLING_RATE)
+    assert X.squeeze(0).shape == RESNET_INPUT_SHAPE
