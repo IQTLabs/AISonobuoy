@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 import os
 from torchvision import utils
 import logging
+import wandb
 import sys
 
 import torchmetrics
@@ -18,6 +19,7 @@ from dataset import BoatDataset
 
 
 def logging_config():
+    wandb.init(project="aisonobuoy-v1")
     return logging.basicConfig(filename="custom.log")
 
 
@@ -94,7 +96,6 @@ def visualize_batch():
 def create_data_loader(data_dir, classes, batch_size, is_training, num_workers):
     shuffle = not is_training
     tugboat_ds = BoatDataset(data_dir=data_dir, class_dir_names=classes)
-    print("DS LENGTH", tugboat_ds.__len__())
 
     return DataLoader(
         tugboat_ds,
@@ -117,7 +118,6 @@ def train_epoch(train_data_loader, model, loss_func, optimizer):
         X, y = X.cuda(), y.cuda()
         optimizer.zero_grad()
         logits = model(X)
-        # print(logits, y)
         loss = loss_func(logits, y)
         loss.backward()
         optimizer.step()
@@ -137,8 +137,6 @@ def eval_func(test_data_loader, model, loss_func, metric_func):
         logits = model(X)
         _, preds_ = torch.max(logits, 1)
         _, gt_ = torch.max(y, 1)
-        # print(logits, y)
-        # print(preds_, gt_)
         loss = loss_func(logits, y)
         loss_ls.append(loss)
         preds.append(preds_.type(torch.int32).cpu())
@@ -191,6 +189,17 @@ def train_loop(
         )
         print("Epoch Time:", str(time() - start_time))
 
+        wandb.log(
+            {
+                "epoch_num": epoch,
+                "train_loss": train_loss,
+                "eval_loss": eval_loss,
+                "f1": eval_metric.item(),
+            }
+        )
+
+        wandb.watch(model)
+
         save_stats(out_dir, train_loss, "train_loss.txt")
         save_stats(out_dir, eval_loss, "eval_loss.txt")
         save_stats(out_dir, eval_metric, "eval_metric.txt")
@@ -235,25 +244,36 @@ if __name__ == "__main__":
     assert len(test_data_loader) > 1  # TODO: SOMETHING IS WRONG HERE
     # TODO: add validation step (maybe in seperate script)
 
-    # model = resnet18(weights=ResNet18_Weights.DEFAULT)
-    model = resnet18()
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    # model = resnet18()
     num_features = model.fc.in_features
     print("NUM FEATURES", num_features)
     # model.fc = nn.Linear(num_features, len(classes))
     model.fc = nn.Sequential(nn.Linear(num_features, len(classes))).cuda()
     model.cuda()
-    for param in model.parameters():
-        param.requires_grad = True
+    # for param in model.parameters():
+    #     param.requires_grad = True
     print("Model size:", sum(p.numel() for p in model.parameters()), "parameters")
     # print(model)
 
     loss_func = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters())
-    # optimizer = optim.Adam(
-    #     params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
-    # )
+    optimizer = optim.Adam(
+        params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
+    )
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
     metric_func = torchmetrics.F1Score(num_classes=2)
+
+    wandb.config = {
+        "model": "ResNet18",
+        "epochs": args.epochs,
+        "batch_size": args.batch_size,
+        "learning_rate": args.learning_rate,
+        "weight_decay": args.weight_decay,
+        "optimizer": "Adam",
+        "lr_scheduler": "StepLR",
+        "loss_func": "CrossEntropy",
+        "pretrained": "",
+    }
 
     results_dict = train_loop(
         train_data_loader,
