@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 
 ROOT = "/home/achadda/sonobuoy_modeling/tugboat_dataset_compressed_specgrams/"
 CLASS_DIRS = os.listdir(ROOT)
@@ -9,13 +10,15 @@ DATASET_OUT_TRAIN = os.path.join(DATASET_OUT_ROOT, "train")
 DATASET_OUT_TEST = os.path.join(DATASET_OUT_ROOT, "test")
 DATASET_OUT_VAL = os.path.join(DATASET_OUT_ROOT, "val")
 
-class_data_dict = {class_: set(os.listdir(os.path.join(ROOT, class_))) for class_ in CLASS_DIRS}
+class_data_dict = {
+    class_: set(os.listdir(os.path.join(ROOT, class_))) for class_ in CLASS_DIRS
+}
 
 # avoid class imbalance by including equal # of targets per class
-class_num_targets = len(min(class_data_dict.values(), key=len)) 
+class_num_targets = len(min(class_data_dict.values(), key=len))
 
-train_num_targets = int(class_num_targets * .7) 
-test_num_targets = int(class_num_targets * .2)
+train_num_targets = int(class_num_targets * 0.7)
+test_num_targets = int(class_num_targets * 0.2)
 val_num_targets = class_num_targets - train_num_targets - test_num_targets
 
 os.makedirs(DATASET_OUT_ROOT, exist_ok=True)
@@ -40,10 +43,10 @@ for class_name, rem_class_targets in class_data_dict.items():
     rem_class_targets -= val_targets
 
     for file in train_targets:
-        os.system(f"cp {os.path.join(ROOT, class_name, file)} {train_path}")
+        shutil.copy(os.path.join(ROOT, class_name, file), train_path)
 
     for file in test_targets:
-        os.system(f"cp {os.path.join(ROOT, class_name, file)} {test_path}")
+        shutil.copy(os.path.join(ROOT, class_name, file), test_path)
 
     for file in val_targets:
-        os.system(f"cp {os.path.join(ROOT, class_name, file)} {val_path}")
+        shutil.copy(os.path.join(ROOT, class_name, file), val_path)

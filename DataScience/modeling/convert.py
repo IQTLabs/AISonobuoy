@@ -82,6 +82,9 @@ keras_out = keras_model.predict(np.rollaxis(dummy_input.detach().cpu().numpy(), 
 assert np.allclose(torch_out.detach().cpu().numpy(), keras_out, rtol=1e-03, atol=1e-05)
 
 keras_model.save(KERAS_PATH)
+
+assert os.path.exists(KERAS_PATH)
+
 loaded_keras_model = keras.models.load_model(KERAS_PATH)
 
 assert keras_model.get_config() == loaded_keras_model.get_config()
