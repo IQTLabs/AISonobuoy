@@ -167,7 +167,6 @@ def load_ais_files(inp_path, speed_threshold=5.0):
                 except json.decoder.JSONDecodeError:
                     print(f"JSON file w/ Error: {inp_path / name}")
                     continue
-
                 # Handle relevant AIS message types
                 # See: https://www.navcen.uscg.gov/ais-messages
                 if sample["type"] == 1 or sample["type"] == 2 or sample["type"] == 3:
@@ -360,7 +359,9 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             timestamp_sets = np.split(
                 timestamp, np.where(np.diff(timestamp) > timestamp_diff)[0] + 1
             )
-            shp[mmsi][status] = []
+            if timestamp_sets:
+                if sum([int(x[-1]) - int(x[0]) for x in timestamp_sets]) > 0:
+                    shp[mmsi][status] = []
             for timestamp_set in timestamp_sets:
                 start_timestamp = int(
                     timestamp_set[0]
