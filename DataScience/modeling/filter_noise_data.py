@@ -1,5 +1,6 @@
 # file handling
 import os
+import json
 
 # data manipulation
 import numpy as np
@@ -33,7 +34,9 @@ NOISE_ID = "0" * 9  # dummy mmsi
 DEFAULT_INTERVAL_LENGTH_SECONDS = 600
 
 # (lat, long)
-LOCATION_BUOY_LOCATION = (0, 0)
+CAPE_BUOY_LOCATION = (28.410868, -80.603866)
+ANNAPOLIS_BUOY_LOCATION = (38.951455, -76.552497)
+
 
 def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
@@ -86,22 +89,23 @@ for data_dir in data_dirs:
 files_ls.sort()  # ais, hmd, shp (alphabetical order)
 
 # TODO: make the following code more generalizeable to multiple deployments
+# Cape Canaveral
 v2mk2_ais_df = pd.read_parquet(files_ls[0])
 v2mk2_hmd_df = pd.read_parquet(files_ls[1])
 v2mk2_shp_df = pd.read_json(files_ls[2], convert_dates=False, convert_axes=False)
 
-location_ais = v2mk2_ais_df.copy()  # making human readable
+cape_ais = v2mk2_ais_df.copy()  # making human readable
 v2mk2_ais_df = None  # free memory
 
 # remove calibration artifacts w/ impossible lat/long
-location_latlon_cleaned = location_ais.loc[
-    (location_ais.lon != 181.0) & (location_ais.lat != 91.0)
+cape_latlon_cleaned = cape_ais.loc[
+    (cape_ais.lon != 181.0) & (cape_ais.lat != 91.0)
 ].copy()
 
 # add relative distance from buoy to each AIS entry
-location_latlon_cleaned.loc[:, "relative_distance_meters"] = location_latlon_cleaned.apply(
+cape_latlon_cleaned.loc[:, "relative_distance_meters"] = cape_latlon_cleaned.apply(
     lambda row: distance_meters(
-        LOCATION_BUOY_LOCATION[0], LOCATION_BUOY_LOCATION[1], row["lat"], row["lon"]
+        CAPE_BUOY_LOCATION[0], CAPE_BUOY_LOCATION[1], row["lat"], row["lon"]
     ),
     axis=1,
 )
@@ -133,11 +137,9 @@ for val in [datetime.datetime.fromtimestamp(x) for x in hydrophone_timestamps_ar
 
 # print(len(files_ls))
 
-location_latlon_cleaned.loc[
-    location_latlon_cleaned["timestamp"] > 0, "hrd"
-] = location_latlon_cleaned["timestamp"].apply(
-    lambda row: datetime.datetime.fromtimestamp(row)
-)
+cape_latlon_cleaned.loc[
+    cape_latlon_cleaned["timestamp"] > 0, "hrd"
+] = cape_latlon_cleaned["timestamp"].apply(datetime.datetime.fromtimestamp)
 
 shp_underway_intervals_to_exclude = [
     x
@@ -169,7 +171,7 @@ for interval in shp_underway_intervals_to_exclude:
     else:
         exclusion_dict[file_timestamp].append(audio_to_exclude)
 
-for idx in range(len(hydrophone_timestamps_arr)):
+for idx, _ in enumerate(hydrophone_timestamps_arr):
     timestamp = hydrophone_timestamps_arr[idx]
     if idx != len(hydrophone_timestamps_arr) - 1:
         next_timestamp = hydrophone_timestamps_arr[idx + 1]
@@ -184,11 +186,12 @@ for idx in range(len(hydrophone_timestamps_arr)):
     )
 
     try:
-        audio = AudioSegment.from_file(file_path, format=HYDROPHONE_RECORDING_FILETYPE[1:])
-    except:
+        audio = AudioSegment.from_file(
+            file_path, format=HYDROPHONE_RECORDING_FILETYPE[1:]
+        )
+    except AttributeError:
         print("FAILED ON FILE:", file_path)
         continue
-
 
     if timestamp in exclusion_dict.keys():
         # TODO: parse each individual interval once we have better data
