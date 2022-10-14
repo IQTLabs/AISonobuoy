@@ -1,8 +1,10 @@
 import os
+from tkinter.tix import IMAGE
 import torchaudio
 import librosa
 import torch
 import random
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -20,7 +22,8 @@ TARGET_WINDOW_SIZE_SECONDS = 3
 
 ROOT = "/home/achadda/tugboat_dataset"
 CLASS_DIR_NAMES = ["tugboat", "no_tugboat"]
-OUT_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_dataset_compressed_specgrams"
+TENSOR_OUT_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_dataset_compressed_specgrams"
+IMAGE_OUT_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_dataset_image_specgrams"
 
 SEED = 1
 random.seed(SEED)
@@ -76,7 +79,7 @@ class PreProcess:
         self.class_counter = {}
 
     def process(self, idx):
-        input_feature = None  # the pytorch hash function hashes objects not data
+        # TODO: use  hashlib.sha1(save_feature.view(np.float32)).hexdigest()
         curr_file = self.files_ls[idx]
 
         data, curr_sampling_rate = torchaudio.load(curr_file)
@@ -103,34 +106,49 @@ class PreProcess:
 
                 self.save_ls.append(input_feature)
                 self._save_tensors(label, input_feature)
+        data = None
+        input_feature = None
+        label = None
 
     ### MAIN DATA MAINPULATION METHODS
 
     def _create_feature_representation(self, signal):
         input_feature = self.transformation(signal)
-        input_feature = self._create_image_spectrogram(
-            input_feature, training_data=True
-        )
+        input_feature = self._create_image_spectrogram(input_feature)
         return input_feature
 
     def _save_tensors(self, label, input_feature):
-        save_path = os.path.join(
-            OUT_ROOT, self.class_dict[label], hex(hash(input_feature)) + ".pt"
+        tensor_save_path = os.path.join(
+            TENSOR_OUT_ROOT, self.class_dict[label], str(self.ctr) + ".pt"
         )
+        image_save_path = os.path.join(
+            IMAGE_OUT_ROOT, self.class_dict[label], str(self.ctr) + ".png"
+        )
+        cv2.imwrite(
+            image_save_path,
+            cv2.cvtColor(np.moveaxis(input_feature.numpy(), 0, -1), cv2.COLOR_RGB2BGR),
+        )
+
         input_feature = torch.flatten(input_feature)
-        torch.save(input_feature, save_path)
+        torch.save(input_feature, tensor_save_path)
+
         self.ctr += 1
 
     ### DATA VISUALIZATION METHODS
-
-    def _create_image_spectrogram(
-        self,
-        specgram
-    ):
+    # TODO: matplotlib scales color range... this should not be the case (use scikit image, maybe use grayscale)
+    # linear vs. log mapping , try linear? (make sure this is log)
+    def _create_image_spectrogram(self, specgram):
         sizes = np.shape(specgram)
         fig, axs = plt.subplots(1, 1)
         fig.set_size_inches(1.0 * sizes[0] / sizes[1], 1, forward=False)
-        im = axs.imshow(librosa.power_to_db(specgram), origin="lower", aspect="auto")
+        im = axs.imshow(
+            librosa.power_to_db(specgram),
+            origin="lower",
+            aspect="auto",
+            vmin=-80,
+            vmax=80,
+            cmap="turbo",
+        )
         arr = im.make_image(renderer=None, unsampled=True)[0]
         arr = np.moveaxis(arr, -1, 0)
         arr = torch.from_numpy(arr)
@@ -144,10 +162,9 @@ if __name__ == "__main__":
         data_dir="/home/achadda/tugboat_dataset",
         class_dir_names=["tugboat", "no_tugboat"],
     )
-    
+
     for idx in range(len(preprocesser.files_ls)):
         preprocesser.process(idx)
 
     # TODO: move to seperate file w/ pytest & add more tests
     assert len(set(preprocesser.save_ls)) == len(preprocesser.save_ls)
-

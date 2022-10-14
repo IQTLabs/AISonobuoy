@@ -9,18 +9,18 @@ from torch.utils.data import DataLoader
 import os
 from torchvision import utils
 import logging
-import wandb
 import sys
 
 import torchmetrics
 from torchvision.models import resnet18, ResNet18_Weights
+from torch.utils.tensorboard import SummaryWriter
 
 from dataset import BoatDataset
 
 
 def logging_config():
-    wandb.init(project="aisonobuoy-v1")
-    return logging.basicConfig(filename="custom.log")
+    tensorboard_writer = SummaryWriter()
+    return logging.basicConfig(filename="custom.log"), tensorboard_writer
 
 
 def parse_cli():
@@ -111,7 +111,9 @@ def save_stats(out_dir, value, out_file):
         out_write.write(str(value) + "\n")
 
 
-def train_epoch(train_data_loader, model, loss_func, optimizer):
+def train_epoch(
+    train_data_loader, model, loss_func, optimizer, tensorboard_writer, epoch
+):
     model.train()
     loss_ls = []
     for X, y in train_data_loader:
@@ -119,6 +121,7 @@ def train_epoch(train_data_loader, model, loss_func, optimizer):
         optimizer.zero_grad()
         logits = model(X)
         loss = loss_func(logits, y)
+        tensorboard_writer.add_scalar("Loss/train", loss, epoch)
         loss.backward()
         optimizer.step()
         loss = loss.mean()
@@ -127,7 +130,9 @@ def train_epoch(train_data_loader, model, loss_func, optimizer):
 
 
 @torch.no_grad()
-def eval_func(test_data_loader, model, loss_func, metric_func):
+def eval_func(
+    test_data_loader, model, loss_func, metric_func, tensorboard_writer, epoch
+):
     model.eval()
     preds = []
     gt = []
@@ -138,10 +143,12 @@ def eval_func(test_data_loader, model, loss_func, metric_func):
         _, preds_ = torch.max(logits, 1)
         _, gt_ = torch.max(y, 1)
         loss = loss_func(logits, y)
+        tensorboard_writer.add_scalar("Loss/val", loss, epoch)
         loss_ls.append(loss)
         preds.append(preds_.type(torch.int32).cpu())
         gt.append(gt_.type(torch.int32).cpu())
     metric = metric_func(torch.cat(preds), torch.cat(gt))
+    tensorboard_writer.add_scalar("Metric/f1", metric, epoch)
     return torch.vstack(loss_ls).mean().item(), metric
 
 
@@ -155,13 +162,16 @@ def train_loop(
     out_dir,
     scheduler,
     metric_func,
+    tensorboard_writer,
 ):
     best_loss = np.float32(sys.maxsize)
     for epoch in range(epochs):
         start_time = time()
-        train_loss = train_epoch(train_data_loader, model, loss_func, optimizer)
+        train_loss = train_epoch(
+            train_data_loader, model, loss_func, optimizer, tensorboard_writer, epoch
+        )
         eval_loss, eval_metric = eval_func(
-            test_data_loader, model, loss_func, metric_func
+            test_data_loader, model, loss_func, metric_func, tensorboard_writer, epoch
         )
         scheduler.step()
 
@@ -189,20 +199,11 @@ def train_loop(
         )
         print("Epoch Time:", str(time() - start_time))
 
-        wandb.log(
-            {
-                "epoch_num": epoch,
-                "train_loss": train_loss,
-                "eval_loss": eval_loss,
-                "f1": eval_metric.item(),
-            }
-        )
-
-        wandb.watch(model)
-
         save_stats(out_dir, train_loss, "train_loss.txt")
         save_stats(out_dir, eval_loss, "eval_loss.txt")
         save_stats(out_dir, eval_metric, "eval_metric.txt")
+
+        tensorboard_writer.flush()
 
     return {
         "epoch": epochs,
@@ -213,7 +214,7 @@ def train_loop(
 
 
 if __name__ == "__main__":
-    logger = logging_config()
+    logge, tensorboard_writer = logging_config()
     args = parse_cli()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -260,20 +261,8 @@ if __name__ == "__main__":
     optimizer = optim.Adam(
         params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
     )
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1000, gamma=0.1)
     metric_func = torchmetrics.F1Score(num_classes=2)
-
-    wandb.config = {
-        "model": "ResNet18",
-        "epochs": args.epochs,
-        "batch_size": args.batch_size,
-        "learning_rate": args.learning_rate,
-        "weight_decay": args.weight_decay,
-        "optimizer": "Adam",
-        "lr_scheduler": "StepLR",
-        "loss_func": "CrossEntropy",
-        "pretrained": "",
-    }
 
     results_dict = train_loop(
         train_data_loader,
@@ -285,7 +274,10 @@ if __name__ == "__main__":
         args.out_dir,
         scheduler,
         metric_func,
+        tensorboard_writer,
     )
+
+    tensorboard_writer.close()
 
     torch.save(
         {"model_state_dict": model.state_dict(), **results_dict},
