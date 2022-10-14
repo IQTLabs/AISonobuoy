@@ -7,6 +7,7 @@ import numpy as np
 from math import radians, cos, sin, asin, sqrt
 
 # data formatting
+import datetime
 import pandas as pd
 
 # audio data manipulation
@@ -33,7 +34,8 @@ OUTPUT_DATA_FORMAT = ".wav"
 OUTPUT_PREFIX = "tugboat_"
 
 # (lat, long)
-LOCATION_BUOY_LOCATION = (0, 0)
+CAPE_BUOY_LOCATION = (28.410868, -80.603866)
+ANNAPOLIS_BUOY_LOCATION = (38.951455, -76.552497)
 
 # Earth-as-a-sphere-based distance approximation using the Haversine formula
 def distance_meters(lat_one, lon_one, lat_two, lon_two):
@@ -58,6 +60,7 @@ def distance_meters(lat_one, lon_one, lat_two, lon_two):
         * earth_radius_km
     ) * 1000
 
+
 # pull data files and ignore hidden files
 data_dirs = [
     x
@@ -80,34 +83,35 @@ for data_dir in data_dirs:
 files_ls.sort()  # ais, hmd, shp (alphabetical order)
 
 # TODO: make the following code more generalizeable to multiple deployments
+# Cape Canaveral
 v2mk2_ais_df = pd.read_parquet(files_ls[0])
 v2mk2_hmd_df = pd.read_parquet(files_ls[1])
 v2mk2_shp_df = pd.read_json(files_ls[2], convert_dates=False, convert_axes=False)
 
-location_ais = v2mk2_ais_df.copy()  # making human readable
+cape_ais = v2mk2_ais_df.copy()  # making human readable
 v2mk2_ais_df = None  # free memory
 
 # remove calibration artifacts w/ impossible lat/long
-location_latlon_cleaned = location_ais.loc[
-    (location_ais.lon != 181.0) & (location_ais.lat != 91.0)
+cape_latlon_cleaned = cape_ais.loc[
+    (cape_ais.lon != 181.0) & (cape_ais.lat != 91.0)
 ].copy()
 
 # add relative distance from buoy to each AIS entry
-location_latlon_cleaned.loc[:, "relative_distance_meters"] = location_latlon_cleaned.apply(
+cape_latlon_cleaned.loc[:, "relative_distance_meters"] = cape_latlon_cleaned.apply(
     lambda row: distance_meters(
-        LOCATION_BUOY_LOCATION[0], LOCATION_BUOY_LOCATION[1], row["lat"], row["lon"]
+        CAPE_BUOY_LOCATION[0], CAPE_BUOY_LOCATION[1], row["lat"], row["lon"]
     ),
     axis=1,
 )
 
 # add human readable name + reformat w/ mmsi + NaN -> None
-location_shp_df = v2mk2_shp_df.copy()
+cape_shp_df = v2mk2_shp_df.copy()
 v2mk2_shp_df = None  # free memory
-location_shp_df = location_shp_df.transpose()
-location_shp_df["mmsi"] = location_shp_df.index
-location_shp_df = location_shp_df.where(pd.notnull(location_shp_df), None)
+cape_shp_df = cape_shp_df.transpose()
+cape_shp_df["mmsi"] = cape_shp_df.index
+cape_shp_df = cape_shp_df.where(pd.notnull(cape_shp_df), None)
 
-# create output directories 
+# create output directories
 os.makedirs(OUT_ROOT, exist_ok=True)
 
 # isolate timestamp part of hydrophone recording filenames
@@ -123,22 +127,22 @@ hydrophone_timestamps_arr = np.array(
 )
 
 mmsi_of_interest = set(
-    location_latlon_cleaned.loc[location_latlon_cleaned["shiptype"] == SHIPTYPE_OF_INTEREST][
+    cape_latlon_cleaned.loc[cape_latlon_cleaned["shiptype"] == SHIPTYPE_OF_INTEREST][
         "mmsi"
     ].to_list()
 )
 
-# filter by recordings where the boat is <300m from buoy, only ships reporting underway, 
+# filter by recordings where the boat is <300m from buoy, only ships reporting underway,
 # and of the type "Tug"
 timestamp_of_interest = set(
-    location_latlon_cleaned.loc[
-        (location_latlon_cleaned["shipcount_uw"] == 1)
-        & (location_latlon_cleaned["relative_distance_meters"] <= DISTANCE_THRESHOLD)
-        & (location_latlon_cleaned["shiptype"] == SHIPTYPE_OF_INTEREST)
+    cape_latlon_cleaned.loc[
+        (cape_latlon_cleaned["shipcount_uw"] == 1)
+        & (cape_latlon_cleaned["relative_distance_meters"] <= DISTANCE_THRESHOLD)
+        & (cape_latlon_cleaned["shiptype"] == SHIPTYPE_OF_INTEREST)
     ]["timestamp"].to_list()
 )
 
-subset_of_interest = location_shp_df[location_shp_df.index.isin(list(mmsi_of_interest))][
+subset_of_interest = cape_shp_df[cape_shp_df.index.isin(list(mmsi_of_interest))][
     STATUS_OF_INTEREST
 ]
 

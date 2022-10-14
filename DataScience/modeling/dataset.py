@@ -1,9 +1,5 @@
 import os
-import sys
 import torch
-import logging
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 import torchvision.transforms as T
@@ -45,7 +41,7 @@ class BoatDataset(Dataset):
 
         input_feature = torch.load(curr_file)
         input_feature = torch.reshape(input_feature, RESNET_INPUT_SHAPE)
-        label_tensor = torch.zeros([2]).type(torch.float32)
+        label_tensor = torch.zeros([len(CLASS_DIRS_NAMES)]).type(torch.float32)
         for i, val in enumerate(self.class_files):
             if self.class_dict:
                 if i not in self.class_dict.keys():
@@ -95,24 +91,6 @@ class BoatDataset(Dataset):
                 signal, (0, self.num_samples - signal.shape[1])
             )
         return signal
-
-    ### DATA VISUALIZATION METHODS
-
-    def plot_spectrogram(
-        self,
-        specgram,
-        title=None,
-        ylabel="freq_bin",
-        out_filename="test_spectrogram_new.png",
-    ):
-        fig, axs = plt.subplots(1, 1)
-        axs.set_title(title or "Spectrogram (db)")
-        axs.set_ylabel(ylabel)
-        axs.set_xlabel("frame")
-        im = axs.imshow(librosa.power_to_db(specgram), origin="lower", aspect="auto")
-        fig.colorbar(im, ax=axs)
-        plt.savefig(out_filename)
-
 
 if __name__ == "__main__":
     ### Tests/Debugging

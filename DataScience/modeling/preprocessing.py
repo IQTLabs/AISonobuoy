@@ -1,5 +1,4 @@
 import os
-from tkinter.tix import IMAGE
 import torchaudio
 import librosa
 import torch
