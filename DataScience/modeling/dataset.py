@@ -2,8 +2,6 @@ import os
 import torch
 from torch.utils.data import Dataset
 
-import torchaudio
-
 RESNET_INPUT_SHAPE = (3, 224, 224)
 DATA_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_final_dataset/train"
 CLASS_DIRS_NAMES = "tugboat no_tugboat"
@@ -50,44 +48,6 @@ class BoatDataset(Dataset):
                 break
 
         return input_feature.type(torch.float32), label_tensor
-
-    ### MAIN DATA MAINPULATION METHODS
-
-    def _data_shape_normalization(self, signal, curr_sampling_rate):
-        signal = self._resample(signal, curr_sampling_rate)
-        signal = self._mix_down(signal)
-        # signal = self._cut_down(signal)
-        signal = self._right_pad(signal)
-        return signal
-
-    # TODO: implement value normalization (not just shape)
-
-    ### HELPER DATA MAINPULATION METHODS
-
-    def _resample(self, signal, curr_sampling_rate):
-        if curr_sampling_rate != self.sampling_rate:
-            resampler = torchaudio.transforms.Resample(
-                curr_sampling_rate, self.sampling_rate
-            )
-            signal = resampler(signal)
-        return signal
-
-    def _mix_down(self, signal):
-        if signal.shape[0] > 1:
-            signal = torch.mean(signal, dim=0, keepdim=True)
-        return signal
-
-    def _cut_down(self, signal):
-        if signal.shape[1] > self.num_samples:
-            signal = signal[:, : self.num_samples]
-        return signal
-
-    def _right_pad(self, signal):
-        if signal.shape[1] < self.num_samples:
-            signal = torch.nn.functional.pad(
-                signal, (0, self.num_samples - signal.shape[1])
-            )
-        return signal
 
 if __name__ == "__main__":
     ### Tests/Debugging

@@ -1,6 +1,5 @@
 # file handling
 import os
-import json
 
 # data manipulation
 import numpy as np

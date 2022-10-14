@@ -113,7 +113,7 @@ class PreProcess:
 
     def _create_feature_representation(self, signal):
         input_feature = self.transformation(signal)
-        input_feature = self._create_image_spectrogram(input_feature)
+        input_feature = create_image_spectrogram(input_feature)
         return input_feature
 
     def _save_tensors(self, label, input_feature):
@@ -133,27 +133,27 @@ class PreProcess:
 
         self.ctr += 1
 
-    ### DATA VISUALIZATION METHODS
-    # TODO: matplotlib scales color range... this should not be the case (use scikit image, maybe use grayscale)
-    # linear vs. log mapping , try linear? (make sure this is log)
-    def _create_image_spectrogram(self, specgram):
-        sizes = np.shape(specgram)
-        fig, axs = plt.subplots(1, 1)
-        fig.set_size_inches(1.0 * sizes[0] / sizes[1], 1, forward=False)
-        im = axs.imshow(
-            librosa.power_to_db(specgram),
-            origin="lower",
-            aspect="auto",
-            vmin=-80,
-            vmax=80,
-            cmap="turbo",
-        )
-        arr = im.make_image(renderer=None, unsampled=True)[0]
-        arr = np.moveaxis(arr, -1, 0)
-        arr = torch.from_numpy(arr)
-        arr = arr[:3, :, :]
-        plt.close()
-        return arr
+### DATA VISUALIZATION METHODS
+# TODO: matplotlib scales color range... this should not be the case (use scikit image, maybe use grayscale)
+# linear vs. log mapping , try linear? (make sure this is log)
+def create_image_spectrogram(specgram):
+    sizes = np.shape(specgram)
+    fig, axs = plt.subplots(1, 1)
+    fig.set_size_inches(1.0 * sizes[0] / sizes[1], 1, forward=False)
+    im = axs.imshow(
+        librosa.power_to_db(specgram),
+        origin="lower",
+        aspect="auto",
+        vmin=-80,
+        vmax=80,
+        cmap="turbo",
+    )
+    arr = im.make_image(renderer=None, unsampled=True)[0]
+    arr = np.moveaxis(arr, -1, 0)
+    arr = torch.from_numpy(arr)
+    arr = arr[:3, :, :]
+    plt.close()
+    return arr
 
 
 if __name__ == "__main__":
