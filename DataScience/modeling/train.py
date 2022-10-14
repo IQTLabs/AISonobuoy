@@ -6,7 +6,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torchvision import utils
 import logging
 import sys
 
@@ -241,8 +240,8 @@ if __name__ == "__main__":
     print("TEST DATALOADER LENGTH", len(test_data_loader))
 
     assert len(train_data_loader) > 1
-    assert len(test_data_loader) > 1  # TODO: SOMETHING IS WRONG HERE
-    # TODO: add validation step (maybe in seperate script)
+    assert len(test_data_loader) > 1 
+    # TODO: add validation step (in seperate script)
 
     model = resnet18(weights=ResNet18_Weights.DEFAULT)
     # model = resnet18()
@@ -282,6 +281,3 @@ if __name__ == "__main__":
         {"model_state_dict": model.state_dict(), **results_dict},
         os.path.join(args.out_dir, "last.pt"),
     )
-
-    if __name__ == "__main__":
-        pass

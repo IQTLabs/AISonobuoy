@@ -1,21 +1,18 @@
 import os
 import torch
-import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
-import torchvision.transforms as T
 
 import torchaudio
-import librosa
 
 RESNET_INPUT_SHAPE = (3, 224, 224)
 DATA_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_final_dataset/train"
-CLASS_DIRS_NAMES = ["tugboat", "no_tugboat"]
+CLASS_DIRS_NAMES = "tugboat no_tugboat"
 
 
 class BoatDataset(Dataset):
     def __init__(self, data_dir=DATA_ROOT, class_dir_names=CLASS_DIRS_NAMES):
         self.data_dir = data_dir
-        self.classes = class_dir_names
+        self.classes = class_dir_names.split(' ')
         self.class_files = []
         self.files_ls = []
 

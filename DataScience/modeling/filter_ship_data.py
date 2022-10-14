@@ -7,7 +7,6 @@ import numpy as np
 from math import radians, cos, sin, asin, sqrt
 
 # data formatting
-import datetime
 import pandas as pd
 
 # audio data manipulation
@@ -188,8 +187,6 @@ for idx, val in subset_of_interest.iteritems():
 if __name__ == "__main__":
     # TODO: move to seperate file w/ pytest & add more tests
     assert not v2mk2_ais_df[["mmsi", "timestamp"]].duplicated().any()
-
-    import json
 
     with open(files_ls[2], "r") as d:
         shp_dict = json.load(d)

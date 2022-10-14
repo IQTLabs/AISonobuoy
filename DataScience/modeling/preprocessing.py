@@ -20,7 +20,7 @@ NUM_SAMPLES = 22500
 TARGET_WINDOW_SIZE_SECONDS = 3
 
 ROOT = "/home/achadda/tugboat_dataset"
-CLASS_DIR_NAMES = ["tugboat", "no_tugboat"]
+CLASS_DIR_NAMES = "tugboat no_tugboat"
 TENSOR_OUT_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_dataset_compressed_specgrams"
 IMAGE_OUT_ROOT = "/home/achadda/sonobuoy_modeling/tugboat_dataset_image_specgrams"
 
@@ -48,8 +48,8 @@ class PreProcess:
         ),
     ):
         self.data_dir = data_dir
-        self.class_names = class_dir_names
-        self.classes = class_dir_names
+        self.class_names = class_dir_names.split(' ')
+        self.classes = class_dir_names.split(' ')
         self.class_files = []
         self.files_ls = []
         self.sampling_rate = sampling_rate
