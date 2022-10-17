@@ -544,6 +544,6 @@ class Telemetry:
 
 
 if __name__ == '__main__':
-    t = Telemetry()
-    t.init_sense()
-    t.main(True)
+    telem = Telemetry()
+    telem.init_sense()
+    telem.main(True)
