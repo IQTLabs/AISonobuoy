@@ -14,6 +14,7 @@ The pipeline can be seen below.
 - `partition_dataset.py`: Partitions the tensors from the previous step into a `training`, `test`, and `val` sets for training/evaluation and saves as separate set directories w/ class-labelled sub-directories. 
 - `dataset.py`: Creates a PyTorch dataset class and creates image-label pairings to be used in training 
 - `train.py`: A PyTorch training loop that takes a model (currently ResNet-18) and uses the image-label data pairings to make predictions + learn from them
+- `convert.py`: Takes the trained PyTorch model and converts it to an ONNX model, Keras model, and then a TFLite model for use on the edge
 
 ---
 
