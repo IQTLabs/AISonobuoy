@@ -3,6 +3,7 @@ import os
 import random
 
 # data manipulaiton
+import ast
 import pandas as pd
 import numpy as np
 from statistics import mean, median
@@ -37,7 +38,7 @@ TUG_DIRNAME = "tugboat"
 NOISE_DIRNAME = "no_tugboat"
 
 # label mapping
-CLASSES = {1: "Tugboat", 0: "Not Tugboat"}
+CLASSES = "{1: 'Tugboat', 0: 'Not Tugboat'}"
 
 # modeling constants
 N_NEIGHBORS = 3
@@ -385,7 +386,7 @@ if __name__ == "__main__":
             cluster_ls[idx],
             curr_dir,
             OUT_DIR,
-            classes_dict=CLASSES,
+            classes_dict=ast.literal_eval(CLASSES),
             n_clusters=N_CLUSTERS,
             n_neighbors=NEIGHBORS_LS[idx],
         )
