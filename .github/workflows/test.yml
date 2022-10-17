@@ -34,7 +34,7 @@ jobs:
               cd PiSupply-PiJuice-bc61c0f/Software/Source && \
               python3 setup.py build && sudo python3 setup.py install && cd ../../.. && \
               pylint -E $(find PiBuoyV2 -type f -name \*py) && \
-              find PiBuoyV2 -type f -name \*py | xargs -n1 pytype && \
+              find PiBuoyV2 -type f -name \*py | xargs -n1 timeout 30s pytype && \
               pytest -v -vv --cov-report term-missing --ignore=PiBuoy --cov=PiBuoyV2 -c .coveragerc && \
               coverage report && \
               coverage xml

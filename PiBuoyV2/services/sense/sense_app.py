@@ -243,43 +243,45 @@ class Telemetry:
         return healthy
 
     def init_sensor_data(self):
-        self.sensor_data = {"temperature_c": [],
-                            "pressure": [],
-                            "humidity": [],
-                            "acceleration_x": [],
-                            "acceleration_y": [],
-                            "acceleration_z": [],
-                            "gyroscope_x": [],
-                            "gyroscope_y": [],
-                            "gyroscope_z": [],
-                            "compass_x": [],
-                            "compass_y": [],
-                            "compass_z": [],
-                            "system_load": [],
-                            "memory_used_mb": [],
-                            "internet": [],
-                            "battery": [],
-                            "ais_record": [],
-                            "audio_record": [],
-                            "disk_free_gb": [],
-                            "files_to_upload": [],
-                            "uptime_seconds": [],
-                            "battery_charge": [],
-                            "battery_voltage": [],
-                            "battery_current": [],
-                            "battery_temperature": [],
-                            "battery_status": [],
-                            "power_input": [],
-                            "power_input_5v": [],
-                            "io_current": [],
-                            "watchdog_reset": [],
-                            "charging_temperature_fault": [],
-                            "version_ais": [],
-                            "version_power": [],
-                            "version_record": [],
-                            "version_s3-upload": [],
-                            "version_sense": [],
-                           }
+        self.sensor_data = {}
+        for var in (
+                "temperature_c",
+                "pressure",
+                "humidity",
+                "acceleration_x",
+                "acceleration_y",
+                "acceleration_z",
+                "gyroscope_x",
+                "gyroscope_y",
+                "gyroscope_z",
+                "compass_x",
+                "compass_y",
+                "compass_z",
+                "system_load",
+                "memory_used_mb",
+                "internet",
+                "battery",
+                "ais_record",
+                "audio_record",
+                "disk_free_gb",
+                "files_to_upload",
+                "uptime_seconds",
+                "battery_charge",
+                "battery_voltage",
+                "battery_current",
+                "battery_temperature",
+                "battery_status",
+                "power_input",
+                "power_input_5v",
+                "io_current",
+                "watchdog_reset",
+                "charging_temperature_fault",
+                "version_ais",
+                "version_power",
+                "version_record",
+                "version_s3-upload",
+                "version_sense"):
+            self.sensor_data[var] = []
 
     def rename_dotfiles(self):
         for dotfile in glob.glob(os.path.join(self.sensor_dir, '.*')):
@@ -543,7 +545,11 @@ class Telemetry:
             cycles += 1
 
 
-if __name__ == '__main__':
+def main():
     telem = Telemetry()
     telem.init_sense()
     telem.main(True)
+
+
+if __name__ == '__main__':
+    main()
