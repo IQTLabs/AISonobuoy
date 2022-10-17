@@ -36,8 +36,9 @@ DEFAULT_INTERVAL_LENGTH_SECONDS = 600
 CAPE_BUOY_LOCATION = (28.410868, -80.603866)
 ANNAPOLIS_BUOY_LOCATION = (38.951455, -76.552497)
 
-
+# find the nearest timestamp
 def find_nearest(array, value):
+    # minimum of the absolute value difference
     idx = (np.abs(array - value)).argmin()
     return idx
 
@@ -87,7 +88,7 @@ for data_dir in data_dirs:
         files_ls.append(os.path.join(ROOT, data_dir, file))
 files_ls.sort()  # ais, hmd, shp (alphabetical order)
 
-# TODO: make the following code more generalizeable to multiple deployments
+
 # Cape Canaveral
 v2mk2_ais_df = pd.read_parquet(files_ls[0])
 v2mk2_hmd_df = pd.read_parquet(files_ls[1])
@@ -126,20 +127,21 @@ hydrophone_timestamps_arr = np.array(
     )
 )
 
+# extract the data between 2AM and 3AM
 files_ls = []
 for val in [datetime.datetime.fromtimestamp(x) for x in hydrophone_timestamps_arr]:
+    # 2AM in UTC time
     if val.hour == 21:
         files_ls.append(
             HYDROPHONE_PREFIX + str(int(val.timestamp())) + HYDROPHONE_POSTFIX
         )
-        # print(HYDROPHONE_PREFIX + str(val) + HYDROPHONE_POSTFIX)
 
-# print(len(files_ls))
-
+# add a human readable date column
 cape_latlon_cleaned.loc[
     cape_latlon_cleaned["timestamp"] > 0, "hrd"
 ] = cape_latlon_cleaned["timestamp"].apply(datetime.datetime.fromtimestamp)
 
+# get all intervals where ships are underway to exclude them from ship json dataframe
 shp_underway_intervals_to_exclude = [
     x
     for x in sum(
@@ -154,29 +156,34 @@ shp_underway_intervals_to_exclude = [
     or datetime.datetime.fromtimestamp(x[1]).hour == 21
 ]
 
+#
 exclusion_dict = {}
 for interval in shp_underway_intervals_to_exclude:
+    # get the nearest hydrophone file
     closest_idx = find_nearest(hydrophone_timestamps_arr, interval[0]) - 1
     file_timestamp = hydrophone_timestamps_arr[closest_idx]
-    # if closest_idx < 0:
-    #     closest_idx = 0
 
+    # snippet to remove
     audio_to_exclude = [
         (int(interval[0]) - file_timestamp) * 1000,
         (int(interval[1]) - file_timestamp) * 1000,
     ]
+    # add exclusion interval to
     if file_timestamp not in exclusion_dict.keys():
         exclusion_dict[file_timestamp] = [audio_to_exclude]
     else:
         exclusion_dict[file_timestamp].append(audio_to_exclude)
 
+# for each hydrophone recording
 for idx, _ in enumerate(hydrophone_timestamps_arr):
     timestamp = hydrophone_timestamps_arr[idx]
+    # get sequnential files
     if idx != len(hydrophone_timestamps_arr) - 1:
         next_timestamp = hydrophone_timestamps_arr[idx + 1]
     else:
         next_timestamp = None
 
+    # create filepath to save snippet
     file_path = os.path.join(
         ROOT,
         DEPLOYMENTS_OF_INTEREST[0],
@@ -184,21 +191,24 @@ for idx, _ in enumerate(hydrophone_timestamps_arr):
         HYDROPHONE_PREFIX + str(timestamp) + HYDROPHONE_POSTFIX,
     )
 
+    # load audio recording from file
     try:
         audio = AudioSegment.from_file(
             file_path, format=HYDROPHONE_RECORDING_FILETYPE[1:]
         )
+    # some file was corrupted
     except AttributeError:
         print("FAILED ON FILE:", file_path)
         continue
 
     if timestamp in exclusion_dict.keys():
-        # TODO: parse each individual interval once we have better data
+        # parsing individuals by first/last
         # doing this for now b/c we are missing AIS readings
         exclusion_timestamps = sorted(exclusion_dict[timestamp])
         exclude_begin = exclusion_timestamps[0][0]
         exclude_end = exclusion_timestamps[-1][-1]
 
+        # get the noise snippet before the exclusion timestamp
         audio_one = audio[:exclude_begin]
         audio_one.export(
             os.path.join(
@@ -214,6 +224,7 @@ for idx, _ in enumerate(hydrophone_timestamps_arr):
             format=OUTPUT_DATA_FORMAT[1:],
         )
 
+        # if the exclusion interval end is within the current file, save
         if exclude_end < len(audio) and exclude_end > 0:
             audio_two = audio[exclude_end:]
             audio_two.export(
@@ -229,8 +240,10 @@ for idx, _ in enumerate(hydrophone_timestamps_arr):
                 ),
                 format=OUTPUT_DATA_FORMAT[1:],
             )
+        # if it's before the interval, ignore
         elif exclude_end < 0:
             continue
+        # if the interval straddles two hydrophone recordings then move the start timestamp for saving
         else:
             if next_timestamp:
                 if next_timestamp in exclusion_dict.keys():
@@ -244,6 +257,7 @@ for idx, _ in enumerate(hydrophone_timestamps_arr):
                         exclusion_dict[next_timestamp] = next_exclusion_values
                 else:
                     exclusion_dict[next_timestamp] = [[exclude_end, -1]]
+    # if there's no exlcusion interval just save the whole thing
     else:
         audio.export(
             os.path.join(
@@ -258,3 +272,9 @@ for idx, _ in enumerate(hydrophone_timestamps_arr):
             ),
             format=OUTPUT_DATA_FORMAT[1:],
         )
+
+# TODO: parse each individual interval once we have better data
+# TODO: simplify this code by loading (+/- audio files into memory too)
+# TODO: make the following code more generalizeable to multiple deployments
+# TODO: make this more modular
+# TODO: add testing suite

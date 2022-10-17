@@ -141,35 +141,44 @@ timestamp_of_interest = set(
     ]["timestamp"].to_list()
 )
 
+# get subset of ship dataframe that is relevant
 subset_of_interest = cape_shp_df[cape_shp_df.index.isin(list(mmsi_of_interest))][
     STATUS_OF_INTEREST
 ]
 
+# iterate through intervals selected from ship json
 for idx, val in subset_of_interest.iteritems():
     curr_mmsi = idx
+    # iterate through interval in list of intervals
     for interval in val:
+        # pull AIS record corresponding to interval
         if (
             interval[0] in timestamp_of_interest
             or interval[-1] in timestamp_of_interest
         ):
+            # get the nearest file timestamp
             file_timestamp = hydrophone_timestamps_arr[
                 hydrophone_timestamps_arr < int(interval[0])
             ].max()
 
+            # filepath to save sinppet
             file_path = os.path.join(
                 ROOT,
                 DEPLOYMENTS_OF_INTEREST[0],
                 HYDROPHONE_DATA_DIR,
                 HYDROPHONE_PREFIX + str(file_timestamp) + HYDROPHONE_POSTFIX,
             )
+            # load the entire audio recording from file
             audio = AudioSegment.from_file(
                 file_path, format=HYDROPHONE_RECORDING_FILETYPE[1:]
             )
+            # pull the interval in milliseconds
             audio_of_interest = audio[
                 (int(interval[0]) - file_timestamp)
                 * 1000 : (int(interval[-1]) - file_timestamp)
                 * 1000
             ]
+            # export the sinppet from the file
             audio_of_interest.export(
                 os.path.join(
                     OUT_ROOT,
@@ -184,22 +193,8 @@ for idx, val in subset_of_interest.iteritems():
                 format=OUTPUT_DATA_FORMAT[1:],
             )
 
-if __name__ == "__main__":
-    # TODO: move to seperate file w/ pytest & add more tests
-    assert not v2mk2_ais_df[["mmsi", "timestamp"]].duplicated().any()
-
-    with open(files_ls[2], "r") as d:
-        shp_dict = json.load(d)
-
-    def check(shp):
-
-        for mmsi in list(shp.keys()):
-            seen = []
-            for status in list(shp[mmsi].keys()):
-                for interval in shp[mmsi][status]:
-                    seen.append(interval[0])
-                    seen.append(interval[1])
-            assert len(set(seen)) == len(seen)
-            break
-
-    check(shp_dict)
+# TODO: make this not ignore intervals that are between files (+/- audio files into memory too)
+# TODO: make this script such that it can take differnt classes and extract their data
+# TODO: modularize this script
+# TODO: add "NotUnderCommand" status
+# TODO: add testing suite
