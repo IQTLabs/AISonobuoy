@@ -48,6 +48,7 @@ class Telemetry:
         self.sensor_data = None
         self.alerts = {}
         self.docker = docker.from_env()
+        self.init_sensor_data()
 
     def init_sense(self):
         self.sense = SenseHat()
@@ -461,7 +462,6 @@ class Telemetry:
 
     def main(self, run_forever):
         os.makedirs(self.sensor_dir, exist_ok=True)
-        self.init_sensor_data()
 
         # Throwaway readings to calibrate
         for i in range(5):
