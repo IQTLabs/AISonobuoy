@@ -92,10 +92,6 @@ def load_data(
 
     plot_feature_distributions(feature_tug_data, feature_noise_data, file_path, out_dir)
 
-    # make sure all features are of the correct shape
-    assert len(set([x.shape for x in feature_tug_data])) == 1
-    assert len(set([x.shape for x in feature_noise_data])) == 1
-
     # loaded data
     ttl_data = np.array([*feature_noise_data, *feature_tug_data])
     ttl_labels = [0] * len(feature_noise_data) + [1] * len(feature_tug_data)
@@ -180,9 +176,6 @@ def model(ttl_data, n_clusters=N_CLUSTERS, n_neighbors=N_NEIGHBORS, seed=SEED):
 
     # result of clustering
     clusters = kmeans.fit_predict(ttl_data)
-
-    # make sure that mapping is consistent
-    assert len(clusters) == len(reduction_results)
 
     return clusters, reduction_results, trust
 
@@ -343,8 +336,33 @@ if __name__ == "__main__":
 
     OUT_DIR = "./out_graphs"
 
-    NEIGHBORS_LS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
-   
+    NEIGHBORS_LS = [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+    ]
+
     for curr_dir in DIR_LS:
         trustworthiness_ls = []
         cluster_ls = []
@@ -358,9 +376,9 @@ if __name__ == "__main__":
             trustworthiness_ls.append(trust)
             cluster_ls.append(clusters)
             reduction_ls.append(reduction_results)
-            
+
         idx = np.array(trustworthiness_ls).argmax()
-        
+
         plot_two_dim_clustering(
             reduction_ls[idx],
             ttl_labels,
