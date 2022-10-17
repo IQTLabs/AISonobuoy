@@ -323,8 +323,9 @@ def train_loop(
     }
 
 
+# training driver code
 if __name__ == "__main__":
-    """training driver code"""
+
     # initalize various utilities
     logger, tensorboard_writer = logging_config()
     args = parse_cli()
