@@ -148,7 +148,7 @@ pooch==1.6.0
 prometheus-client @ file:///tmp/abs_d3zeliano1/croots/recipe/prometheus_client_1659455100375/work
 promise==2.3
 prompt-toolkit==3.0.30
-protobuf==3.9.2
+protobuf==3.18.3
 psutil==5.9.1
 ptyprocess @ file:///tmp/build/80754af9/ptyprocess_1609355006118/work/dist/ptyprocess-0.7.0-py2.py3-none-any.whl
 pure-eval @ file:///opt/conda/conda-bld/pure_eval_1646925070566/work
