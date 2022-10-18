@@ -116,7 +116,7 @@ multidict @ file:///croot/multidict_1665674239670/work
 mypy-extensions==0.4.3
 nbclassic==0.4.3
 nbclient==0.6.6
-nbconvert==6.5.0
+nbconvert==6.5.1
 nbformat @ file:///opt/conda/conda-bld/nbformat_1663744952973/work
 nest-asyncio @ file:///tmp/build/80754af9/nest-asyncio_1649847908682/work
 notebook @ file:///tmp/abs_abf6xa6h6f/croots/recipe/notebook_1659083654985/work
