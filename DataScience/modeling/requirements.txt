@@ -77,7 +77,7 @@ itsdangerous==2.1.2
 jedi @ file:///tmp/build/80754af9/jedi_1644315233700/work
 Jinja2==3.1.2
 jmespath==1.0.1
-joblib==1.1.0
+joblib==1.2.0
 json5==0.9.8
 jsonschema @ file:///opt/conda/conda-bld/jsonschema_1663375472438/work
 jupyter @ file:///tmp/abs_33h4eoipez/croots/recipe/jupyter_1659349046347/work
