@@ -1,0 +1,15 @@
+# requirements.in
+pydub
+numpy
+pandas
+torch
+torchaudio
+librosa
+opencv-python
+matplotlib
+torchmetrics
+tensorflow
+keras
+onnx
+onnxruntime
+onnx2keras
