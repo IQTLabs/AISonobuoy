@@ -25,9 +25,9 @@ Reference implementations for each of the Sensor to Solution functions can be se
 
 A buoy designed to run an Raspberry Pi with power management that can do continuous collection of hydrophone audio. It is equipped with an AIS receiver and other sensors such as GPS, LTE, temperature, and a 9-axis gyroscope.
 
-<img src="./PiBuoyV2/media/pibuoy2-hydrophone-solar.png" alt="pibuoy" height="400px" title="pibuoy">
+<img src="https://raw.githubusercontent.com/IQTLabs/aisonobuoy-collector-raspberrypi/16c310a024b9cea7af391d85bd6df96d2cf76dd6/media/pibuoy2-hydrophone-solar.png" alt="pibuoy" height="400px" title="pibuoy">
 
-See [PiBuoyV2/README.md](PiBuoyV2/README.md)
+See [https://github.com/IQTLabs/aisonobuoy-collector-raspberrypi](https://github.com/IQTLabs/aisonobuoy-collector-raspberrypi)
 
 ## Analysis
 
