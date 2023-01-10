@@ -821,10 +821,16 @@ def main():
         action="store_true",
         help="decompress downloaded files",
     )
-    parser.add_argument(
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--force-download",
         action="store_true",
         help="force file download",
+    )
+    group.add_argument(
+        "--skip-download",
+        action="store_true",
+        help="skip file download",
     )
     parser.add_argument(
         "--force-ais-parquet",
@@ -906,14 +912,15 @@ def main():
             raise Exception(
                 "Source and hydrophone expected using the same name, prefix, and label"
             )
-        download_buoy_objects(
-            data_home / source["name"] / source["label"],
-            source["name"],  # bucket
-            source["prefix"],
-            source["label"],
-            force=args.force_download,
-            decompress=args.decompress,
-        )
+        if not args.skip_download:
+            download_buoy_objects(
+                data_home / source["name"] / source["label"],
+                source["name"],  # bucket
+                source["prefix"],
+                source["label"],
+                force=args.force_download,
+                decompress=args.decompress,
+            )
 
         # Get AIS data, hydrophone metadata, and augment AIS data with
         # distance, speed, and ship counts, if needed. Get corresponding
