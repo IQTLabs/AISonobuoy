@@ -170,6 +170,12 @@ def load_ais_files(inp_path, speed_threshold=5.0):
                     print(f"JSON file w/ Error: {inp_path / name}")
                     continue
 
+                # Exclude unneeded columns, currently only one, though more expected
+                for key in [
+                    "radio",
+                ]:
+                    _ = sample.pop(key, None)
+
                 # Handle relevant AIS message types
                 # See: https://www.navcen.uscg.gov/ais-messages
                 if sample["type"] == 1 or sample["type"] == 2 or sample["type"] == 3:
