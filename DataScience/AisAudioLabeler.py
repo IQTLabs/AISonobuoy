@@ -157,6 +157,8 @@ def load_ais_files(inp_path, speed_threshold=5.0):
     n_mmsis = 0
     names = os.listdir(inp_path)
     for name in names:
+        if not name.endswith(".json"):
+            continue
         with open(inp_path / name, "r", encoding="utf-8") as f:
             for line in f:
                 n_lines += 1
