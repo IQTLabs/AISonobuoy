@@ -334,7 +334,14 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         vld_lambda = np.deg2rad(ais_g["lon"].to_numpy())  # [rad]
         vld_varphi = np.deg2rad(ais_g["lat"].to_numpy())  # [rad]
         vld_h = ais_g["h"].to_numpy()  # [m]
-        (distance, _heading, _heading_dot, speed, _r_s_h, _v_s_h,) = lu.compute_source_metrics(
+        (
+            distance,
+            _heading,
+            _heading_dot,
+            speed,
+            _r_s_h,
+            _v_s_h,
+        ) = lu.compute_source_metrics(
             source, vld_t, vld_lambda, vld_varphi, vld_h, hydrophone
         )
         ais.loc[ais["mmsi"] == mmsi, "distance"] = distance
@@ -370,12 +377,8 @@ def augment_ais_data(source, hydrophone, ais, hmd):
             )
             shp[mmsi][status] = []
             for timestamp_set in timestamp_sets:
-                start_timestamp = int(
-                    timestamp_set[0]
-                )
-                stop_timestamp = int(
-                    timestamp_set[-1]
-                )
+                start_timestamp = int(timestamp_set[0])
+                stop_timestamp = int(timestamp_set[-1])
 
                 # Collect status intervals for each ship
                 if start_timestamp != stop_timestamp:
@@ -396,9 +399,9 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 ]:  # Be explicit
                     # ... when not underway
                     shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
-                    shipcount_nuw.loc[
-                        start_timestamp:stop_timestamp, "mmsis"
-                    ].apply(lambda x: x.append(mmsi))
+                    shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
+                        lambda x: x.append(mmsi)
+                    )
     # Assign ship counts and mmsis when underway, and not underway
     logger.info("Assigning ship counts underway")
     ais["shipcount_uw"] = ais["timestamp"].apply(lambda x: shipcount_uw.loc[x, "count"])
