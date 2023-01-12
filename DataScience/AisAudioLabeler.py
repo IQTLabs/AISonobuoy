@@ -697,8 +697,11 @@ def export_audio_clips(
                 if interval[0] <= timestamp and timestamp <= interval[1]:
                     found_interval = True
                     break
+
+            # TODO: Understand why some intervals are not found
             if not found_interval:
-                raise Exception(f"Did not find interval for ship {mmsi}")
+                logger.warning(f"Did not find interval for ship {mmsi}")
+                continue
 
             # Identify the earliest AIS dataframe row for the current
             # ship within the interval and maximum distance
