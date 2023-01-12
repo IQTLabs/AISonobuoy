@@ -318,16 +318,16 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         ais_g = (
             group[1].copy().reset_index()
         )  # groups are tuples with (groupedbyval, group)
-        mmsi = ais_g["mmsi"].unique()
-
-        mmsi = mmsi[0]
-
         if len(ais_g) < 3:
             logger.info(f"Group {group[0]} has fewer than three reports: skipping")
             continue
 
+        # TODO: Is the MMSI available in the group?
+        mmsi = ais_g["mmsi"].unique()
+        mmsi = mmsi[0]
+
         # Initialize SHP dictionary for tracking ship counts and status intervals for each ship
-        shp[mmsi] = {}  # TODO: is a dictionary of dictionaries the best way to do this
+        shp[mmsi] = {}  # TODO: Is a dictionary of dictionaries the best way to do this?
 
         # Compute source metrics and assign
         vld_t = ais_g["timestamp"].to_numpy()  # [s]
@@ -348,22 +348,25 @@ def augment_ais_data(source, hydrophone, ais, hmd):
         ais.loc[ais["mmsi"] == mmsi, "speed"] = speed
 
         # Consider each unique status
+        status_for_underway = ["UnderWayUsingEngine"]
+        status_for_not_underway = [
+            "NotUnderWayUsingEngine",
+            "AtAnchor",
+            "Moored",
+            "NotUnderCommand",
+        ]
         for status in ais_g["status"].unique():
-            # TODO: The problem is the assumption here is that we're getting every AIS message, which we may not be...
+            # TODO: Are we receiving every AIS message? We might not be ...
             logger.info(
                 f"Processing status {status} records for ship with MMSI: {group[0]}"
             )
+            # Assign timestamp differences by status
             # See: https://www.navcen.uscg.gov/?pageName=AISMessagesA
-            if status in ["UnderWayUsingEngine"]:
+            if status in status_for_underway:
                 timestamp_diff = 10  # [s]
-            elif status in [
-                "NotUnderWayUsingEngine",
-                "AtAnchor",
-                "Moored",
-                "NotUnderCommand",
-            ]:  # Be explicit
+            elif status in status_for_not_underway:  # Be explicit
                 timestamp_diff = 180  # [s]
-            else:  # Allow other status values to have a different default
+            else:
                 timestamp_diff = 180  # [s]
 
             # Assign AIS dataframe and select columns
@@ -384,24 +387,18 @@ def augment_ais_data(source, hydrophone, ais, hmd):
                 if start_timestamp != stop_timestamp:
                     shp[mmsi][status].append((start_timestamp, stop_timestamp))
 
-                # Update ship counts ...
-                if status in ["UnderWayUsingEngine"]:
-                    # ... when underway
+                # Update ship counts
+                if status in status_for_underway:
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "count"] += 1
                     shipcount_uw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
-                elif status in [
-                    "NotUnderWayUsingEngine",
-                    "AtAnchor",
-                    "Moored",
-                    "NotUnderCommand",
-                ]:  # Be explicit
-                    # ... when not underway
+                elif status in status_for_not_underway:  # Be explicit
                     shipcount_nuw.loc[start_timestamp:stop_timestamp, "count"] += 1
                     shipcount_nuw.loc[start_timestamp:stop_timestamp, "mmsis"].apply(
                         lambda x: x.append(mmsi)
                     )
+
     # Assign ship counts and mmsis when underway, and not underway
     logger.info("Assigning ship counts underway")
     ais["shipcount_uw"] = ais["timestamp"].apply(lambda x: shipcount_uw.loc[x, "count"])
