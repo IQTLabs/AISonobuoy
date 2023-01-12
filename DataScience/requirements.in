@@ -3,6 +3,7 @@ folium
 jupyterlab
 lxml
 matplotlib
+miniaudio
 numpy
 pandas
 pyarrow
