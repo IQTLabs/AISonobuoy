@@ -800,6 +800,71 @@ def upload_audio_clips(upload_path, bucket, prefix=None):
                     s3.put_object(f, bucket, key)
 
 
+def use_audio_clips_to_compute_SL(
+    clip_home, S_dB_re_V_per_μPa, gain_dB, c_1=None, c_2=None, z_b=None
+):
+    """Use exported audio clips to compute source level for each
+    sample.
+
+    Parameters
+    ----------
+    clip_home : pathlib.Path()
+        Home directory for clip files
+    S_dB_re_V_per_μPa : float
+        Hydrophone sensitivity [dB re V/μPa]
+    gain_dB : float
+        Gain applied prior to analog to digital conversion [dB]
+    c_1 : float
+        Sound speed in the ocean [m/s]
+    c_2 : float
+        Sound speed in the bottom media [m/s]
+    z_b : float
+        Depth [m]
+
+    Returns
+    -------
+    sls : pd.DataFrame()
+        SLs samples with ship type, range, and intermediate values
+
+    """
+    entries = []
+    for audio_file in os.listdir(clip_home):
+        if not audio_file.endswith(".wav"):
+            continue
+
+        # Parse name to obtain ship type and range
+        fields = audio_file.split("-")
+        shiptype = fields[9].replace("_NoAdditionalInformation", "")
+        r = float(fields[11].replace(".wav", ""))  # [m]
+
+        # Compute source level, propagation loss, mean square pressure,
+        # and sound pressure level
+        samples = lu.get_audio_samples(clip_home / audio_file)
+        SL, PL, MSP, SPL = lu.compute_SL(
+            samples,
+            S_dB_re_V_per_μPa,
+            gain_dB,
+            r,
+            c_1=c_1,
+            c_2=c_2,
+            z_b=z_b,
+        )
+
+        # Assign and accumulate entries
+        entry = {
+            "shiptype": shiptype,
+            "r": r,
+            "MSP": MSP,
+            "SPL": SPL,
+            "PL": PL,
+            "SL": SL,
+        }
+        entries.append(entry)
+    sls = pd.DataFrame(entries).sort_values(by=["shiptype"], ignore_index=True)
+
+    return sls
+
+
 def main():
     """Provide a command-line interface for the AisAudioLabeler module."""
     parser = ArgumentParser(description="Use AIS data to slice an audio file")
@@ -879,6 +944,11 @@ def main():
         action="store_true",
         help="do upload audio clips",
     )
+    parser.add_argument(
+        "--compute-source-levels",
+        action="store_true",
+        help="use audio clips to compute source levels",
+    )
     args = parser.parse_args()
     data_home = Path(args.data_home)
 
@@ -903,16 +973,16 @@ def main():
     # Handle each source and hydrophone pair
     for source, hydrophone in zip(sources, hydrophones):
 
-        # Download all source files
-        if (
-            source["name"] != hydrophone["name"]
-            or source["prefix"] != hydrophone["prefix"]
-            or source["label"] != hydrophone["label"]
-        ):
-            raise Exception(
-                "Source and hydrophone expected using the same name, prefix, and label"
-            )
         if not args.skip_download:
+            # Download all source files
+            if (
+                source["name"] != hydrophone["name"]
+                or source["prefix"] != hydrophone["prefix"]
+                or source["label"] != hydrophone["label"]
+            ):
+                raise Exception(
+                    "Source and hydrophone expected using the same name, prefix, and label"
+                )
             download_buoy_objects(
                 data_home / source["name"] / source["label"],
                 source["name"],  # bucket
@@ -922,49 +992,49 @@ def main():
                 decompress=args.decompress,
             )
 
-        # Get AIS data, hydrophone metadata, and augment AIS data with
-        # distance, speed, and ship counts, if needed. Get corresponding
-        # SHP data.
-        ais = get_ais_dataframe(data_home, source, force=args.force_ais_parquet)
-        hmd = get_hmd_dataframe(data_home, hydrophone, force=args.force_hmd_parquet)
-        if "shipcount_uw" not in ais.columns or args.force_shp_json:
-            ais, hmd, shp = augment_ais_data(source, hydrophone, ais, hmd)
-            ais = get_ais_dataframe(data_home, source, force=True, ais=ais)
-            shp = get_shp_dictionary(data_home, source, force=True, shp=shp)
+            # Get AIS data, hydrophone metadata, and augment AIS data with
+            # distance, speed, and ship counts, if needed. Get corresponding
+            # SHP data.
+            ais = get_ais_dataframe(data_home, source, force=args.force_ais_parquet)
+            hmd = get_hmd_dataframe(data_home, hydrophone, force=args.force_hmd_parquet)
+            if "shipcount_uw" not in ais.columns or args.force_shp_json:
+                ais, hmd, shp = augment_ais_data(source, hydrophone, ais, hmd)
+                ais = get_ais_dataframe(data_home, source, force=True, ais=ais)
+                shp = get_shp_dictionary(data_home, source, force=True, shp=shp)
 
-        else:
-            shp = get_shp_dictionary(data_home, source)
-
-        # Plot ship status and hydrophone recording intervals
-        if args.plot_intervals:
-            plot_intervals(shp, hmd)
-
-        # Plot histogram of distance for times at which at most a
-        # specified maximum number of ships are reporting their status as
-        # underway.
-        if args.plot_histogram:
-            plot_histogram(ais, case["max_n_ships"])
-
-        # Export audio clips from AIS intervals during which two ships are
-        # underway. Label the audio clip using the attributes of the ship
-        # closest to the hydrophone. Always delete exiting audio clips.
-        if args.export_audio_clips:
-            clip_home = Path(args.clip_home) / case["output_dir"]
-            if not clip_home.exists():
-                clip_home.mkdir(parents=True)  # Make the directory
             else:
-                for p in clip_home.iterdir():  # Or remove all files
-                    p.unlink()
-            export_audio_clips(
-                ais,
-                hmd,
-                shp,
-                data_home,
-                hydrophone,
-                clip_home,
-                case["max_n_ships"],
-                case["max_distance"],
-            )
+                shp = get_shp_dictionary(data_home, source)
+
+            # Plot ship status and hydrophone recording intervals
+            if args.plot_intervals:
+                plot_intervals(shp, hmd)
+
+            # Plot histogram of distance for times at which at most a
+            # specified maximum number of ships are reporting their status as
+            # underway.
+            if args.plot_histogram:
+                plot_histogram(ais, case["max_n_ships"])
+
+            # Export audio clips from AIS intervals during which two ships are
+            # underway. Label the audio clip using the attributes of the ship
+            # closest to the hydrophone. Always delete exiting audio clips.
+            if args.export_audio_clips:
+                clip_home = Path(args.clip_home) / case["output_dir"]
+                if not clip_home.exists():
+                    clip_home.mkdir(parents=True)  # Make the directory
+                else:
+                    for p in clip_home.iterdir():  # Or remove all files
+                        p.unlink()
+                export_audio_clips(
+                    ais,
+                    hmd,
+                    shp,
+                    data_home,
+                    hydrophone,
+                    clip_home,
+                    case["max_n_ships"],
+                    case["max_distance"],
+                )
 
         # Upload all audio clips found on the upload path to the
         # bucket with the prefix set a concatenation of "products" and
@@ -979,8 +1049,24 @@ def main():
                 prefix="/".join(["products", datetime.now().strftime("%Y-%m-%d")]),
             )
 
-    return ais, hmd, shp
+        # Use exported audio clips to compute source level for each
+        # clip
+        sls = None
+        if args.compute_source_levels:
+            clip_home = Path(args.clip_home) / case["output_dir"]
+            if not clip_home.exists():
+                raise Exception(f"Clip home {clip_home} does not exist")
+            sls = use_audio_clips_to_compute_SL(
+                clip_home,
+                hydrophone["S_dB_re_V_per_μPa"],
+                hydrophone["gain_dB"],
+                c_1=hydrophone["c_1"],
+                c_2=hydrophone["c_2"],
+                z_b=hydrophone["z_b"],
+            )
+
+    return ais, hmd, shp, sls
 
 
 if __name__ == "__main__":
-    ais, hmd, shp = main()
+    ais, hmd, shp, sls = main()
