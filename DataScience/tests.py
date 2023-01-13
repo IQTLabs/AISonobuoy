@@ -1,11 +1,16 @@
-import pytest
-import os
 import json
-import pandas as pd
-import numpy as np
-import LabelerUtilities as lu
-import AisAudioLabeler as aal
+import math
+import os
 from pathlib import Path
+
+import miniaudio
+import numpy as np
+import pandas as pd
+from pydub import AudioSegment
+import pytest
+
+import AisAudioLabeler as aal
+import LabelerUtilities as lu
 
 
 @pytest.fixture
@@ -152,3 +157,54 @@ class TestAisAudioLabeler:
         }
 
         assert shp == shp_expected, "augment_ais_data_status() shp.json test failed"
+
+
+class TestLabelerUtilities:
+    def test_compute_PL_MSP_SL(self):
+
+        r = 1000.0  # [m]
+        assert lu.compute_PL(r) == 60.0
+
+        # Sound speeds give theta_c_g = 0.5
+        c_1 = 1500.0  # [m/s]
+        c_2 = 1500.0 / math.cos(0.5)  # [m/s]
+
+        # Depth gives r_cs = 1000 m and equal sperical and cylindrical
+        # spreading
+        z_b = 1000.0  # [m]
+
+        assert lu.compute_PL(r, c_1=c_1, c_2=c_2, z_b=z_b) == 60.0
+
+        samples = np.ones(10)
+
+        S_dB_re_V_per_μPa = -180
+        gain_dB = 60
+
+        MSP, SPL = lu.compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB)
+
+        assert MSP == 10.0**12
+        assert SPL == 120.0
+
+        SL, _, _, _ = lu.compute_SL(
+            samples, S_dB_re_V_per_μPa, gain_dB, r, c_1=c_1, c_2=c_2, z_b=z_b
+        )
+
+        assert SL == 180
+
+    def test_FLAC_to_WAV_export(self):
+
+        data_path = Path("test-data/aisonobuoy-pibuoy-v2/v2-mk2-3/hydrophone")
+
+        # Read FLAC audio file using pydub
+        flac_file = "pibuoy-v2-mk2-3-1645399051-hydrophone.flac"
+        audio = AudioSegment.from_file(data_path / flac_file, "flac")
+
+        # Write WAV audio file using pydub
+        wav_file = flac_file.replace(".flac", ".wav")
+        audio.export(data_path / wav_file, format="wav")
+
+        # Read FLAC and WAV audio files using miniaudio
+        flac_f32 = miniaudio.flac_read_file_f32(data_path / flac_file)
+        wav_f32 = miniaudio.wav_read_file_f32(data_path / wav_file)
+
+        assert np.array_equal(np.array(wav_f32.samples), np.array(flac_f32.samples))
