@@ -21,7 +21,12 @@
             "label": "v2-mk2-3",
             "lat": 0.0,
             "lon": 0.0,
-            "ele": 0.0
+            "ele": 0.0,
+            "z_b": null,
+            "S_dB_re_V_per_μPa": -180.0,
+            "gain_dB": 40.0,
+            "c_1": null,
+            "c_2": null
         },
         {
             "type": "bucket",
@@ -30,7 +35,12 @@
             "label": "v2-mk3-3",
             "lat": 0.0,
             "lon": 0.0,
-            "ele": 0.0
+            "ele": 0.0,
+            "z_b": null,
+            "S_dB_re_V_per_μPa": -180.0,
+            "gain_dB": 40.0,
+            "c_1": null,
+            "c_2": null
         }
     ]
 }
