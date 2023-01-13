@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 
 from matplotlib import pyplot as plt
+import miniaudio
 import numpy as np
 import pandas as pd
 from pydub import AudioSegment
@@ -416,3 +417,140 @@ def cluster_source_metrics(
         speed.reshape(-1, 1)
     )
     return distance_clusters, heading_clusters, heading_dot_clusters, speed_clusters
+
+
+def get_audio_samples(inp_path):
+    """Get audio samples from an audio file.
+
+    Parameters
+    ----------
+    inp_path : pathlib.Path()
+        Path of the audio file to read
+
+    Returns
+    -------
+    samples : numpy.ndarray
+        The audio samples as 32 bits float
+
+    See also:
+        https://github.com/irmen/pyminiaudio
+
+    """
+    logger.info(f"Reading {inp_path}")
+    if inp_path.suffix.lower() == ".wav":
+        samples = miniaudio.wav_read_file_f32(inp_path).samples
+
+    elif inp_path.suffix.lower() == ".flac":
+        samples = miniaudio.flac_read_file_f32(inp_path).samples
+
+    return np.array(samples)
+
+
+def compute_PL(r, c_1=None, c_2=None, z_b=None):
+    """Compute propagation loss assuming spherical spreading, unless
+    ocean and bottom media sound speeds and depth are provided, then
+    use cylindrical spreading.
+
+    Parameters
+    ----------
+    r : float
+        Range [m]
+    c_1 : float
+        Sound speed in the ocean [m/s]
+    c_2 : float
+        Sound speed in the bottom media [m/s]
+    z_b : float
+        Depth [m]
+
+    Returns
+    -------
+    PL : float
+        Propagation loss [dB re m²]
+
+    """
+    if z_b is None or c_1 is None or c_2 is None:
+        # Assume spherical spreading
+        PL = 20 * math.log10(r)  #  dB re m²
+
+    else:
+        # Assume cylindrical spreading
+        theta_c_g = math.acos(c_1 / c_2)
+        r_cs = z_b / (2 * theta_c_g)
+        PL = 10 * math.log10(r_cs) + 10 * math.log10(r)
+
+    return PL
+
+
+def compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB):
+    """Use samples produced by a hydrophone to compute mean square
+    pressure.
+
+    Parameters
+    ----------
+    samples : numpy.ndarray
+        The audio samples as 32 bits float
+    S_dB_re_V_per_μPa : float
+        Hydrophone sensitivity [dB re V/μPa]
+    gain_dB : float
+        Gain applied prior to analog to digital conversion [dB]
+
+    Returns
+    -------
+    MSP : float
+        Mean square pressure [μPa²]
+    SPL : float
+        Sound pressure level [dB re μPa²]
+
+    """
+    # Compute voltage at hydrophone
+    gain = 10 ** (gain_dB / 20)
+    voltage = samples / gain  # [V]
+
+    # Compute pressure at hydrophone
+    S_V_per_μPa = 10 ** (S_dB_re_V_per_μPa / 20)  # [V/μPa]
+    pressure = voltage / S_V_per_μPa  # [μPa]
+
+    # Compute mean square pressure and sound pressure level
+    MSP = np.mean(np.power(pressure, 2))  # [μPa²]
+    SPL = 10 * math.log10(MSP)  # [dB re μPa²]
+
+    return MSP, SPL
+
+
+def compute_SL(samples, S_dB_re_V_per_μPa, gain_dB, r, c_1=None, c_2=None, z_b=None):
+    """Use samples produced by a hydrophone to compute source level.
+
+    Parameters
+    ----------
+    samples : numpy.ndarray
+        The audio samples as 32 bits float
+    S_dB_re_V_per_μPa : float
+        Hydrophone sensitivity [dB re V/μPa]
+    gain_dB : float
+        Gain applied prior to analog to digital conversion [dB]
+    r : float
+        Range [m]
+    c_1 : float
+        Sound speed in the ocean [m/s]
+    c_2 : float
+        Sound speed in the bottom media [m/s]
+    z_b : float
+        Depth [m]
+
+    Returns
+    -------
+    SL : float
+        Source level [dB re μPa²m²]
+    PL : float
+        Propagation loss [dB re m²]
+    MSP : float
+        Mean square pressure [μPa²]
+    SPL : float
+        Sound pressure level [dB re μPa²]
+
+    """
+    MSP, SPL = compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB)
+    PL = compute_PL(r, c_1=c_1, c_2=c_2, z_b=z_b)
+    SL = SPL + PL  # [dB re μPa²m²]
+
+    return SL, PL, MSP, SPL
