@@ -45,13 +45,13 @@ def load_json_file(inp_path):
 
     """
     logger.info(f"Loading {inp_path}")
-    with open(inp_path, "r", encoding='utf-8') as f:
+    with open(inp_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data
 
 
 def get_audio_file(inp_path):
-    """Get audio segemnt from an audio file.
+    """Get audio segment from an audio file.
 
     Parameters
     ----------
@@ -64,7 +64,8 @@ def get_audio_file(inp_path):
         The audio segment
 
     See also:
-    https://github.com/jiaaro/pydub
+        https://github.com/jiaaro/pydub
+
     """
     logger.info(f"Getting {inp_path}")
     if inp_path.suffix.lower() == ".wav":
@@ -82,7 +83,7 @@ def probe_audio_file(input_path):
     Parameters
     ----------
     inp_path : pathlib.Path()
-        Path of the audo file to probe
+        Path of the audio file to probe
 
     Returns
     -------
@@ -90,7 +91,8 @@ def probe_audio_file(input_path):
         Values of the audio stream entries
 
     See also:
-    https://github.com/jiaaro/pydub
+        https://github.com/jiaaro/pydub
+
     """
     cp = subprocess.run(
         [
@@ -128,6 +130,7 @@ def export_audio_clip(audio, start_t, stop_t, clip_filepath):
     Returns
     -------
     None
+
     """
     clip = audio[start_t:stop_t]
     clip.export(clip_filepath, format="wav")
@@ -151,6 +154,7 @@ def compute_E(_lambda, _varphi):
     E : numpy.ndarray
         Orthogonal transformation matrix from geocentric to
         topocentric coordinates
+
     """
     e_E = np.array([-math.sin(_lambda), math.cos(_lambda), 0])
     e_N = np.array(
@@ -248,7 +252,8 @@ def compute_source_metrics(source, vld_t, vld_lambda, vld_varphi, vld_h, hydroph
         Source topocentric (east, north, zenith) velocity [m/s]
 
     See:
-    Montenbruck O., Gill E.; Satellite Orbits; Springer, Berlin (2001); pp. 37 and 188.
+        Montenbruck O., Gill E.; Satellite Orbits; Springer, Berlin (2001); pp. 37 and 188.
+
     """
     logger.info(
         f"Computing source {source['name']} metrics for hydrophone {Path(hydrophone['name'].lower()).stem}"
@@ -309,6 +314,7 @@ def plot_source_metrics(
     Returns
     -------
     None
+
     """
     logger.info(
         f"Plotting source {source['name']} metrics for hydrophone {Path(hydrophone['name'].lower()).stem}"
@@ -394,6 +400,7 @@ def cluster_source_metrics(
         Fitted estimator for heading first derivative
     speed_clusters : sklearn.cluster.KMeans
         Fitted estimator for speed
+
     """
     logger.info(f"Computing clusters of heading, distance, and speed")
     distance_clusters = KMeans(n_clusters=distance_n_clusters, random_state=0).fit(
