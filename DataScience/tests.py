@@ -208,3 +208,6 @@ class TestLabelerUtilities:
         wav_f32 = miniaudio.wav_read_file_f32(data_path / wav_file)
 
         assert np.array_equal(np.array(wav_f32.samples), np.array(flac_f32.samples))
+
+        # Clean up
+        os.remove(data_path / wav_file)
