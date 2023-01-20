@@ -429,8 +429,8 @@ def get_audio_samples(inp_path):
 
     Returns
     -------
-    samples : numpy.ndarray
-        The audio samples as 32 bits float
+    (numpy.ndarray, float)
+        Tuple containing the audio samples as 32 bits float, and the sample rate
 
     See also:
         https://github.com/irmen/pyminiaudio
@@ -438,12 +438,12 @@ def get_audio_samples(inp_path):
     """
     logger.info(f"Reading {inp_path}")
     if inp_path.suffix.lower() == ".wav":
-        samples = miniaudio.wav_read_file_f32(inp_path).samples
+        dsf = miniaudio.wav_read_file_f32(inp_path)
 
     elif inp_path.suffix.lower() == ".flac":
-        samples = miniaudio.flac_read_file_f32(inp_path).samples
+        dsf = miniaudio.flac_read_file_f32(inp_path)
 
-    return np.array(samples)
+    return np.array(dsf.samples), dsf.sample_rate
 
 
 def compute_PL(r, c_1=None, c_2=None, z_b=None):
@@ -500,6 +500,8 @@ def compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB):
         Mean square pressure [μPa²]
     SPL : float
         Sound pressure level [dB re μPa²]
+    pressure : numpy.ndarray
+        Pressure samples [μPa]
 
     """
     # Compute voltage at hydrophone
@@ -514,7 +516,7 @@ def compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB):
     MSP = np.mean(np.power(pressure, 2))  # [μPa²]
     SPL = 10 * math.log10(MSP)  # [dB re μPa²]
 
-    return MSP, SPL
+    return MSP, SPL, pressure
 
 
 def compute_SL(samples, S_dB_re_V_per_μPa, gain_dB, r, c_1=None, c_2=None, z_b=None):
@@ -549,8 +551,8 @@ def compute_SL(samples, S_dB_re_V_per_μPa, gain_dB, r, c_1=None, c_2=None, z_b=
         Sound pressure level [dB re μPa²]
 
     """
-    MSP, SPL = compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB)
+    MSP, SPL, pressure = compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB)
     PL = compute_PL(r, c_1=c_1, c_2=c_2, z_b=z_b)
     SL = SPL + PL  # [dB re μPa²m²]
 
-    return SL, PL, MSP, SPL
+    return SL, PL, MSP, SPL, pressure

@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
+import pickle
 import re
 import shutil
 import tarfile
@@ -11,6 +12,7 @@ import tarfile
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
+from scipy import signal
 
 import S3Utilities as s3
 import LabelerUtilities as lu
@@ -28,7 +30,7 @@ if not root_logger.handlers:
 logger = logging.getLogger("AisAudioLabeler")
 logger.setLevel(logging.INFO)
 
-# color-blind accessible color palette, https://gist.github.com/thriveth/8560036
+# Color-blind accessible color palette, https://gist.github.com/thriveth/8560036
 CB_color_cycle = [
     "#ff7f00",
     "#377eb8",
@@ -40,6 +42,33 @@ CB_color_cycle = [
     "#e41a1c",
     "#dede00",
 ]
+
+# Shiptype constants for plotting PSDs
+SHIPTYPE_REMOVE_STRINGS = [
+    "_NoAdditionalInformation",
+    "_HazardousCategory_A",
+    "_HazardousCategory_B",
+    "_HazardousCategory_C",
+    "_Reserved",
+]
+SHIPTYPE_SET_ONE = [
+    "Cargo",
+    "DredgingOrUnderwaterOps",
+    "Tanker",
+    "HSC",
+    "Towing",
+    "Tug",
+]
+SHIPTYPE_SET_TWO = [
+    "ClassB",
+    "LawEnforcement",
+    "Passenger",
+    "PleasureCraft",
+    "Sailing",
+    "SearchAndRescueVessel",
+    "WIG",
+]
+PSD_PICKLE_FILE = "psd.pickle"
 
 
 def download_buoy_objects(
@@ -453,7 +482,7 @@ def get_hmd_dataframe(data_home, hydrophone, force=False, hmd=None):
 
     Parameters
     ----------
-    data_path : pathlib.Path()
+    data_home : pathlib.Path()
         Path to directory containing data files
     hydrophone : dict
         The hydrophone configuration
@@ -800,16 +829,16 @@ def upload_audio_clips(upload_path, bucket, prefix=None):
                     s3.put_object(f, bucket, key)
 
 
-def use_audio_clips_to_compute_SL(
-    clip_home, S_dB_re_V_per_μPa, gain_dB, c_1=None, c_2=None, z_b=None
+def get_psd_pickle(
+    clip_home, S_dB_re_V_per_μPa, gain_dB, c_1=None, c_2=None, z_b=None, force=False
 ):
-    """Use exported audio clips to compute source level for each
-    sample.
+    """Read power spectral density pickle, if it exists, or compute
+    source level and power spectral densities and pickle.
 
     Parameters
     ----------
     clip_home : pathlib.Path()
-        Home directory for clip files
+        Path to directory containing audio files
     S_dB_re_V_per_μPa : float
         Hydrophone sensitivity [dB re V/μPa]
     gain_dB : float
@@ -820,6 +849,66 @@ def use_audio_clips_to_compute_SL(
         Sound speed in the bottom media [m/s]
     z_b : float
         Depth [m]
+    force : boolean
+        Flag to force creation of the pickle, or not
+
+    Returns
+    -------
+    psd : dict
+        Source levles and power spectral densities
+
+    """
+    psd_pickle = clip_home / PSD_PICKLE_FILE
+    if not os.path.exists(psd_pickle) or force:
+        logger.info("Computing SLs and PSDs")
+        psd = use_audio_clips_to_compute_SL_and_PSD(
+            clip_home,
+            S_dB_re_V_per_μPa,
+            gain_dB,
+            c_1=None,
+            c_2=None,
+            z_b=None,
+            force=force,
+        )
+        logger.info("Dumping power spectral densities pickle")
+        with open(psd_pickle, "wb") as f:
+            pickle.dump(psd, f, pickle.HIGHEST_PROTOCOL)
+    else:
+        logger.info("Loading power spectral densities pickle")
+        with open(psd_pickle, "rb") as f:
+            psd = pickle.load(f)
+    return psd
+
+
+def use_audio_clips_to_compute_SL_and_PSD(
+    clip_home,
+    S_dB_re_V_per_μPa,
+    gain_dB,
+    c_1=None,
+    c_2=None,
+    z_b=None,
+    force=False,
+):
+    """Use exported audio clips to compute source level and power
+    spectral density for each sample.
+
+    Parameters
+    ----------
+    clip_home : pathlib.Path()
+        Path to directory containing audio files
+    S_dB_re_V_per_μPa : float
+        Hydrophone sensitivity [dB re V/μPa]
+    gain_dB : float
+        Gain applied prior to analog to digital conversion [dB]
+    c_1 : float
+        Sound speed in the ocean [m/s]
+    c_2 : float
+        Sound speed in the bottom media [m/s]
+    z_b : float
+        Depth [m]
+    force : boolean
+        Flag to force creation of the power spectral densities pickle,
+        or not
 
     Returns
     -------
@@ -827,42 +916,145 @@ def use_audio_clips_to_compute_SL(
         SLs samples with ship type, range, and intermediate values
 
     """
-    entries = []
+    psd = {}
+    psd["clip_home"] = clip_home
     for audio_file in os.listdir(clip_home):
-        if not audio_file.endswith(".wav"):
+        if Path(audio_file).suffix != ".wav":
             continue
 
-        # Parse name to obtain ship type and range
+        # Parse name to obtain ship MMSI, type and range
         fields = audio_file.split("-")
-        shiptype = fields[9].replace("_NoAdditionalInformation", "")
+        mmsi = fields[8]
+        shiptype = fields[9]
+        for r_s in SHIPTYPE_REMOVE_STRINGS:
+            shiptype = fields[9].replace(r_s, "")
+        if shiptype not in SHIPTYPE_SET_ONE and shiptype not in SHIPTYPE_SET_TWO:
+            continue
         r = float(fields[11].replace(".wav", ""))  # [m]
 
         # Compute source level, propagation loss, mean square pressure,
-        # and sound pressure level
-        samples = lu.get_audio_samples(clip_home / audio_file)
-        SL, PL, MSP, SPL = lu.compute_SL(
-            samples,
-            S_dB_re_V_per_μPa,
-            gain_dB,
-            r,
-            c_1=c_1,
-            c_2=c_2,
-            z_b=z_b,
+        # sound pressure level, and power spectral densitry
+        samples, sample_rate = lu.get_audio_samples(clip_home / audio_file)
+        SL, PL, MSP, SPL, pressure = lu.compute_SL(
+            samples, S_dB_re_V_per_μPa, gain_dB, r, c_1=c_1, c_2=c_2, z_b=z_b
         )
+        f, PSD = signal.welch(pressure, fs=sample_rate, nperseg=sample_rate)
+        # TODO: Move up to samples?
+        if f.size == 0:
+            continue
 
-        # Assign and accumulate entries
-        entry = {
-            "shiptype": shiptype,
+        # Assign and accumulate samples
+        sample = {
+            "audio_file": audio_file,
+            "mmsi": mmsi,
             "r": r,
+            "SL": SL,
+            "PL": PL,
             "MSP": MSP,
             "SPL": SPL,
-            "PL": PL,
-            "SL": SL,
+            "f": f,
+            "PSD": PSD,
         }
-        entries.append(entry)
-    sls = pd.DataFrame(entries).sort_values(by=["shiptype"], ignore_index=True)
+        if shiptype not in psd:
+            psd[shiptype] = {}
+            psd[shiptype]["f"] = f.copy()
+            psd[shiptype]["SL"] = SL
+            psd[shiptype]["PSD"] = PSD.copy()
+            psd[shiptype]["samples"] = [sample]
 
-    return sls
+        else:
+            psd[shiptype]["SL"] += SL
+            psd[shiptype]["PSD"] += PSD
+            psd[shiptype]["samples"].append(sample)
+
+    # Compute source level and power spectral density averages
+    shiptypes = [t for t in psd.keys() if t != "clip_home"]
+    for shiptype in shiptypes:
+        n_samples = len(psd[shiptype]["samples"])
+        psd[shiptype]["SL"] /= n_samples
+        psd[shiptype]["PSD"] /= n_samples
+
+    return psd
+
+
+# TODO: Complete
+def write_psd(clip_home, psd):
+    pass
+
+
+def plot_psd(psd, shiptypes, clip_home, plot_file, plot_average=False):
+    """Plot power spectral densities for the specified ship types, and
+    save the figure to the specified clip home.
+
+    Parameters
+    ----------
+    psd : dict
+        Source levles and power spectral densities
+    shiptypes : list(str)
+        Ship types to plot, currently exactly six
+    clip_home : pathlib.Path()
+        Path to directory containing audio files
+    plot_file : str
+        Name of plot file
+    plot_average : boolean
+        Flag to plot the average PSD, or not
+
+    Returns
+    -------
+    None
+
+    """
+    # Configure figure with six plots
+    nRow = 2
+    nCol = 3
+    fig, axs = plt.subplots(nRow, nCol, figsize=(10, 5), layout="constrained")
+
+    # Initialize common x and y axis limits
+    x0 = 2.0
+    x1 = 2000.0
+    y0 = float("inf")
+    y1 = float("-inf")
+
+    # Plot each ship type
+    SL = []
+    iTyp = -1
+    for iRow in range(nRow):
+        for iCol in range(nCol):
+            iTyp += 1
+            if plot_average:
+                item = psd[shiptypes[iTyp]]
+            else:
+                item = psd[shiptypes[iTyp]]["samples"][0]
+            f = item["f"]
+            SL.append(item["SL"])
+            PSD = item["PSD"]
+
+            # Plot only over the x limits
+            idx = np.logical_and(x0 <= f, f <= x1)
+            axs[iRow, iCol].loglog(f[idx], PSD[idx])
+            axs[iRow, iCol].set_title(f"{shiptypes[iTyp]}", loc="left")
+
+            # Find common y limits
+            ylim = axs[iRow, iCol].get_ylim()
+            y0 = min(y0, ylim[0])
+            y1 = max(y1, ylim[1])
+
+    # Set common y limits, and annotate each plot with source level
+    iTyp = -1
+    for iRow in range(nRow):
+        for iCol in range(nCol):
+            iTyp += 1
+            axs[iRow, iCol].set_ylim(y0, y1)
+            t = axs[iRow, iCol].text(x0, 3 * y0, f"{SL[iTyp]:.1f} dB re µPa²m²")
+
+    # Label the axes of the figure of subplots
+    xL = fig.supxlabel("Frequency [Hz]", fontweight="semibold")
+    yL = fig.supylabel("Pressure Density [µPa²/Hz]", fontweight="semibold")
+
+    # Save the figure and block for user input
+    plot_path = clip_home / plot_file
+    plt.savefig(plot_path, format=plot_path.suffix.replace(".", ""))
+    plt.show()
 
 
 def main():
@@ -910,7 +1102,7 @@ def main():
     parser.add_argument(
         "--force-shp-json",
         action="store_true",
-        help="force SHP JSON creation",
+        help="force shp JSON creation",
     )
     parser.add_argument(
         "-s",
@@ -945,9 +1137,19 @@ def main():
         help="do upload audio clips",
     )
     parser.add_argument(
-        "--compute-source-levels",
+        "--compute-sls-psds",
         action="store_true",
-        help="use audio clips to compute source levels",
+        help="use audio clips to compute source levels and power spectral densities",
+    )
+    parser.add_argument(
+        "--force-psd-pickle",
+        action="store_true",
+        help="force psd pickle creation",
+    )
+    parser.add_argument(
+        "--plot-psds",
+        action="store_true",
+        help="do plot power spectral densities",
     )
     args = parser.parse_args()
     data_home = Path(args.data_home)
@@ -973,6 +1175,9 @@ def main():
     # Handle each source and hydrophone pair
     for source, hydrophone in zip(sources, hydrophones):
 
+        ais = None
+        hmd = None
+        shp = None
         if not args.skip_download:
             # Download all source files
             if (
@@ -1049,24 +1254,52 @@ def main():
                 prefix="/".join(["products", datetime.now().strftime("%Y-%m-%d")]),
             )
 
-        # Use exported audio clips to compute source level for each
-        # clip
-        sls = None
-        if args.compute_source_levels:
+        # Use exported audio clips to compute source level and power
+        # spectral density for each clip, and plot
+        psd = None
+        if args.compute_sls_psds or args.plot_psds:
             clip_home = Path(args.clip_home) / case["output_dir"]
             if not clip_home.exists():
                 raise Exception(f"Clip home {clip_home} does not exist")
-            sls = use_audio_clips_to_compute_SL(
+            psd = get_psd_pickle(
                 clip_home,
                 hydrophone["S_dB_re_V_per_μPa"],
                 hydrophone["gain_dB"],
                 c_1=hydrophone["c_1"],
                 c_2=hydrophone["c_2"],
                 z_b=hydrophone["z_b"],
+                force=args.force_psd_pickle,
             )
+            if args.plot_psds:
+                plot_psd(
+                    psd,
+                    SHIPTYPE_SET_ONE,
+                    clip_home,
+                    "SL-and-PSD-Example-for-Ship-Type-Set-One.pdf",
+                )
+                plot_psd(
+                    psd,
+                    SHIPTYPE_SET_ONE,
+                    clip_home,
+                    "SL-and-PSD-Average-for-Ship-Type-Set-One.pdf",
+                    plot_average=True,
+                )
+                plot_psd(
+                    psd,
+                    SHIPTYPE_SET_TWO,
+                    clip_home,
+                    "SL-and-PSD-Example-for-Ship-Type-Set-Two.pdf",
+                )
+                plot_psd(
+                    psd,
+                    SHIPTYPE_SET_TWO,
+                    clip_home,
+                    "SL-and-PSD-Average-for-Ship-Type-Set-Two.pdf",
+                    plot_average=True,
+                )
 
-    return ais, hmd, shp, sls
+    return ais, hmd, shp, psd
 
 
 if __name__ == "__main__":
-    ais, hmd, shp, sls = main()
+    ais, hmd, shp, psd = main()
