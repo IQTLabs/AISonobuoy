@@ -912,8 +912,9 @@ def use_audio_clips_to_compute_SL_and_PSD(
 
     Returns
     -------
-    sls : pd.DataFrame()
-        SLs samples with ship type, range, and intermediate values
+    psd : dict
+        Source levels and power spectral densities byship type, with
+        intermediate values
 
     """
     psd = {}
