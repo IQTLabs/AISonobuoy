@@ -158,6 +158,66 @@ class TestAisAudioLabeler:
 
         assert shp == shp_expected, "augment_ais_data_status() shp.json test failed"
 
+    def test_use_audio_clips_to_compute_SL_and_PSD(self):
+
+        clip_home = Path("test-data/aisonobuoy-pibuoy-v2/v2-mk2-3/hydrophone")
+        audio_file = "pibuoy-v2-mk2-3-1645578692-hydrophone-257000-797000-367001890-Tug-UnderWayUsingEngine-207.3.wav"
+
+        S_dB_re_V_per_μPa = -180.0
+        gain_dB = 40.0
+        c_1 = 1500.0
+        c_2 = 2000.0
+        z_b = 15.0
+
+        samples, sample_rate = lu.get_audio_samples(clip_home / audio_file)
+        MSP, SPL, pressure = lu.compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB)
+
+        # Compute PSD directly
+        FFT = np.fft.rfft(pressure)
+        scale = 1 / (sample_rate * pressure.size)
+        PSD = 2 * ((np.conjugate(FFT) * FFT) * scale).real
+        f = np.fft.rfftfreq(pressure.size, d=1 / sample_rate)
+
+        # MSP agrees closely
+        assert np.abs(np.mean(PSD) * f[-1] - MSP) / MSP < 1e-6
+
+        # Compute PSD using Welch's method
+        psd = aal.use_audio_clips_to_compute_SL_and_PSD(
+            clip_home,
+            S_dB_re_V_per_μPa,
+            gain_dB,
+            c_1=c_1,
+            c_2=c_2,
+            z_b=z_b,
+            force=True,
+        )
+
+        # MSP using Welch's method is still within a percent
+        assert (
+            np.abs(
+                np.mean(psd["Tug"]["samples"][0]["PSD"])
+                * psd["Tug"]["samples"][0]["f"][-1]
+                - MSP
+            )
+            / MSP
+            < 1e-2
+        )
+
+        f_min = 100
+        f_max = 300
+
+        idx_a = np.logical_and(f_min <= f, f <= f_max)
+        idx_b = np.logical_and(
+            f_min <= psd["Tug"]["samples"][0]["f"],
+            psd["Tug"]["samples"][0]["f"] <= f_max,
+        )
+
+        MSP_a = np.mean(PSD[idx_a]) * (f_max - f_min)
+        MSP_b = np.mean(psd["Tug"]["samples"][0]["PSD"][idx_b]) * (f_max - f_min)
+
+        # MSP in a frequency band is still within a percent
+        assert math.fabs(MSP_b - MSP_a) / MSP_a < 1e-2
+
 
 class TestLabelerUtilities:
     def test_compute_PL_MSP_SL(self):
