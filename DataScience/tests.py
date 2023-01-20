@@ -240,12 +240,12 @@ class TestLabelerUtilities:
         S_dB_re_V_per_μPa = -180
         gain_dB = 60
 
-        MSP, SPL = lu.compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB)
+        MSP, SPL, _ = lu.compute_MSP(samples, S_dB_re_V_per_μPa, gain_dB)
 
         assert MSP == 10.0**12
         assert SPL == 120.0
 
-        SL, _, _, _ = lu.compute_SL(
+        SL, _, _, _, _ = lu.compute_SL(
             samples, S_dB_re_V_per_μPa, gain_dB, r, c_1=c_1, c_2=c_2, z_b=z_b
         )
 
