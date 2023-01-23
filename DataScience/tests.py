@@ -111,6 +111,9 @@ class TestAisAudioLabeler:
         with open("test-data/_shp.json", "r") as f:
             shp = json.load(f)
         assert shp == shp_test_data
+        # Clean up
+        os.remove("test-data/_shp.json")
+
         assert ais_fixed_data.loc[
             :, ~ais_fixed_data.columns.isin(["distance", "speed"])
         ].equals(ais.loc[:, ~ais.columns.isin(["distance", "speed"])])
