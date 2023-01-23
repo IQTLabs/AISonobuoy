@@ -945,10 +945,13 @@ def use_audio_clips_to_compute_SL_and_PSD(
             continue
 
         # Assign and accumulate samples
+        q = 100
         sample = {
             "audio_file": audio_file,
             "mmsi": mmsi,
             "r": r,
+            "sample_rate": sample_rate / q,
+            "pressure": pressure[::q],
             "SL": SL,
             "PL": PL,
             "MSP": MSP,
