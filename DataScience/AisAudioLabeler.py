@@ -1393,7 +1393,7 @@ def main():
                         base_name = "Ship-Type-Set-Two"
                         shiptype_set = SHIPTYPE_SET_TWO
                     write_SLs(
-                        psd, SHIPTYPE_SET_ONE, clip_home, base_name + "-SL-Examples.tex"
+                        psd, shiptype_set, clip_home, base_name + "-SL-Examples.tex"
                     )
                     plot_psd(
                         psd,
