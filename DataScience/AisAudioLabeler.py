@@ -981,81 +981,191 @@ def use_audio_clips_to_compute_SL_and_PSD(
     return psd
 
 
-# TODO: Complete
-def write_psd(clip_home, psd):
-    pass
-
-
-def plot_psd(psd, shiptypes, clip_home, plot_file, plot_average=False):
-    """Plot power spectral densities for the specified ship types, and
-    save the figure to the specified clip home.
+def write_SLs(psd, shiptypes, clip_home, tex_file):
+    """Write source levels for the specified ship types as a LaTeX
+    table.
 
     Parameters
     ----------
     psd : dict
-        Source levles and power spectral densities
+        Source levels and power spectral densities
     shiptypes : list(str)
         Ship types to plot, currently exactly six
     clip_home : pathlib.Path()
         Path to directory containing audio files
-    plot_file : str
-        Name of plot file
-    plot_average : boolean
-        Flag to plot the average PSD, or not
+    tex_file : str
+        Name of LaTeX file
 
     Returns
     -------
     None
 
     """
-    # Configure figure with six plots
+    with open(clip_home / tex_file, "w") as f:
+
+        # ̱Open environment
+        line = "\\begin{tabular}{"
+        for shiptype in shiptypes:
+            line += "c"
+        line += "}\n"
+        f.write(line)
+
+        # ̱Label table
+        f.write("  \\hline\n")
+        line = "  "
+        for shiptype in shiptypes:
+            if line != "  ":
+                line += " & "
+            line += f"\\textbf{{{shiptype[0:min(len(shiptype), 6)]}}}"
+        line += " \\\\\n"
+        f.write(line)
+        f.write("  \\hline\n")
+        f.write("  \\hline\n")
+
+        # ̱Write at most ten samples for each ship type
+        for iSmp in range(10):
+            line = "  "
+            for shiptype in shiptypes:
+                if line != "  ":
+                    line += " & "
+                samples = psd[shiptype]["samples"]
+                if iSmp < len(samples):
+                    line += f"{samples[iSmp]['SL']:.1f}"
+            line += " \\\\\n"
+            f.write(line)
+        f.write("  \\hline\n")
+
+        # Write the average and number of samples for each ship type
+        line = "  "
+        for shiptype in shiptypes:
+            if line != "  ":
+                line += " & "
+            line += f"{psd[shiptype]['SL']:.1f} ({len(psd[shiptype]['samples'])})"
+        line += " \\\\\n"
+        f.write(line)
+        f.write("  \\hline\n")
+
+        # Close environment
+        f.write("\\end{tabular}\n")
+
+
+def plot_psd(psd, plot_type, shiptypes, clip_home, plot_file):
+    """Plot example pressure time series, or example or average power
+    spectral densities for the specified ship types, and save the
+    figure to the specified clip home.
+
+    Parameters
+    ----------
+    psd : dict
+        Pressure, source levels and power spectral densities
+    plot_type : str
+        Type of plot: "example_p_ts" (example pressure time series),
+        "example_psd" (examples PSDs), or "average_psd" (averages
+        PSDs)
+    shiptypes : list(str)
+        Ship types to plot, currently exactly six
+    clip_home : pathlib.Path()
+        Path to directory containing audio files
+    plot_file : str
+        Name of plot file
+
+    Returns
+    -------
+    None
+
+    """
+    # Configure figure for subplots
     nRow = 2
     nCol = 3
     fig, axs = plt.subplots(nRow, nCol, figsize=(10, 5), layout="constrained")
 
     # Initialize common x and y axis limits
-    x0 = 2.0
-    x1 = 2000.0
+    if plot_type in ["example_psd", "average_psd"]:
+        x0 = 2.0
+        x1 = 2000.0
     y0 = float("inf")
     y1 = float("-inf")
 
     # Plot each ship type
+    if plot_type in ["example_p_ts", "example_psd"]:
+        mmsi = []
+        SPL = []
     SL = []
     iTyp = -1
     for iRow in range(nRow):
         for iCol in range(nCol):
             iTyp += 1
-            if plot_average:
-                item = psd[shiptypes[iTyp]]
-            else:
-                item = psd[shiptypes[iTyp]]["samples"][0]
-            f = item["f"]
-            SL.append(item["SL"])
-            PSD = item["PSD"]
 
-            # Plot only over the x limits
-            idx = np.logical_and(x0 <= f, f <= x1)
-            axs[iRow, iCol].loglog(f[idx], PSD[idx])
-            axs[iRow, iCol].set_title(f"{shiptypes[iTyp]}", loc="left")
+            if plot_type in ["example_p_ts", "example_psd"]:
+                item = psd[shiptypes[iTyp]]["samples"][0]
+                mmsi.append(item["mmsi"])  # Accumulate for labeling
+            else:
+                item = psd[shiptypes[iTyp]]
+
+            if plot_type == "example_p_ts":
+
+                # Plot pressure over the full sample time
+                SPL.append(item["SPL"])  # Accumulate for labeling
+                pressure = item["pressure"]
+                t = np.arange(pressure.size) / item["sample_rate"]
+                axs[iRow, iCol].plot(t, pressure / 1.0e6)
+                axs[iRow, iCol].set_title(
+                    f"{shiptypes[iTyp][0:min(len(shiptypes[iTyp]), 12)]} ({mmsi[iTyp]})",
+                    loc="left",
+                )
+                xlim = axs[iRow, iCol].get_xlim()
+                x0 = xlim[0]
+                x1 = xlim[1]
+
+            else:
+
+                # Plot spectrum over the x (frequency) limits
+                SL.append(item["SL"])  # Accumulate for labeling
+                f = item["f"]
+                PSD = item["PSD"]
+                idx = np.logical_and(x0 <= f, f <= x1)
+                axs[iRow, iCol].loglog(f[idx], PSD[idx])
+                if plot_type == "example_psd":
+                    axs[iRow, iCol].set_title(
+                        f"{shiptypes[iTyp][0:min(len(shiptypes[iTyp]), 12)]} ({mmsi[iTyp]})",
+                        loc="left",
+                    )
+                else:
+                    axs[iRow, iCol].set_title(f"{shiptypes[iTyp]}", loc="left")
 
             # Find common y limits
             ylim = axs[iRow, iCol].get_ylim()
             y0 = min(y0, ylim[0])
             y1 = max(y1, ylim[1])
 
-    # Set common y limits, and annotate each plot with source level
+    # Set common y limits, and annotate each subplot ...
     iTyp = -1
     for iRow in range(nRow):
         for iCol in range(nCol):
             iTyp += 1
-            axs[iRow, iCol].set_ylim(y0, y1)
-            t = axs[iRow, iCol].text(x0, 3 * y0, f"{SL[iTyp]:.1f} dB re µPa²m²")
 
-    # Label the axes of the figure of subplots
-    xL = fig.supxlabel("Frequency [Hz]", fontweight="semibold")
-    yL = fig.supylabel("Pressure Density [µPa²/Hz]", fontweight="semibold")
+            if plot_type == "example_p_ts":
+                axs[iRow, iCol].set_ylim(y0, y1)
+                xW = x1 - x0
+                yW = y1 - y0
+                aT = axs[iRow, iCol].text(
+                    x0 + 0.05 * xW, y0 + 0.05 * yW, f"{SPL[iTyp]:.1f} dB re µPa²"
+                )
 
-    # Save the figure and block for user input
+            else:
+                axs[iRow, iCol].set_ylim(y0, y1)
+                aT = axs[iRow, iCol].text(x0, 2 * y0, f"{SL[iTyp]:.1f} dB re µPa²m²")
+
+    # Label the axes of the figures of subplots
+    if plot_type == "example_p_ts":
+        xL = fig.supxlabel("Time [s]", fontweight="semibold")
+        yL = fig.supylabel("Pressure [Pa]", fontweight="semibold")
+
+    else:
+        xL = fig.supxlabel("Frequency [Hz]", fontweight="semibold")
+        yL = fig.supylabel("Pressure Spectral Density [µPa²/Hz]", fontweight="semibold")
+
+    # Save the figure, then block for user input
     plot_path = clip_home / plot_file
     plt.savefig(plot_path, format=plot_path.suffix.replace(".", ""))
     plt.show()
@@ -1275,32 +1385,37 @@ def main():
                 force=args.force_psd_pickle,
             )
             if args.plot_psds:
-                plot_psd(
-                    psd,
-                    SHIPTYPE_SET_ONE,
-                    clip_home,
-                    "SL-and-PSD-Example-for-Ship-Type-Set-One.pdf",
-                )
-                plot_psd(
-                    psd,
-                    SHIPTYPE_SET_ONE,
-                    clip_home,
-                    "SL-and-PSD-Average-for-Ship-Type-Set-One.pdf",
-                    plot_average=True,
-                )
-                plot_psd(
-                    psd,
-                    SHIPTYPE_SET_TWO,
-                    clip_home,
-                    "SL-and-PSD-Example-for-Ship-Type-Set-Two.pdf",
-                )
-                plot_psd(
-                    psd,
-                    SHIPTYPE_SET_TWO,
-                    clip_home,
-                    "SL-and-PSD-Average-for-Ship-Type-Set-Two.pdf",
-                    plot_average=True,
-                )
+                for iSet in range(2):
+                    if iSet == 0:
+                        base_name = "Ship-Type-Set-One"
+                        shiptype_set = SHIPTYPE_SET_ONE
+                    else:
+                        base_name = "Ship-Type-Set-Two"
+                        shiptype_set = SHIPTYPE_SET_TWO
+                    write_SLs(
+                        psd, SHIPTYPE_SET_ONE, clip_home, base_name + "-SL-Examples.tex"
+                    )
+                    plot_psd(
+                        psd,
+                        "example_p_ts",
+                        shiptype_set,
+                        clip_home,
+                        base_name + "-Pressure-Examples.pdf",
+                    )
+                    plot_psd(
+                        psd,
+                        "example_psd",
+                        shiptype_set,
+                        clip_home,
+                        base_name + "-Spectrum-Examples.pdf",
+                    )
+                    plot_psd(
+                        psd,
+                        "average_psd",
+                        shiptype_set,
+                        clip_home,
+                        base_name + "-Spectrum-Averages.pdf",
+                    )
 
     return ais, hmd, shp, psd
 
