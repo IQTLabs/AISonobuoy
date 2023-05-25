@@ -307,7 +307,7 @@ tomli==2.0.1
     # via
     #   jupyterlab
     #   pytest
-tornado==6.2
+tornado==6.3.2
     # via
     #   ipykernel
     #   jupyter-client
