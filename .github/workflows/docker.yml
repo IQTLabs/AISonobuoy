@@ -27,7 +27,7 @@ jobs:
       id: change_tag
       run: if [ "${{ steps.get_version.outputs.VERSION }}" == "main" ]; then echo ::set-output name=IMAGE_TAG::latest; else echo ::set-output name=IMAGE_TAG::stable; fi
     - name: Set up qemu
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
       with:
         platforms: all
     - name: Set up Docker Buildx
