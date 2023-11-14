@@ -228,7 +228,7 @@ typing-extensions==4.3.0
     #   torch
 urllib3==1.26.11
     # via requests
-werkzeug==2.2.0
+werkzeug==2.3.8
     # via tensorboard
 wheel==0.37.1
     # via
