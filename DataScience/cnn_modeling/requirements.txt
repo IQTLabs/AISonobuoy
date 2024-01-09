@@ -32,7 +32,7 @@ flatbuffers==22.9.24
     # via
     #   onnxruntime
     #   tensorflow
-fonttools==4.34.4
+fonttools==4.43.0
     # via matplotlib
 gast==0.4.0
     # via tensorflow
