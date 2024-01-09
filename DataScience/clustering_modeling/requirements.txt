@@ -20,7 +20,7 @@ cycler==0.11.0
     # via matplotlib
 decorator==5.1.1
     # via librosa
-fonttools==4.37.4
+fonttools==4.43.0
     # via matplotlib
 idna==3.4
     # via requests
