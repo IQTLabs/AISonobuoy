@@ -81,7 +81,7 @@ ipython-genutils==0.2.0
     #   notebook
 jedi==0.18.1
     # via ipython
-jinja2==3.1.2
+jinja2==3.1.3
     # via
     #   branca
     #   folium
