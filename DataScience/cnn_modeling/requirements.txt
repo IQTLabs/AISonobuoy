@@ -162,7 +162,7 @@ python-dateutil==2.8.2
     #   pandas
 pytz==2022.1
     # via pandas
-requests==2.28.1
+requests==2.32.0
     # via
     #   pooch
     #   requests-oauthlib
