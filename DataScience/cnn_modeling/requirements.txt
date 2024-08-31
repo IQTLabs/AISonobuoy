@@ -118,7 +118,7 @@ onnx2keras==0.0.24
     # via -r requirements.in
 onnxruntime==1.12.1
     # via -r requirements.in
-opencv-python==4.6.0.66
+opencv-python==4.8.1.78
     # via -r requirements.in
 opt-einsum==3.3.0
     # via tensorflow
